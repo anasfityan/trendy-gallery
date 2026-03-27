@@ -2,18 +2,37 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>تجربة الربط</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فحص اتصال الحقائب</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f4f1ee; }
+        .box { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        button { background: #1a1410; color: white; border: none; padding: 15px 30px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 20px; }
+        input { width: 100%; padding: 12px; margin-top: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        #list { text-align: right; margin-top: 20px; }
+    </style>
 </head>
 <body>
-    <h2>اختبار الاتصال بالسحابة</h2>
-    <input type="text" id="testInp" placeholder="اكتب أي شيء هنا">
-    <button onclick="testSave()">اضغط للحفظ وتجربة المزامنة</button>
-    <div id="status"></div>
-    <ul id="list"></ul>
+
+    <div class="box">
+        <h2>🛍️ تجربة نظام المزامنة</h2>
+        <p>اكتب أي شيء واضغط حفظ لتجربة الربط</p>
+        
+        <input type="text" id="testInp" placeholder="مثلاً: حقيبة حمراء - 200 ليرة">
+        <button onclick="saveItem()">💾 حفظ ومزامنة الآن</button>
+
+        <div id="list">
+            <strong>المضاف حديثاً:</strong>
+            <ul id="items"></ul>
+        </div>
+    </div>
 
 <script>
+// إعدادات مشروعك (haqaibi-50ba4)
 const firebaseConfig = {
   apiKey: "AIzaSyDae0M8CdKmahKD78YICAON5VC01aG43cM",
   authDomain: "haqaibi-50ba4.firebaseapp.com",
@@ -24,25 +43,45 @@ const firebaseConfig = {
   appId: "1:461111216258:web:694ad5d112f60a01274c9b"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+// تشغيل Firebase مع معالجة الأخطاء
+try {
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-function testSave() {
-    const val = document.getElementById('testInp').value;
-    db.ref('test_logs').push({ text: val, time: Date.now() })
-    .then(() => alert("✅ تم الحفظ بنجاح! المزامنة تعمل"))
-    .catch((error) => alert("❌ فشل الحفظ: " + error.message));
-}
+    // دالة الحفظ
+    function saveItem() {
+        const text = document.getElementById('testInp').value;
+        if(!text) return alert("اكتب شيئاً أولاً!");
 
-// عرض البيانات مباشرة
-db.ref('test_logs').on('value', (snap) => {
-    const data = snap.val();
-    const list = document.getElementById('list');
-    list.innerHTML = '';
-    for(let id in data) {
-        list.innerHTML += `<li>${data[id].text}</li>`;
+        db.ref('bags_test').push({
+            content: text,
+            time: Date.now()
+        })
+        .then(() => {
+            alert("✅ رائع! تم الحفظ في السحابة بنجاح");
+            document.getElementById('testInp').value = '';
+        })
+        .catch((error) => {
+            alert("❌ خطأ في الصلاحيات: تأكد من تفعيل Rules في Firebase\n" + error.message);
+        });
     }
-});
+
+    // عرض البيانات فورياً عند الإضافة من أي هاتف
+    db.ref('bags_test').on('value', (snapshot) => {
+        const data = snapshot.val();
+        const listUl = document.getElementById('items');
+        listUl.innerHTML = '';
+        for (let id in data) {
+            let li = document.createElement('li');
+            li.textContent = data[id].content;
+            listUl.appendChild(li);
+        }
+    });
+
+} catch (e) {
+    alert("❌ فشل تشغيل التطبيق: " + e.message);
+}
 </script>
+
 </body>
 </html>
