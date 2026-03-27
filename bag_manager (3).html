@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>حقائبي</title>
+
+<!-- PWA META -->
+<meta name="theme-color" content="#1a1410">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="حقائبي">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="إدارة حقائبك بسهولة">
+
+<!-- APPLE TOUCH ICON (SVG → PNG via canvas) -->
+<link rel="apple-touch-icon" id="appleTouchIcon">
+<link rel="icon" type="image/svg+xml" id="faviconLink">
+
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f2ed;--card:#fff;--deep:#1a1410;--gold:#c8962e;--gold-l:#f0c96a;
+  --text:#2a1f14;--text2:#8a7060;--border:#e0d8ce;--green:#2d7a4f;--red:#b53a2f;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);min-height:100vh;}
+
+/* ── SPLASH SCREEN ── */
+#splash{
+  position:fixed;inset:0;background:var(--deep);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:9999;transition:opacity .5s,transform .5s;
+}
+#splash.hide{opacity:0;transform:scale(1.05);pointer-events:none;}
+.splash-icon{
+  width:100px;height:100px;background:var(--gold);
+  border-radius:28px;display:flex;align-items:center;justify-content:center;
+  font-size:52px;margin-bottom:20px;
+  box-shadow:0 8px 32px rgba(200,150,46,.4);
+  animation:splashPop .6s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes splashPop{from{opacity:0;transform:scale(.6);}to{opacity:1;transform:scale(1);}}
+.splash-title{color:#fff;font-size:28px;font-weight:900;margin-bottom:6px;animation:fadeUp .6s .2s both;}
+.splash-sub{color:rgba(255,255,255,.4);font-size:14px;animation:fadeUp .6s .35s both;}
+.splash-bar{
+  width:60px;height:3px;background:rgba(255,255,255,.1);border-radius:2px;
+  margin-top:32px;overflow:hidden;animation:fadeUp .6s .4s both;
+}
+.splash-progress{height:100%;background:var(--gold);border-radius:2px;animation:progress 1.2s .3s ease-out both;}
+@keyframes progress{from{width:0}to{width:100%}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+/* HEADER */
+.hdr{background:var(--deep);padding:16px 16px 12px;position:sticky;top:0;z-index:50;}
+.hdr-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.logo{display:flex;align-items:center;gap:8px;}
+.logo-icon{width:34px;height:34px;background:var(--gold);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.logo-text{color:#fff;font-weight:900;font-size:17px;}
+.hcount{background:rgba(255,255,255,.1);border-radius:20px;padding:5px 14px;color:var(--gold-l);font-size:14px;font-weight:700;}
+.srch{position:relative;}
+.srch input{width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:10px 40px 10px 14px;color:#fff;font-family:'Tajawal',sans-serif;font-size:14px;outline:none;}
+.srch input::placeholder{color:rgba(255,255,255,.3);}
+.srch input:focus{background:rgba(255,255,255,.15);border-color:var(--gold);}
+.srch-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;}
+
+/* FILTERS */
+.fbar{display:flex;gap:8px;padding:10px 12px 4px;overflow-x:auto;scrollbar-width:none;}
+.fbar::-webkit-scrollbar{display:none;}
+.fp{background:var(--card);border:1.5px solid var(--border);border-radius:22px;padding:6px 14px;font-family:'Tajawal',sans-serif;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;white-space:nowrap;transition:all .15s;}
+.fp.active{background:var(--deep);border-color:var(--deep);color:#fff;}
+
+/* GRID */
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px 10px 100px;}
+
+/* CARD */
+.card{background:var(--card);border-radius:14px;overflow:hidden;border:1px solid var(--border);box-shadow:0 2px 8px rgba(106,76,42,.07);animation:pop .28s cubic-bezier(.34,1.56,.64,1) both;}
+@keyframes pop{from{opacity:0;transform:scale(.94);}to{opacity:1;transform:scale(1);}}
+.card-thumb{width:100%;aspect-ratio:1;background:#ede8e0;display:flex;align-items:center;justify-content:center;font-size:40px;position:relative;overflow:hidden;cursor:pointer;}
+.card-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.card-thumb.shimmer{background:linear-gradient(90deg,#ede8e0 25%,#f5f2ed 50%,#ede8e0 75%);background-size:200% 100%;animation:shim 1.2s infinite;}
+@keyframes shim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.sdot{position:absolute;top:7px;right:7px;width:10px;height:10px;border-radius:50%;border:2px solid #fff;}
+.sa{background:var(--green);} .su{background:var(--red);} .sk{background:var(--gold);}
+.price-tag{position:absolute;bottom:7px;left:7px;background:rgba(26,20,16,.75);color:#fff;border-radius:7px;padding:2px 7px;font-size:11px;font-weight:700;backdrop-filter:blur(4px);}
+.card-foot{padding:7px 8px 9px;}
+.card-name{font-size:11px;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.cdots{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;}
+.cdot-c{width:14px;height:14px;border-radius:50%;border:1.5px solid rgba(0,0,0,.12);flex-shrink:0;}
+.open-btn{width:100%;background:var(--deep);color:#fff;border:none;border-radius:9px;padding:8px;font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;}
+.open-btn:active{opacity:.8;}
+.empty{text-align:center;padding:60px 20px;grid-column:1/-1;}
+.empty .ei{font-size:50px;margin-bottom:10px;}
+.empty p{color:var(--text2);font-size:14px;}
+
+/* FAB */
+.fab{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--deep);color:#fff;border:none;border-radius:28px;padding:13px 26px;font-family:'Tajawal',sans-serif;font-size:15px;font-weight:800;display:flex;align-items:center;gap:7px;cursor:pointer;box-shadow:0 6px 20px rgba(26,20,16,.4);z-index:40;}
+.fab:active{transform:translateX(-50%) scale(.96);}
+.fab-dot{width:7px;height:7px;background:var(--gold);border-radius:50%;}
+
+/* OVERLAY + DRAWER */
+.ov{position:fixed;inset:0;background:rgba(26,20,16,.65);backdrop-filter:blur(6px);z-index:100;opacity:0;pointer-events:none;transition:opacity .25s;}
+.ov.open{opacity:1;pointer-events:all;}
+.drawer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:22px 22px 0 0;padding:0 0 28px;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform .32s cubic-bezier(.32,.72,0,1);z-index:101;}
+.ov.open .drawer{transform:translateY(0);}
+.dhandle{width:34px;height:4px;background:#e0d8ce;border-radius:2px;margin:12px auto 0;}
+.dhead{padding:12px 18px 0;display:flex;align-items:center;justify-content:space-between;}
+.dtitle{font-size:16px;font-weight:900;color:var(--text);}
+.dclose{width:30px;height:30px;background:var(--bg);border-radius:8px;border:none;cursor:pointer;font-size:15px;color:var(--text2);}
+.dbody{padding:14px 18px;}
+.hint-box{background:#fdf8f0;border:1px solid rgba(200,150,46,.25);border-radius:12px;padding:11px 13px;margin-bottom:13px;font-size:13px;color:var(--text2);line-height:1.5;}
+.hint-box strong{color:var(--gold);display:block;margin-bottom:2px;}
+.fg{margin-bottom:11px;}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:4px;}
+.fg input,.fg textarea{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:11px 13px;font-family:'Tajawal',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border .2s;resize:none;}
+.fg input:focus,.fg textarea:focus{border-color:var(--gold);background:#fff;}
+.fg-row{display:flex;gap:9px;} .fg-row .fg{flex:1;}
+.prev-wrap{width:100%;aspect-ratio:4/3;background:#ede8e0;border-radius:13px;overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:11px;border:1.5px solid var(--border);font-size:34px;color:#bbb;position:relative;}
+.prev-wrap img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+.prev-wrap.shimmer{background:linear-gradient(90deg,#ede8e0 25%,#f5f2ed 50%,#ede8e0 75%);background-size:200% 100%;animation:shim 1.2s infinite;}
+.spin{width:32px;height:32px;border:3px solid #e0d8ce;border-top-color:var(--gold);border-radius:50%;animation:sp .8s linear infinite;position:absolute;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.status-row{display:flex;gap:7px;margin-bottom:13px;}
+.stbtn{flex:1;padding:9px 4px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);font-family:'Tajawal',sans-serif;font-size:11px;font-weight:700;color:var(--text2);cursor:pointer;text-align:center;}
+.act-a{background:rgba(45,122,79,.1);border-color:var(--green);color:var(--green);}
+.act-u{background:rgba(181,58,47,.1);border-color:var(--red);color:var(--red);}
+.act-k{background:rgba(200,150,46,.1);border-color:var(--gold);color:var(--gold);}
+.btn-save{width:100%;background:var(--deep);color:#fff;border:none;border-radius:13px;padding:14px;font-family:'Tajawal',sans-serif;font-size:16px;font-weight:800;cursor:pointer;}
+.btn-save:disabled{opacity:.35;cursor:not-allowed;}
+
+/* DETAIL */
+.det-img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:14px;margin-bottom:13px;display:block;}
+.det-img-ph{width:100%;aspect-ratio:4/3;background:#ede8e0;border-radius:14px;margin-bottom:13px;display:flex;align-items:center;justify-content:center;font-size:44px;}
+.det-name{font-size:17px;font-weight:900;margin-bottom:4px;}
+.det-price{font-size:15px;color:var(--gold);font-weight:700;margin-bottom:7px;}
+.det-status{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:10px;}
+.ds-a{background:rgba(45,122,79,.1);color:var(--green);}
+.ds-u{background:rgba(181,58,47,.1);color:var(--red);}
+.ds-k{background:rgba(200,150,46,.1);color:var(--gold);}
+.det-colors{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.det-sw{display:flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--border);border-radius:18px;padding:3px 9px;font-size:12px;}
+.det-sd{width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.1);flex-shrink:0;}
+.det-note{font-size:13px;color:var(--text2);background:var(--bg);border-radius:9px;padding:8px 10px;margin-bottom:14px;line-height:1.5;}
+.det-btns{display:flex;gap:8px;}
+.dbtn{flex:1;padding:12px 6px;border-radius:11px;border:none;font-family:'Tajawal',sans-serif;font-size:14px;font-weight:700;cursor:pointer;text-align:center;}
+.dbtn-open{background:var(--deep);color:#fff;}
+.dbtn-edit{background:var(--bg);color:var(--text);border:1.5px solid var(--border);}
+.dbtn-del{background:rgba(181,58,47,.08);color:var(--red);border:1.5px solid rgba(181,58,47,.2);}
+
+/* TOAST */
+.toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--deep);color:#fff;border-radius:28px;padding:9px 20px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;white-space:nowrap;z-index:200;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* INSTALL BANNER */
+.install-bar{background:linear-gradient(135deg,#1a1410,#2d1f0f);border-bottom:1px solid rgba(200,150,46,.2);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.install-bar p{color:rgba(255,255,255,.8);font-size:13px;line-height:1.4;flex:1;}
+.install-bar p strong{color:var(--gold-l);display:block;}
+.install-btn{background:var(--gold);color:#1a1410;border:none;border-radius:10px;padding:8px 14px;font-family:'Tajawal',sans-serif;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;}
+.install-close{background:none;border:none;color:rgba(255,255,255,.4);font-size:18px;cursor:pointer;padding:4px;}
+
+@media(min-width:540px){.gallery{grid-template-columns:repeat(3,1fr);}}
+@media(min-width:800px){
+  .gallery{grid-template-columns:repeat(4,1fr);}
+  .drawer{max-width:480px;left:50%;right:auto;transform:translateX(-50%) translateY(100%);border-radius:22px;bottom:32px;}
+  .ov.open .drawer{transform:translateX(-50%) translateY(0);}
+}
+@media(min-width:1100px){.gallery{grid-template-columns:repeat(5,1fr);}}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-icon">👜</div>
+  <div class="splash-title">حقائبي</div>
+  <div class="splash-sub">إدارة حقائبك بسهولة</div>
+  <div class="splash-bar"><div class="splash-progress"></div></div>
+</div>
+
+<!-- INSTALL BANNER -->
+<div class="install-bar" id="installBar" style="display:none">
+  <p><strong>📲 أضف التطبيق لهاتفك</strong>اضغط هنا لتثبيته على الشاشة الرئيسية</p>
+  <button class="install-btn" id="installBtn">تثبيت</button>
+  <button class="install-close" onclick="document.getElementById('installBar').style.display='none'">✕</button>
+</div>
+
+<div class="hdr">
+  <div class="hdr-row">
+    <div class="logo">
+      <div class="logo-icon">👜</div>
+      <div class="logo-text">حقائبي</div>
+    </div>
+    <div class="hcount" id="hcount">0 حقيبة</div>
+  </div>
+  <div class="srch">
+    <input type="text" id="srchInput" placeholder="ابحث..." oninput="render()">
+    <span class="srch-ico">🔍</span>
+  </div>
+</div>
+
+<div class="fbar">
+  <button class="fp active" onclick="setF('all',this)">الكل</button>
+  <button class="fp" onclick="setF('available',this)">✅ متوفرة</button>
+  <button class="fp" onclick="setF('unavailable',this)">❌ نفذت</button>
+  <button class="fp" onclick="setF('unknown',this)">❓ غير معروف</button>
+</div>
+
+<div class="gallery" id="gallery"></div>
+<button class="fab" onclick="openAdd()"><div class="fab-dot"></div>إضافة حقيبة</button>
+
+<!-- OVERLAY -->
+<div class="ov" id="ov" onclick="bgClose(event)">
+  <div class="drawer" id="drawer">
+    <div class="dhandle"></div>
+    <div id="addPanel">
+      <div class="dhead">
+        <div class="dtitle" id="addTitle">إضافة حقيبة</div>
+        <button class="dclose" onclick="closeD()">✕</button>
+      </div>
+      <div class="dbody">
+        <div class="hint-box"><strong>📋 الصق الرابط — الصورة تظهر تلقائياً</strong>ثم أضف السعر والألوان واضغط حفظ</div>
+        <div class="fg"><label>رابط المنتج ✱</label><input type="url" id="urlInp" placeholder="https://www.shulebags.com/..."></div>
+        <div class="prev-wrap" id="prevWrap">👜</div>
+        <div class="fg"><label>اسم الحقيبة</label><input type="text" id="nameInp" placeholder="اسم الحقيبة (اختياري)"></div>
+        <div class="fg-row">
+          <div class="fg"><label>سعر الشراء</label><input type="text" id="priceInp" placeholder="850 TL"></div>
+          <div class="fg"><label>الألوان</label><input type="text" id="colorsInp" placeholder="أحمر، أسود، بيج"></div>
+        </div>
+        <div class="fg"><label>ملاحظات</label><textarea id="noteInp" rows="2" placeholder="أي تفاصيل..."></textarea></div>
+        <div class="status-row">
+          <button class="stbtn act-a" id="st-a" onclick="setSt('available')">✅ متوفرة</button>
+          <button class="stbtn" id="st-u" onclick="setSt('unavailable')">❌ نفذت</button>
+          <button class="stbtn" id="st-k" onclick="setSt('unknown')">❓ غير معروف</button>
+        </div>
+        <input type="hidden" id="editId">
+        <button class="btn-save" id="saveBtn" onclick="saveBag()" disabled>💾 حفظ</button>
+      </div>
+    </div>
+    <div id="detPanel" style="display:none">
+      <div class="dhead">
+        <div class="dtitle">تفاصيل الحقيبة</div>
+        <button class="dclose" onclick="closeD()">✕</button>
+      </div>
+      <div class="dbody">
+        <div id="detImgWrap"></div>
+        <div class="det-name" id="detName"></div>
+        <div class="det-price" id="detPrice"></div>
+        <div class="det-status" id="detStatus"></div>
+        <div class="det-colors" id="detColors"></div>
+        <div class="det-note" id="detNote" style="display:none"></div>
+        <div class="det-btns">
+          <button class="dbtn dbtn-open" onclick="detOpen()">🔗 فتح</button>
+          <button class="dbtn dbtn-edit" onclick="detEdit()">✏️ تعديل</button>
+          <button class="dbtn dbtn-del" onclick="detDelete()">🗑️ حذف</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── PWA: Generate icon via canvas ──
+function makeIcon(){
+  const c=document.createElement('canvas');c.width=512;c.height=512;
+  const ctx=c.getContext('2d');
+  // background
+  ctx.fillStyle='#1a1410';
+  roundRect(ctx,0,0,512,512,80);ctx.fill();
+  // gold circle bg
+  ctx.fillStyle='#c8962e';
+  roundRect(ctx,56,56,400,400,60);ctx.fill();
+  // bag emoji
+  ctx.font='220px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('👜',256,270);
+  // text
+  ctx.fillStyle='#fff';ctx.font='bold 52px Tajawal,Arial';
+  ctx.fillText('حقائبي',256,460);
+  return c.toDataURL('image/png');
+}
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+try{
+  const ico=makeIcon();
+  document.getElementById('appleTouchIcon').href=ico;
+  document.getElementById('faviconLink').href=ico;
+}catch(e){}
+
+// ── PWA: Manifest ──
+const manifest={
+  name:'حقائبي',short_name:'حقائبي',
+  description:'إدارة حقائبك من تركيا بسهولة',
+  start_url:'/',display:'standalone',
+  background_color:'#1a1410',theme_color:'#1a1410',
+  orientation:'portrait',lang:'ar',dir:'rtl',
+  icons:[{src:'',sizes:'512x512',type:'image/png',purpose:'any maskable'}]
+};
+try{
+  const ico=makeIcon();manifest.icons[0].src=ico;
+  const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+  const mUrl=URL.createObjectURL(blob);
+  const ml=document.createElement('link');ml.rel='manifest';ml.href=mUrl;
+  document.head.appendChild(ml);
+}catch(e){}
+
+// ── PWA: Service Worker (offline) ──
+if('serviceWorker' in navigator){
+  const swCode=`
+const CACHE='haqaibi-v1';
+const ASSETS=['${location.href}'];
+self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS))));
+self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('${location.href}')))));
+`;
+  const swBlob=new Blob([swCode],{type:'application/javascript'});
+  const swUrl=URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl).catch(()=>{});
+}
+
+// ── PWA: Install prompt ──
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  document.getElementById('installBar').style.display='flex';
+});
+document.getElementById('installBtn').addEventListener('click',async()=>{
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  const{outcome}=await deferredPrompt.userChoice;
+  if(outcome==='accepted') document.getElementById('installBar').style.display='none';
+  deferredPrompt=null;
+});
+
+// ── SPLASH ──
+window.addEventListener('load',()=>{
+  setTimeout(()=>document.getElementById('splash').classList.add('hide'),1400);
+  setTimeout(()=>document.getElementById('splash').remove(),1950);
+});
+
+// ── COLOR MAP ──
+const CM={
+  'أسود':'#1a1a1a','أبيض':'#f5f5f5','أحمر':'#e53935','أزرق':'#1565c0','أخضر':'#2e7d32',
+  'أصفر':'#f9a825','وردي':'#e91e8c','بنفسجي':'#7b1fa2','برتقالي':'#e65100','رمادي':'#757575',
+  'بني':'#795548','بيج':'#d4b896','كريمي':'#f5f0e8','كحلي':'#1a237e','ذهبي':'#f0b429',
+  'فضي':'#9e9e9e','كاراميل':'#c4874e','خمري':'#880e4f','زيتي':'#558b2f','تركواز':'#00838f',
+  'بوردو':'#800020','bordo':'#800020','siyah':'#1a1a1a','beyaz':'#f5f5f5','kırmızı':'#e53935',
+  'mavi':'#1565c0','pembe':'#e91e8c','gri':'#757575','kahverengi':'#795548','bej':'#d4b896',
+  'lacivert':'#1a237e','black':'#1a1a1a','white':'#f5f5f5','red':'#e53935','blue':'#1565c0',
+  'green':'#2e7d32','pink':'#e91e8c','grey':'#757575','gray':'#757575','brown':'#795548',
+  'beige':'#d4b896','navy':'#1a237e','gold':'#f0b429','camel':'#c4874e','burgundy':'#800020',
+};
+function cHex(n){if(!n)return'#bbb';const l=n.toLowerCase().trim();for(const[k,v]of Object.entries(CM)){if(l.includes(k))return v;}return'#bdbdbd';}
+
+// ── DATA ──
+let bags=[],filt='all',curStatus='available',curImg='',curBagId=null;
+function load(){try{bags=JSON.parse(localStorage.getItem('haqaibi9')||'[]');}catch(e){bags=[];}}
+function saveData(){localStorage.setItem('haqaibi9',JSON.stringify(bags));}
+
+// ── IMAGE FETCH ──
+async function fetchImg(url){
+  const enc=encodeURIComponent(url);
+  const results=await Promise.allSettled([
+    (async()=>{
+      const r=await fetch(`https://api.allorigins.win/get?url=${enc}`,{signal:AbortSignal.timeout(8000)});
+      const d=await r.json();const html=d.contents||'';
+      const m=html.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/i)
+        ||html.match(/content=["']([^"']+)["'][^>]*property=["']og:image["']/i)
+        ||html.match(/name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i)
+        ||html.match(/content=["']([^"']+)["'][^>]*name=["']twitter:image["']/i);
+      if(m&&m[1]&&m[1].startsWith('http'))return m[1];
+      const imgs=[...html.matchAll(/src=["'](https:\/\/[^"']+\.(?:jpg|jpeg|webp|png)[^"']*)/gi)];
+      for(const im of imgs){if(!im[1].includes('logo')&&!im[1].includes('icon'))return im[1];}
+      throw'x';
+    })(),
+    (async()=>{
+      const r=await fetch(`https://api.microlink.io/?url=${enc}`,{signal:AbortSignal.timeout(8000)});
+      const d=await r.json();const img=d?.data?.image?.url;if(img)return img;throw'x';
+    })(),
+    (async()=>{
+      const r=await fetch(`https://corsproxy.io/?${enc}`,{signal:AbortSignal.timeout(8000)});
+      const html=await r.text();
+      const m=html.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/i)
+        ||html.match(/content=["']([^"']+)["'][^>]*property=["']og:image["']/i);
+      if(m&&m[1]&&m[1].startsWith('http'))return m[1];throw'x';
+    })(),
+  ]);
+  for(const r of results){if(r.status==='fulfilled'&&r.value)return r.value;}
+  return null;
+}
+
+let debTimer=null;
+document.getElementById('urlInp').addEventListener('input',function(){
+  const url=this.value.trim();
+  document.getElementById('saveBtn').disabled=!url;
+  clearTimeout(debTimer);
+  if(!url||!url.startsWith('http'))return;
+  debTimer=setTimeout(()=>doFetch(url),700);
+});
+
+async function doFetch(url){
+  const w=document.getElementById('prevWrap');
+  w.className='prev-wrap shimmer';w.innerHTML='<div class="spin"></div>';curImg='';
+  const img=await fetchImg(url);
+  w.className='prev-wrap';
+  if(img){curImg=img;w.innerHTML=`<img src="${img}" onerror="imgErr(this)" alt="">`;}
+  else{w.innerHTML='👜';toast('⚠️ لم تظهر الصورة — يمكنك الحفظ بدونها');}
+}
+function imgErr(el){el.parentElement.innerHTML='👜';curImg='';}
+
+function setSt(s){
+  curStatus=s;const m={available:'act-a',unavailable:'act-u',unknown:'act-k'};
+  ['a','u','k'].forEach(x=>{
+    const b=document.getElementById('st-'+x);b.className='stbtn';
+    if((x==='a'&&s==='available')||(x==='u'&&s==='unavailable')||(x==='k'&&s==='unknown'))b.classList.add(m[s]);
+  });
+}
+
+function saveBag(){
+  const url=document.getElementById('urlInp').value.trim();if(!url)return;
+  const eid=document.getElementById('editId').value;
+  const bag={
+    id:eid||Date.now().toString(36)+Math.random().toString(36).slice(2,4),
+    name:document.getElementById('nameInp').value.trim()||urlToName(url),
+    url,img:curImg,price:document.getElementById('priceInp').value.trim(),
+    colors:document.getElementById('colorsInp').value.trim(),
+    note:document.getElementById('noteInp').value.trim(),status:curStatus,
+  };
+  if(eid){const i=bags.findIndex(x=>x.id===eid);bags[i]=bag;toast('✅ تم التحديث');}
+  else{bags.unshift(bag);toast('✅ تمت الإضافة');}
+  saveData();closeD();render();
+}
+function urlToName(url){try{return new URL(url).pathname.split('/').filter(Boolean).pop().replace(/-/g,' ').slice(0,35)||'حقيبة';}catch(e){return'حقيبة';}}
+
+function setF(f,el){filt=f;document.querySelectorAll('.fp').forEach(p=>p.classList.remove('active'));el.classList.add('active');render();}
+
+function render(){
+  const q=document.getElementById('srchInput').value.trim().toLowerCase();
+  const list=bags.filter(b=>(!q||b.name.toLowerCase().includes(q)||(b.colors||'').toLowerCase().includes(q))&&(filt==='all'||b.status===filt));
+  document.getElementById('hcount').textContent=bags.length+' حقيبة';
+  const g=document.getElementById('gallery');
+  if(!list.length){g.innerHTML=`<div class="empty"><div class="ei">${bags.length?'🔍':'🛍️'}</div><p>${bags.length?'لا توجد نتائج':'أضف أول حقيبة!'}</p></div>`;return;}
+  const dc={available:'sa',unavailable:'su',unknown:'sk'};
+  g.innerHTML=list.map((b,i)=>{
+    const thumb=b.img?`<img src="${b.img}" loading="lazy" onerror="this.style.display='none'" alt="">`:'<span>👜</span>';
+    const priceTag=b.price?`<div class="price-tag">${b.price}</div>`:'';
+    const carr=(b.colors||'').split(',').map(c=>c.trim()).filter(Boolean);
+    const colorDots=carr.length?`<div class="cdots">${carr.slice(0,8).map(c=>`<div class="cdot-c" style="background:${cHex(c)}" title="${c}"></div>`).join('')}</div>`:'';
+    const su=(b.url||'').replace(/'/g,"&#39;");
+    return `<div class="card" style="animation-delay:${i*.03}s">
+      <div class="card-thumb" onclick="openDetail('${b.id}')">
+        ${thumb}<div class="sdot ${dc[b.status]||'sk'}"></div>${priceTag}
+      </div>
+      <div class="card-foot">
+        <div class="card-name">${b.name}</div>
+        ${colorDots}
+        <button class="open-btn" onclick="event.stopPropagation();window.open('${su}','_blank')">🔗 فتح الموقع</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openDetail(id){
+  curBagId=id;const b=bags.find(x=>x.id===id);if(!b)return;
+  document.getElementById('addPanel').style.display='none';
+  document.getElementById('detPanel').style.display='block';
+  document.getElementById('detImgWrap').innerHTML=b.img
+    ?`<img class="det-img" src="${b.img}" onerror="this.outerHTML='<div class=det-img-ph>👜</div>'" alt="">`
+    :`<div class="det-img-ph">👜</div>`;
+  document.getElementById('detName').textContent=b.name||'حقيبة';
+  const pEl=document.getElementById('detPrice');
+  pEl.textContent=b.price?'💲 '+b.price:'';pEl.style.display=b.price?'block':'none';
+  const sl={available:'✅ متوفرة',unavailable:'❌ نفذت',unknown:'❓ غير معروف'};
+  const sc={available:'ds-a',unavailable:'ds-u',unknown:'ds-k'};
+  document.getElementById('detStatus').textContent=sl[b.status]||'❓';
+  document.getElementById('detStatus').className='det-status '+(sc[b.status]||'ds-k');
+  const carr=(b.colors||'').split(',').map(c=>c.trim()).filter(Boolean);
+  document.getElementById('detColors').innerHTML=carr.map(c=>`<div class="det-sw"><div class="det-sd" style="background:${cHex(c)}"></div>${c}</div>`).join('');
+  const nEl=document.getElementById('detNote');
+  if(b.note){nEl.textContent='📝 '+b.note;nEl.style.display='block';}else nEl.style.display='none';
+  document.getElementById('ov').classList.add('open');
+}
+
+function detOpen(){const b=bags.find(x=>x.id===curBagId);if(b?.url)window.open(b.url,'_blank');}
+function detDelete(){
+  if(!confirm('حذف هذه الحقيبة؟'))return;
+  bags=bags.filter(b=>b.id!==curBagId);saveData();closeD();render();toast('🗑️ تم الحذف');
+}
+function detEdit(){
+  const b=bags.find(x=>x.id===curBagId);if(!b)return;
+  document.getElementById('detPanel').style.display='none';
+  document.getElementById('addPanel').style.display='block';
+  document.getElementById('addTitle').textContent='تعديل الحقيبة';
+  document.getElementById('editId').value=b.id;
+  document.getElementById('urlInp').value=b.url||'';
+  document.getElementById('nameInp').value=b.name||'';
+  document.getElementById('priceInp').value=b.price||'';
+  document.getElementById('colorsInp').value=b.colors||'';
+  document.getElementById('noteInp').value=b.note||'';
+  setSt(b.status||'available');curImg=b.img||'';
+  document.getElementById('saveBtn').disabled=false;
+  const w=document.getElementById('prevWrap');
+  w.className='prev-wrap';
+  w.innerHTML=b.img?`<img src="${b.img}" onerror="imgErr(this)" alt="">`:'👜';
+}
+
+function openAdd(){
+  document.getElementById('addPanel').style.display='block';
+  document.getElementById('detPanel').style.display='none';
+  document.getElementById('addTitle').textContent='إضافة حقيبة';
+  document.getElementById('editId').value='';
+  ['urlInp','nameInp','priceInp','colorsInp','noteInp'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('prevWrap').className='prev-wrap';
+  document.getElementById('prevWrap').innerHTML='👜';
+  document.getElementById('saveBtn').disabled=true;
+  curImg='';setSt('available');
+  document.getElementById('ov').classList.add('open');
+  setTimeout(()=>document.getElementById('urlInp').focus(),380);
+}
+function closeD(){document.getElementById('ov').classList.remove('open');}
+function bgClose(e){if(e.target.id==='ov')closeD();}
+
+let _t;
+function toast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('show');clearTimeout(_t);_t=setTimeout(()=>el.classList.remove('show'),2400);}
+
+load();
+if(!bags.length){
+  bags=[
+    {id:'s1',name:'lea suni deri baget bordo',url:'https://www.shulebags.com/lea-suni-deri-baget-canta-bordo-3807',img:'',price:'850 TL',colors:'بوردو، أسود',status:'available',note:''},
+    {id:'s2',name:'حقيبة كروس بيج',url:'https://www.shulebags.com',img:'',price:'650 TL',colors:'بيج، بني',status:'available',note:''},
+  ];
+  saveData();
+}
+render();
+</script>
+</body>
+</html>
