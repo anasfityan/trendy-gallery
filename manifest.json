@@ -11,7 +11,16 @@
   "lang": "ar",
   "dir": "rtl",
   "icons": [
-    { "src": "https://img.icons8.com/emoji/192/handbag.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "https://img.icons8.com/emoji/512/handbag.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
-  ]
-}
+  {
+    "src": "assets/icons/icon_192.png",
+    "sizes": "192x192",
+    "type": "image/png",
+    "purpose": "any maskable"
+  },
+  {
+    "src": "assets/icons/icon_512.png",
+    "sizes": "512x512",
+    "type": "image/png",
+    "purpose": "any maskable"
+  }
+]
