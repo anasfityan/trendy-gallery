@@ -223,6 +223,28 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .am-field label{display:block;font-size:9px;font-weight:700;color:var(--text2);margin-bottom:3px;text-transform:uppercase;letter-spacing:.3px;}
 .am-field input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;padding:9px 11px;font-family:inherit;font-size:13px;color:var(--text);outline:none;transition:border .18s;}
 .am-field input:focus{border-color:var(--gold);}
+/* ── NEW ADD MODAL LAYOUT ── */
+.am-body{padding:8px 10px 6px;display:flex;flex-direction:column;gap:6px;}
+.am-top{display:flex;gap:8px;align-items:stretch;}
+.am-btns{display:flex;flex-direction:column;gap:5px;width:44%;}
+.am-btn{width:100%;flex:1;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);font-family:inherit;font-size:11px;font-weight:600;color:var(--text2);cursor:pointer;display:flex;align-items:center;padding:0 8px;gap:6px;min-height:38px;transition:border .15s;}
+.am-btn:active{border-color:var(--gold);}
+.am-btn-ico{font-size:14px;flex-shrink:0;}
+.am-cat{-webkit-appearance:none;appearance:none;outline:none;color:var(--text);}
+.am-cat:focus{border-color:var(--gold);}
+.am-save-img{background:var(--deep)!important;color:#fff!important;border-color:var(--deep)!important;position:relative;}
+.am-save-img:disabled{opacity:.3;cursor:not-allowed;}
+.am-save-img.done{background:var(--green)!important;border-color:var(--green)!important;}
+.am-save-img .sp{display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);width:13px;height:13px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;}
+.am-save-img .sp.show{display:block;}
+.am-save-img .ck{display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:13px;}
+.am-save-img .ck.show{display:block;}
+.am-bottom{display:flex;flex-direction:column;gap:5px;}
+.am-inp{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13px;color:var(--text);outline:none;transition:border .18s;}
+.am-inp:focus{border-color:var(--gold);}
+.am-inp::placeholder{color:var(--text2);font-size:12px;}
+.am-manual{display:none;}
+
 /* manual image input */
 .am-manual{margin-bottom:7px;display:none;}
 /* save button */
@@ -403,33 +425,40 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
    <button class="am-close" onclick="closeAdd()">✕</button>
   </div>
   <div class="am-body">
-   <!-- Top row: image + buttons -->
-   <div class="am-row">
-    <div class="am-img-col">
-     <div class="am-img-box" id="amImgBox">
-      <span id="amImgPH">🛍️</span>
-      <div class="am-spin" id="amSpin"><div class="fs-ring"></div></div>
-      <div class="am-retry" id="amRetry"><button class="am-retry-btn" onclick="retryFetch()">↻</button></div>
-     </div>
-    </div>
-    <div class="am-act-col">
-     <button class="am-act-btn" onclick="triggerFile()">📁 <span id="lbl-upload">رفع صورة</span></button>
-     <button class="am-act-btn" onclick="toggleManual()">🔗 <span id="lbl-manual">رابط يدوي</span></button>
-     <select class="am-cat-sel" id="catInp"></select>
-    </div>
-   </div>
-   <!-- manual img -->
-   <div class="am-manual" id="amManual">
-    <div class="am-field"><label id="lbl-imgurl">رابط الصورة</label><input type="url" id="imgInp" placeholder="https://..."></div>
-   </div>
    <input type="file" id="fileIn" accept="image/*" style="display:none" onchange="handleFile(event)">
-   <!-- URL field full width -->
-   <div class="am-field"><label id="lbl-url">رابط المنتج</label><input type="url" id="urlInp" placeholder="https://" autocomplete="off"></div>
-   <!-- Name field -->
-   <div class="am-field"><label id="lbl-name">الاسم <span style="color:var(--text2);font-weight:400;text-transform:none">(اختياري)</span></label><input type="text" id="nameInp" autocomplete="off"></div>
+   <!-- TOP SECTION: big image LEFT + 4 buttons RIGHT -->
+   <div class="am-top">
+    <!-- Image box -->
+    <div class="am-img-box" id="amImgBox">
+     <span id="amImgPH">🛍️</span>
+     <div class="am-spin" id="amSpin"><div class="fs-ring"></div></div>
+     <div class="am-retry" id="amRetry"><button class="am-retry-btn" onclick="retryFetch()">↻</button></div>
+    </div>
+    <!-- 4 stacked buttons -->
+    <div class="am-btns">
+     <button class="am-btn" onclick="triggerFile()"><span class="am-btn-ico">📁</span><span id="lbl-upload">رفع صورة</span></button>
+     <button class="am-btn" onclick="toggleManual()"><span class="am-btn-ico">🔗</span><span id="lbl-manual">رابط الصورة</span></button>
+     <select class="am-btn am-cat" id="catInp"></select>
+     <button class="am-btn am-save-img" id="saveBtnTop" onclick="saveBag()" disabled>
+      <span class="am-btn-ico">💾</span><span id="saveTxtTop">حفظ</span>
+      <div class="sp" id="saveSpinTop"></div>
+      <span class="ck" id="saveCheckTop">✅</span>
+     </button>
+    </div>
+   </div>
+   <!-- manual img url (shown when toggled) -->
+   <div class="am-manual" id="amManual">
+    <input type="url" id="imgInp" placeholder="https://... رابط الصورة" class="am-inp">
+   </div>
+   <!-- BOTTOM: URL + Name -->
+   <div class="am-bottom">
+    <input type="url" id="urlInp" placeholder="https:// رابط المنتج" class="am-inp" autocomplete="off">
+    <input type="text" id="nameInp" placeholder="الاسم (اختياري)" class="am-inp am-inp-name" autocomplete="off">
+   </div>
    <input type="hidden" id="editId">
-   <button class="am-save" id="saveBtn" onclick="saveBag()" disabled>
-    <span id="saveTxt">💾 حفظ</span>
+   <!-- hidden save btn for JS compatibility -->
+   <button id="saveBtn" onclick="saveBag()" disabled style="display:none">
+    <span id="saveTxt">حفظ</span>
     <div class="sp" id="saveSpin"></div>
     <span class="ck" id="saveCheck">✅</span>
    </button>
@@ -521,6 +550,7 @@ function dedup(){const s=new Set();bags=bags.filter(b=>{const k=b.url||b.id;if(s
 function grt(){const h=new Date().getHours();const k=h<12?'good_morning':h<17?'good_afternoon':h<21?'good_evening':'good_night';const el=document.getElementById('greeting');if(el)el.textContent=t(k);}
 
 function fillCatSel(selId,val){const s=document.getElementById(selId);if(!s)return;s.innerHTML=CATS.map(c=>`<option value="${c.id}">${c.ico} ${lang==='ar'?c.ar:c.en}</option>`).join('');if(val)s.value=val;}
+function fillAllCatSels(val){['catInp','e-cat'].forEach(id=>fillCatSel(id,val));}
 
 function buildCats(){
   document.getElementById('catList').innerHTML=CATS.map(c=>{
@@ -633,6 +663,7 @@ let debT=null;
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('urlInp').addEventListener('input',function(){
     const u=this.value.trim();document.getElementById('saveBtn').disabled=!u;
+    const sb2=document.getElementById('saveBtnTop');if(sb2)sb2.disabled=!u;
     clearTimeout(debT);if(!u||!u.startsWith('http')||u===lastUrl)return;
     document.getElementById('catInp').value=detectCat(u,'');
     debT=setTimeout(()=>doFetch(u),900);
@@ -663,11 +694,17 @@ async function saveBag(){
   if(bags.some(b=>b.url===url&&b.id!==eid)){toast(t('dup'));return;}
   saving=true;const btn=document.getElementById('saveBtn');btn.disabled=true;
   document.getElementById('saveSpin').classList.add('show');document.getElementById('saveTxt').textContent='';
+  document.getElementById('saveSpinTop')?.classList.add('show');
+  if(document.getElementById('saveTxtTop'))document.getElementById('saveTxtTop').textContent='';
+  document.getElementById('saveBtnTop').disabled=true;
   const cat=document.getElementById('catInp').value||'bags';
   const bag={id:eid||Date.now().toString(36)+Math.random().toString(36).slice(2,5),name:document.getElementById('nameInp').value.trim()||urlToName(url),url,img:curImg||document.getElementById('imgInp').value.trim(),price:'',colors:'',note:'',status:'available',cat,addedAt:eid?(bags.find(b=>b.id===eid)?.addedAt||new Date().toISOString()):new Date().toISOString()};
   if(eid){const i=bags.findIndex(b=>b.id===eid);if(i>=0)bags[i]=bag;else bags.unshift(bag);}else bags.unshift(bag);
   saveL();pushSheets();
   document.getElementById('saveSpin').classList.remove('show');document.getElementById('saveCheck').classList.add('show');btn.classList.add('done');
+  document.getElementById('saveSpinTop')?.classList.remove('show');
+  document.getElementById('saveCheckTop')?.classList.add('show');
+  document.getElementById('saveBtnTop')?.classList.add('done');
   toast(t('saved'));closeAdd();render();buildCats();saving=false;
 }
 async function saveEdit(){
@@ -771,6 +808,9 @@ function openAdd(){
   document.getElementById('urlInp').value='';document.getElementById('imgInp').value='';document.getElementById('nameInp').value='';document.getElementById('editId').value='';
   document.getElementById('saveBtn').disabled=true;document.getElementById('saveBtn').classList.remove('done');
   document.getElementById('saveTxt').textContent=t('save');document.getElementById('saveCheck').classList.remove('show');document.getElementById('saveSpin').classList.remove('show');
+  const sb2=document.getElementById('saveBtnTop');if(sb2){sb2.disabled=true;sb2.classList.remove('done');}
+  const st2=document.getElementById('saveTxtTop');if(st2)st2.textContent=lang==='ar'?'حفظ':'Save';
+  document.getElementById('saveCheckTop')?.classList.remove('show');document.getElementById('saveSpinTop')?.classList.remove('show');
   clearImgBox();showSpin(false);showRetry(false);document.getElementById('amImgPH').style.display='flex';
   document.getElementById('amManual').style.display='none';manualOpen=false;
   document.getElementById('addTitle').textContent=t('add_t');lastUrl='';curImg='';saving=false;
