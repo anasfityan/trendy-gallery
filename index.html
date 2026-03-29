@@ -184,14 +184,9 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .lb-x{position:absolute;top:12px;right:12px;width:30px;height:30px;background:rgba(255,255,255,.1);border-radius:50%;border:none;color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 
 /* ══ ADD PANEL — compact modal ══ */
-.add-modal-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:150;opacity:0;pointer-events:none;transition:opacity .2s;}
+.add-modal-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:150;opacity:0;pointer-events:none;transition:opacity .2s;}
 .add-modal-ov.open{opacity:1;pointer-events:all;}
-.add-modal{position:fixed;top:0;left:0;right:0;background:var(--drawer);border-radius:0 0 20px 20px;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3);z-index:151;
-  height:auto;
-  max-height:100dvh;
-  padding-bottom:10px;
-  transition:max-height .15s ease;
-}
+.add-modal{position:fixed;top:0;left:0;right:0;width:100%;background:var(--drawer);border-radius:0 0 18px 18px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,.25);z-index:151;display:flex;flex-direction:column;}
 .add-modal::-webkit-scrollbar{width:0;}
 .am-head{padding:10px 14px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--drawer);z-index:1;}
 [data-theme="dark"] .am-head{border-color:rgba(255,255,255,.06);}
@@ -225,9 +220,11 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .am-field input:focus{border-color:var(--gold);}
 /* ── NEW ADD MODAL LAYOUT ── */
 .am-body{padding:8px 10px 8px;display:flex;flex-direction:column;gap:7px;flex:1;min-height:0;}
-.am-top{display:flex;gap:8px;align-items:stretch;flex:1;min-height:0;}
-.am-btns{display:flex;flex-direction:column;gap:6px;width:43%;}
-.am-btn{width:100%;flex:1;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);font-family:inherit;font-size:11px;font-weight:600;color:var(--text2);cursor:pointer;display:flex;align-items:center;padding:0 10px;gap:6px;transition:border .15s;}
+.am-top{display:flex;gap:7px;flex:1;min-height:0;overflow:hidden;}
+.am-btns{display:flex;flex-direction:column;gap:6px;width:42%;flex-shrink:0;}
+.am-btn{width:100%;flex:1;border-radius:8px;border:1px solid var(--border);background:var(--card);font-family:inherit;font-size:11px;font-weight:600;color:var(--text2);cursor:pointer;display:flex;align-items:center;padding:0 10px;gap:6px;transition:all .15s;
+  box-shadow:0 1px 3px rgba(0,0,0,.06),0 2px 6px rgba(0,0,0,.04);}
+.am-btn:active{border-color:var(--gold);box-shadow:none;}
 .am-btn:active{border-color:var(--gold);}
 .am-btn-ico{font-size:14px;flex-shrink:0;}
 .am-cat{-webkit-appearance:none;appearance:none;outline:none;color:var(--text);}
@@ -240,7 +237,7 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .am-save-img .ck{display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:13px;}
 .am-save-img .ck.show{display:block;}
 .am-bottom{display:flex;flex-direction:column;gap:5px;flex-shrink:0;}
-.am-inp{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;padding:8px 12px;font-family:inherit;font-size:13px;color:var(--text);outline:none;transition:border .18s;}
+.am-inp{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;padding:10px 13px;font-family:inherit;font-size:13px;color:var(--text);outline:none;transition:border .18s;}
 .am-inp:focus{border-color:var(--gold);}
 .am-inp::placeholder{color:var(--text2);font-size:12px;}
 .am-manual{display:none;}
@@ -429,6 +426,7 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
    <!-- TOP SECTION: big image LEFT + 4 buttons RIGHT -->
    <div class="am-top">
     <!-- Image box -->
+    <div class="am-img-col-wrap">
     <div class="am-img-box" id="amImgBox">
      <span id="amImgPH">🛍️</span>
      <div class="am-spin" id="amSpin"><div class="fs-ring"></div></div>
@@ -815,10 +813,11 @@ function openAdd(){
   document.getElementById('amManual').style.display='none';manualOpen=false;
   document.getElementById('addTitle').textContent=t('add_t');lastUrl='';curImg='';saving=false;
   fillCatSel('catInp',curCat);
+  _modalInitH = 0; // reset so it recalculates
   document.getElementById('addOv').classList.add('open');
   document.getElementById('addModal').style.display='flex';
   resizeModal();
-  setTimeout(()=>{resizeModal();document.getElementById('urlInp').focus();},300);
+  setTimeout(()=>{resizeModal();document.getElementById('urlInp').focus();},200);
   playClick();
 }
 function closeAdd(){
@@ -842,18 +841,24 @@ function setSize(n){
   [1,2,3].forEach(i=>{document.getElementById('sz'+i)?.classList.toggle('on',i===n);});
   localStorage.setItem('tg_cols', n);
 }
+let _modalInitH = 0;
 function resizeModal(){
   const modal = document.getElementById('addModal');
   if(!modal || modal.style.display==='none') return;
   const vp = window.visualViewport;
   const availH = vp ? vp.height : window.innerHeight;
-  // Fill from top to just above keyboard (leave 6px gap)
-  modal.style.height = (availH - 6) + 'px';
+  // On first open, record full height
+  if(_modalInitH === 0) _modalInitH = availH;
+  // Only use available height (shrinks with keyboard, never grows past init)
+  const h = Math.min(availH, _modalInitH) - 6;
+  modal.style.height = h + 'px';
 }
 if(window.visualViewport){
-  window.visualViewport.addEventListener('resize', resizeModal);
+  window.visualViewport.addEventListener('resize', ()=>{
+    // Small delay to let keyboard settle
+    setTimeout(resizeModal, 50);
+  });
 }
-window.addEventListener('resize', resizeModal);
 
 function loadPrefs(){
   const d=localStorage.getItem('tg_dark'),l=localStorage.getItem('tg_lang')||'ar',cc=localStorage.getItem('tg_cat')||'bags';
