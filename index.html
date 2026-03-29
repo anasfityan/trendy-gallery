@@ -131,11 +131,13 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 
 /* ══ GALLERY ══ */
 .gallery{display:grid;grid-template-columns:repeat(var(--cols,2),1fr);gap:6px;padding:6px 6px 86px;}
-.size-bar{display:flex;align-items:center;justify-content:flex-end;gap:4px;padding:6px 8px 2px;background:var(--bg);}
-.sz-btn{width:26px;height:26px;border:1.5px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0;}
-.sz-btn.on{border-color:var(--gold);background:var(--gdim);}
-.sz-btn svg{stroke:var(--text2);fill:none;stroke-width:1.5;}
+.sz-row{display:flex;align-items:center;gap:6px;padding:4px 2px;}
+.sz-btn{width:28px;height:28px;border:1.5px solid rgba(255,255,255,.08);border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0;}
+.sz-btn.on{border-color:rgba(200,150,46,.5);background:rgba(200,150,46,.12);}
+.sz-btn svg{stroke:rgba(255,255,255,.35);fill:none;stroke-width:1.5;}
 .sz-btn.on svg{stroke:var(--gold);}
+/* hide old size bar in page */
+.size-bar{display:none;}
 .card{background:var(--card);border-radius:10px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--csh);animation:pop .2s cubic-bezier(.34,1.56,.64,1) both;}
 [data-theme="dark"] .card{border-color:rgba(255,255,255,.06);}
 @keyframes pop{from{opacity:0;transform:scale(.9);}to{opacity:1;transform:scale(1);}}
@@ -184,14 +186,11 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 /* ══ ADD PANEL — compact modal ══ */
 .add-modal-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:150;opacity:0;pointer-events:none;transition:opacity .2s;}
 .add-modal-ov.open{opacity:1;pointer-events:all;}
-.add-modal{position:fixed;top:0;left:0;right:0;background:var(--drawer);border-radius:0 0 20px 20px;height:auto;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3);z-index:151;
-  /* fills from top to just above keyboard dynamically */
+.add-modal{position:fixed;top:0;left:0;right:0;background:var(--drawer);border-radius:0 0 20px 20px;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3);z-index:151;
+  height:auto;
   max-height:100dvh;
-  padding-bottom:8px;
-}
-/* When keyboard is open, modal stays fixed at top */
-@supports (height: 100dvh) {
-  .add-modal{ max-height: min(540px, 55dvh); }
+  padding-bottom:10px;
+  transition:max-height .15s ease;
 }
 .add-modal::-webkit-scrollbar{width:0;}
 .am-head{padding:10px 14px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--drawer);z-index:1;}
@@ -204,7 +203,7 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .am-row{display:flex;gap:7px;margin-bottom:7px;align-items:stretch;}
 /* left: image box */
 .am-img-col{flex-shrink:0;width:42%;display:flex;flex-direction:column;}
-.am-img-box{width:100%;flex:1;min-height:130px;background:var(--bg);border-radius:9px;border:1.5px solid var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:28px;position:relative;}
+.am-img-box{width:100%;flex:1;min-height:150px;background:var(--bg);border-radius:9px;border:1.5px solid var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:28px;position:relative;}
 [data-theme="dark"] .am-img-box{background:#111;}
 .am-img-box img{width:100%;height:100%;object-fit:contain;position:absolute;inset:0;}
 .am-spin{position:absolute;inset:0;background:rgba(0,0,0,.38);display:none;align-items:center;justify-content:center;}
@@ -318,6 +317,18 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
    <div class="sb-sect">
     <div class="sb-lbl" id="lbl-cats">التصنيفات</div>
     <div class="cat-list" id="catList"></div>
+   </div>
+   <div class="sb-div"></div>
+   <div class="sb-sect">
+    <div class="sb-lbl" id="lbl-size">حجم البطاقات</div>
+    <div class="sz-row">
+     <button class="sz-btn on" onclick="setSize(2)" id="sz2" title="وسط">
+      <svg width="14" height="14" viewBox="0 0 12 12"><rect x="1" y="1" width="4.2" height="4.2" rx=".5"/><rect x="6.8" y="1" width="4.2" height="4.2" rx=".5"/><rect x="1" y="6.8" width="4.2" height="4.2" rx=".5"/><rect x="6.8" y="6.8" width="4.2" height="4.2" rx=".5"/></svg>
+     </button>
+     <button class="sz-btn" onclick="setSize(3)" id="sz3" title="صغير">
+      <svg width="14" height="14" viewBox="0 0 12 12"><rect x="1" y="1" width="2.5" height="2.5" rx=".4"/><rect x="4.7" y="1" width="2.5" height="2.5" rx=".4"/><rect x="8.5" y="1" width="2.5" height="2.5" rx=".4"/><rect x="1" y="4.7" width="2.5" height="2.5" rx=".4"/><rect x="4.7" y="4.7" width="2.5" height="2.5" rx=".4"/><rect x="8.5" y="4.7" width="2.5" height="2.5" rx=".4"/><rect x="1" y="8.5" width="2.5" height="2.5" rx=".4"/><rect x="4.7" y="8.5" width="2.5" height="2.5" rx=".4"/><rect x="8.5" y="8.5" width="2.5" height="2.5" rx=".4"/></svg>
+     </button>
+    </div>
    </div>
    <div class="sb-div"></div>
    <div class="sb-sect">
@@ -527,7 +538,7 @@ function setLang(l){
   applyT();buildCats();grt();localStorage.setItem('tg_lang',l);playClick();
 }
 function applyT(){
-  const m={'fabTxt':'fab','srchHint':'srch','lbl-url':'url_lbl','lbl-imgurl':'img_lbl','lbl-upload':'upload','lbl-manual':'manual','lbl-name':'name_lbl','saveTxt':'save','saveEditTxt':'se','d-open-txt':'open','d-edit-txt':'edit','d-del-txt':'del','lbl-lang':'lbl_lang','lbl-appear':'lbl_appear','lbl-hist':'lbl_hist','lbl-cats':'lbl_cats','liveTxt':'live','hp-all':'hp_all','hp-w':'hp_w','hp-m':'hp_m','hp-2m':'hp_2m','hp-3m':'hp_3m'};
+  const m={'fabTxt':'fab','lbl-size':lang==='ar'?'حجم البطاقات':'Card Size','srchHint':'srch','lbl-url':'url_lbl','lbl-imgurl':'img_lbl','lbl-upload':'upload','lbl-manual':'manual','lbl-name':'name_lbl','saveTxt':'save','saveEditTxt':'se','d-open-txt':'open','d-edit-txt':'edit','d-del-txt':'del','lbl-lang':'lbl_lang','lbl-appear':'lbl_appear','lbl-hist':'lbl_hist','lbl-cats':'lbl_cats','liveTxt':'live','hp-all':'hp_all','hp-w':'hp_w','hp-m':'hp_m','hp-2m':'hp_2m','hp-3m':'hp_3m'};
   Object.entries(m).forEach(([id,k])=>{const el=document.getElementById(id);if(el)el.textContent=t(k);});
   document.getElementById('srchInp').placeholder=t('srch');
   document.getElementById('sbThLbl').textContent=dark?t('light'):t('dark');
@@ -766,10 +777,16 @@ function openAdd(){
   fillCatSel('catInp',curCat);
   document.getElementById('addOv').classList.add('open');
   document.getElementById('addModal').style.display='block';
+  resizeModal();
   setTimeout(()=>document.getElementById('urlInp').focus(),300);
   playClick();
 }
-function closeAdd(){document.getElementById('addOv').classList.remove('open');document.getElementById('addModal').style.display='none';}
+function closeAdd(){
+  document.getElementById('addOv').classList.remove('open');
+  document.getElementById('addModal').style.display='none';
+  const modal=document.getElementById('addModal');
+  if(modal) modal.style.maxHeight='';
+}
 function bgCloseAdd(e){if(e.target.id==='addOv')closeAdd();}
 // Prevent background scroll when modal open
 document.addEventListener('touchmove',function(e){
@@ -786,6 +803,23 @@ function setSize(n){
   [1,2,3].forEach(i=>{document.getElementById('sz'+i)?.classList.toggle('on',i===n);});
   localStorage.setItem('tg_cols', n);
 }
+function resizeModal(){
+  const modal = document.getElementById('addModal');
+  if(!modal || modal.style.display==='none') return;
+  // Use visualViewport if available (accounts for keyboard)
+  if(window.visualViewport){
+    const vh = window.visualViewport.height;
+    modal.style.maxHeight = (vh - 8) + 'px';
+  } else {
+    modal.style.maxHeight = (window.innerHeight - 8) + 'px';
+  }
+}
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', resizeModal);
+  window.visualViewport.addEventListener('scroll', resizeModal);
+}
+window.addEventListener('resize', resizeModal);
+
 function loadPrefs(){
   const d=localStorage.getItem('tg_dark'),l=localStorage.getItem('tg_lang')||'ar',cc=localStorage.getItem('tg_cat')||'bags';
   if(d==='1'){dark=true;document.documentElement.setAttribute('data-theme','dark');document.getElementById('thmTr').classList.add('on');document.getElementById('hThBtn').textContent='☀️';}
