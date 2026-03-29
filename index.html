@@ -182,21 +182,29 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .lb-x{position:absolute;top:12px;right:12px;width:30px;height:30px;background:rgba(255,255,255,.1);border-radius:50%;border:none;color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 
 /* ══ ADD PANEL — compact modal ══ */
-.add-modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(5px);z-index:150;opacity:0;pointer-events:none;transition:opacity .2s;display:flex;align-items:flex-start;justify-content:center;padding:env(safe-area-inset-top,0px) 0 0;}
+.add-modal-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:150;opacity:0;pointer-events:none;transition:opacity .2s;}
 .add-modal-ov.open{opacity:1;pointer-events:all;}
-.add-modal{background:var(--drawer);border-radius:0 0 18px 18px;width:100%;max-width:100%;height:auto;max-height:52dvh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3);touch-action:none;}
+.add-modal{position:fixed;top:0;left:0;right:0;background:var(--drawer);border-radius:0 0 20px 20px;height:auto;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3);z-index:151;
+  /* fills from top to just above keyboard dynamically */
+  max-height:100dvh;
+  padding-bottom:8px;
+}
+/* When keyboard is open, modal stays fixed at top */
+@supports (height: 100dvh) {
+  .add-modal{ max-height: min(540px, 55dvh); }
+}
 .add-modal::-webkit-scrollbar{width:0;}
-.am-head{padding:12px 14px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--drawer);z-index:1;}
+.am-head{padding:10px 14px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--drawer);z-index:1;}
 [data-theme="dark"] .am-head{border-color:rgba(255,255,255,.06);}
 .am-title{font-size:14px;font-weight:900;color:var(--text);}
 .am-close{width:26px;height:26px;background:var(--bg);border-radius:6px;border:none;cursor:pointer;font-size:13px;color:var(--text2);display:flex;align-items:center;justify-content:center;}
-.am-body{padding:10px 14px 14px;}
+.am-body{padding:8px 12px 10px;}
 
 /* ADD form layout — matches sketch */
-.am-row{display:flex;gap:8px;margin-bottom:8px;align-items:stretch;}
+.am-row{display:flex;gap:7px;margin-bottom:7px;align-items:stretch;}
 /* left: image box */
-.am-img-col{flex-shrink:0;width:45%;display:flex;flex-direction:column;}
-.am-img-box{width:100%;flex:1;min-height:110px;background:var(--bg);border-radius:9px;border:1.5px solid var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:28px;position:relative;}
+.am-img-col{flex-shrink:0;width:42%;display:flex;flex-direction:column;}
+.am-img-box{width:100%;flex:1;min-height:130px;background:var(--bg);border-radius:9px;border:1.5px solid var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:28px;position:relative;}
 [data-theme="dark"] .am-img-box{background:#111;}
 .am-img-box img{width:100%;height:100%;object-fit:contain;position:absolute;inset:0;}
 .am-spin{position:absolute;inset:0;background:rgba(0,0,0,.38);display:none;align-items:center;justify-content:center;}
@@ -212,14 +220,14 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .am-cat-sel{width:100%;flex:1;padding:0 8px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);font-family:inherit;font-size:11px;color:var(--text);outline:none;-webkit-appearance:none;}
 .am-cat-sel:focus{border-color:var(--gold);}
 /* full-width fields */
-.am-field{margin-bottom:7px;}
+.am-field{margin-bottom:6px;}
 .am-field label{display:block;font-size:9px;font-weight:700;color:var(--text2);margin-bottom:3px;text-transform:uppercase;letter-spacing:.3px;}
 .am-field input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;padding:9px 11px;font-family:inherit;font-size:13px;color:var(--text);outline:none;transition:border .18s;}
 .am-field input:focus{border-color:var(--gold);}
 /* manual image input */
 .am-manual{margin-bottom:7px;display:none;}
 /* save button */
-.am-save{width:100%;background:var(--deep);color:#fff;border:none;border-radius:10px;padding:11px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;position:relative;transition:background .2s;}
+.am-save{width:100%;background:var(--deep);color:#fff;border:none;border-radius:10px;padding:10px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;position:relative;transition:background .2s;}
 .am-save:disabled{opacity:.3;cursor:not-allowed;}
 .am-save.done{background:var(--green);}
 .am-save .sp{display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);width:15px;height:15px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;}
@@ -377,8 +385,8 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 <div class="lb" id="lb" onclick="closeLB()"><button class="lb-x" onclick="closeLB()">✕</button><img id="lbImg" src="" alt=""></div>
 
 <!-- ADD MODAL (compact, above keyboard) -->
-<div class="add-modal-ov" id="addOv" onclick="bgCloseAdd(event)">
- <div class="add-modal" id="addModal">
+<div class="add-modal-ov" id="addOv" onclick="bgCloseAdd(event)"></div>
+<div class="add-modal" id="addModal" style="display:none">
   <div class="am-head">
    <div class="am-title" id="addTitle">إضافة</div>
    <button class="am-close" onclick="closeAdd()">✕</button>
@@ -416,7 +424,6 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
    </button>
   </div>
  </div>
-</div>
 
 <!-- EDIT / DETAIL DRAWER -->
 <div class="ov" id="ov" onclick="bgClose(event)">
@@ -758,10 +765,11 @@ function openAdd(){
   document.getElementById('addTitle').textContent=t('add_t');lastUrl='';curImg='';saving=false;
   fillCatSel('catInp',curCat);
   document.getElementById('addOv').classList.add('open');
-  setTimeout(()=>document.getElementById('urlInp').focus(),350);
+  document.getElementById('addModal').style.display='block';
+  setTimeout(()=>document.getElementById('urlInp').focus(),300);
   playClick();
 }
-function closeAdd(){document.getElementById('addOv').classList.remove('open');}
+function closeAdd(){document.getElementById('addOv').classList.remove('open');document.getElementById('addModal').style.display='none';}
 function bgCloseAdd(e){if(e.target.id==='addOv')closeAdd();}
 // Prevent background scroll when modal open
 document.addEventListener('touchmove',function(e){
