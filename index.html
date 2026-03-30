@@ -105,20 +105,20 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .sb-credit span{color:var(--gold);}
 
 /* ══ HEADER ══ */
-.hdr{background:var(--hbg);padding:9px 12px 8px;position:sticky;top:0;z-index:50;box-shadow:0 1px 0 rgba(200,150,46,.1),0 3px 16px rgba(0,0,0,.28);}
+.hdr{background:var(--hbg);padding:12px 14px 11px;position:sticky;top:0;z-index:50;box-shadow:0 1px 0 rgba(200,150,46,.12),0 3px 20px rgba(0,0,0,.3);}
 .hdr-inner{display:flex;align-items:center;gap:7px;}
-.menu-btn{width:30px;height:30px;border:none;background:rgba(255,255,255,.07);border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.menu-btn svg{width:14px;height:14px;stroke:rgba(255,255,255,.6);stroke-width:1.8;fill:none;stroke-linecap:round;}
+.menu-btn{width:34px;height:34px;border:none;background:rgba(255,255,255,.08);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.menu-btn svg{width:16px;height:16px;stroke:rgba(255,255,255,.65);stroke-width:1.8;fill:none;stroke-linecap:round;}
 .hdr-brand{flex:1;}
 .hdr-wm{display:flex;gap:3px;}
-.hw1{color:#fff;font-size:13px;font-weight:900;}
-.hw2{color:var(--gold);font-size:13px;font-weight:900;}
-.hdr-gr{font-size:9px;color:rgba(255,255,255,.4);margin-top:2px;}
-.srch-pill{height:27px;background:rgba(255,255,255,.08);border-radius:7px;display:flex;align-items:center;gap:4px;padding:0 9px;cursor:text;border:1px solid rgba(255,255,255,.05);flex-shrink:0;}
+.hw1{color:#fff;font-size:16px;font-weight:900;letter-spacing:-.2px;}
+.hw2{color:var(--gold);font-size:16px;font-weight:900;letter-spacing:-.2px;}
+.hdr-gr{font-size:10px;color:rgba(255,255,255,.45);margin-top:2px;}
+.srch-pill{height:30px;background:rgba(255,255,255,.09);border-radius:8px;display:flex;align-items:center;gap:5px;padding:0 11px;cursor:text;border:1px solid rgba(255,255,255,.07);flex-shrink:0;}
 .srch-pill .si{font-size:11px;opacity:.4;}
 .srch-pill span{font-size:10px;color:rgba(255,255,255,.28);}
 .hdr-acts{display:flex;align-items:center;gap:3px;}
-.hbtn{width:28px;height:28px;border:none;background:rgba(255,255,255,.07);border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:rgba(255,255,255,.6);}
+.hbtn{width:32px;height:32px;border:none;background:rgba(255,255,255,.08);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:rgba(255,255,255,.65);}
 .hdr-line{height:2px;background:linear-gradient(90deg,transparent 0%,rgba(200,150,46,.5) 15%,rgba(240,201,106,.95) 35%,rgba(255,228,80,1) 50%,rgba(240,201,106,.95) 65%,rgba(200,150,46,.5) 85%,transparent 100%);box-shadow:0 0 16px 2px rgba(240,201,106,.55),0 0 32px 4px rgba(200,150,46,.3),0 4px 24px rgba(200,150,46,.15);}
 
 /* SEARCH */
@@ -201,9 +201,20 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .am-img-box{width:100%;flex:1;min-height:150px;background:var(--bg);border-radius:9px;border:1.5px solid var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:28px;position:relative;}
 [data-theme="dark"] .am-img-box{background:#111;}
 .am-img-box img{width:100%;height:100%;object-fit:contain;position:absolute;inset:0;}
-.am-spin{position:absolute;inset:0;background:rgba(0,0,0,.38);display:none;align-items:center;justify-content:center;}
+.am-spin{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:var(--bg);}
+[data-theme="dark"] .am-spin{background:#111;}
 .am-spin.show{display:flex;}
-.fs-ring{width:20px;height:20px;border:2px solid rgba(255,255,255,.12);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;}
+/* shimmer skeleton */
+.am-spin::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(200,150,46,.18) 40%,rgba(200,150,46,.35) 50%,rgba(200,150,46,.18) 60%,transparent 100%);background-size:200% 100%;animation:shimmer 1.4s infinite;}
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+/* AI dots */
+.am-spin-dots{display:flex;gap:6px;z-index:1;}
+.am-spin-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);animation:dotPop .9s infinite;}
+.am-spin-dot:nth-child(2){animation-delay:.15s;}
+.am-spin-dot:nth-child(3){animation-delay:.3s;}
+@keyframes dotPop{0%,100%{transform:scale(.6);opacity:.4;}50%{transform:scale(1);opacity:1;}}
+.am-spin-txt{font-size:11px;color:var(--gold);font-weight:600;z-index:1;letter-spacing:.3px;}
+.fs-ring{display:none;}
 .am-retry{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.25);}
 .am-retry.show{display:flex;}
 .am-retry-btn{width:36px;height:36px;background:rgba(200,150,46,.92);border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;}
@@ -229,9 +240,9 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .am-btn-ico{font-size:14px;flex-shrink:0;}
 .am-cat{-webkit-appearance:none;appearance:none;outline:none;color:var(--text);}
 .am-cat:focus{border-color:var(--gold);}
-.am-save-img{background:var(--deep)!important;color:#fff!important;border-color:var(--deep)!important;position:relative;}
-.am-save-img:disabled{opacity:.3;cursor:not-allowed;}
-.am-save-img.done{background:var(--green)!important;border-color:var(--green)!important;}
+.am-save-img{background:var(--gold)!important;color:#0a0806!important;border-color:var(--gold)!important;position:relative;font-weight:800;}
+.am-save-img:disabled{opacity:.25;cursor:not-allowed;}
+.am-save-img.done{background:#1e8a50!important;border-color:#1e8a50!important;color:#fff!important;}
 .am-save-img .sp{display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);width:13px;height:13px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;}
 .am-save-img .sp.show{display:block;}
 .am-save-img .ck{display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:13px;}
@@ -428,7 +439,14 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
     <!-- LEFT: image box -->
     <div class="am-img-box" id="amImgBox">
      <span id="amImgPH">🛍️</span>
-     <div class="am-spin" id="amSpin"><div class="fs-ring"></div></div>
+     <div class="am-spin" id="amSpin">
+      <div class="am-spin-dots">
+       <div class="am-spin-dot"></div>
+       <div class="am-spin-dot"></div>
+       <div class="am-spin-dot"></div>
+      </div>
+      <div class="am-spin-txt" id="amSpinTxt">جاري الجلب...</div>
+     </div>
      <div class="am-retry" id="amRetry"><button class="am-retry-btn" onclick="retryFetch()">↻</button></div>
     </div>
     <!-- RIGHT: 4 buttons stacked -->
@@ -641,6 +659,8 @@ async function tryFetch(url){
   return null;
 }
 async function doFetch(url){
+  const spinTxt = document.getElementById('amSpinTxt');
+  if(spinTxt) spinTxt.textContent = lang==='ar' ? 'جاري الجلب...' : 'Fetching...';
   lastUrl=url;curImg='';showSpin(true);showRetry(false);clearImgBox();
   const res=await tryFetch(url);showSpin(false);
   if(res?.img){curImg=res.img;setImgBox(res.img);if(res.name&&!document.getElementById('nameInp').value)document.getElementById('nameInp').value=res.name;document.getElementById('catInp').value=detectCat(url,res.name);document.getElementById('amManual').style.display='none';toast(t('fok'));}
@@ -811,14 +831,14 @@ function openAdd(){
   document.getElementById('amManual').style.display='none';manualOpen=false;
   document.getElementById('addTitle').textContent=t('add_t');lastUrl='';curImg='';saving=false;
   fillCatSel('catInp',curCat);
-  _modalInitH = 0;
+  _modalH = 0;
   document.getElementById('addOv').classList.add('open');
   document.getElementById('addModal').style.display='flex';
   document.body.style.overflow='hidden';
   document.body.style.position='fixed';
   document.body.style.width='100%';
   resizeModal();
-  setTimeout(()=>{resizeModal();document.getElementById('urlInp').focus();},200);
+  setTimeout(()=>document.getElementById('urlInp').focus(), 180);
   playClick();
 }
 function closeAdd(){
@@ -845,31 +865,25 @@ function setSize(n){
   [1,2,3].forEach(i=>{document.getElementById('sz'+i)?.classList.toggle('on',i===n);});
   localStorage.setItem('tg_cols', n);
 }
-let _modalInitH = 0;
+let _modalH = 0;
 function resizeModal(){
   const modal = document.getElementById('addModal');
   if(!modal || modal.style.display==='none') return;
   const vp = window.visualViewport;
-  if(vp){
-    if(_modalInitH === 0) _modalInitH = vp.height;
-    // When keyboard opens: vp.height shrinks — use it directly
-    // When keyboard closes: cap at initial height
-    const h = Math.min(vp.height, _modalInitH) - 4;
-    modal.style.height = h + 'px';
-  } else {
-    if(_modalInitH === 0) _modalInitH = window.innerHeight;
-    modal.style.height = (_modalInitH - 4) + 'px';
+  const available = vp ? vp.height : window.innerHeight;
+  // Set height only when keyboard opens (shrinks available space)
+  // Never grow back — lock at initial open height
+  if(_modalH === 0){
+    _modalH = available;
+    modal.style.height = (_modalH - 4) + 'px';
+  } else if(available < _modalH){
+    // Keyboard opened: shrink to fit
+    modal.style.height = (available - 4) + 'px';
   }
+  // When keyboard closes (available grows back): do nothing — keep current height
 }
 if(window.visualViewport){
-  window.visualViewport.addEventListener('resize', ()=>setTimeout(resizeModal, 30));
-  window.visualViewport.addEventListener('scroll', ()=>{
-    // Keep modal pinned at top even if viewport scrolls
-    const modal = document.getElementById('addModal');
-    if(modal && modal.style.display!=='none'){
-      modal.style.top = window.visualViewport.offsetTop + 'px';
-    }
-  });
+  window.visualViewport.addEventListener('resize', ()=>setTimeout(resizeModal, 20));
 }
 
 function loadPrefs(){
