@@ -801,7 +801,7 @@ async function saveBag(){
   if(document.getElementById('saveTxtTop'))document.getElementById('saveTxtTop').textContent='';
   document.getElementById('saveBtnTop').disabled=true;
   const cat=document.getElementById('catInp').value||'bags';
-  const bag={id:eid||Date.now().toString(36)+Math.random().toString(36).slice(2,5),name:document.getElementById('nameInp').value.trim()||urlToName(url),url,img:curImg||document.getElementById('imgInp').value.trim(),price:'',colors:'',note:'',status:'available',cat,addedAt:eid?(bags.find(b=>b.id===eid)?.addedAt||new Date().toISOString()):new Date().toISOString()};
+  const bag={id:eid||Date.now().toString(36)+Math.random().toString(36).slice(2,5),name:document.getElementById('nameInp').value.trim()||urlToName(url),url,img:curImg||document.getElementById('imgInp').value.trim(),price:'',colors:'',sizes:'',note:'',status:'available',cat,addedAt:eid?(bags.find(b=>b.id===eid)?.addedAt||new Date().toISOString()):new Date().toISOString()};
   if(eid){const i=bags.findIndex(b=>b.id===eid);if(i>=0)bags[i]=bag;else bags.unshift(bag);}else bags.unshift(bag);
   saveL();pushSheets();
   document.getElementById('saveSpin').classList.remove('show');document.getElementById('saveCheck').classList.add('show');btn.classList.add('done');
@@ -872,20 +872,132 @@ function openCardModal(id){
   const b = bags.find(x=>x.id===id);
   if(!b) return;
   _curCardId = id;
+
   // صورة
   const img = document.getElementById('cmImg');
-  img.src = b.img || '';
-  img.style.display = b.img ? 'block' : 'none';
-  // اسم وسعر
+  if(b.img){
+    img.src = b.img;
+    img.style.display = 'block';
+  } else {
+    img.style.display = 'none';
+  }
+
+  // اسم
   document.getElementById('cmName').textContent = b.name || urlToName(b.url);
-  document.getElementById('cmPrice').textContent = b.price ? '💲 ' + b.price : '';
+
+  // سعر
   document.getElementById('cmPriceInp').value = b.price || '';
+
+  // ألوان — من بيانات المنتج المحفوظة
   document.getElementById('cmColorsInp').value = b.colors || '';
+
+  // قياسات — من بيانات المنتج المحفوظة
   document.getElementById('cmSizesInp').value = b.sizes || '';
-  // حدّث البطاقة
+
+  // حدّث عرض البطاقة
   updateCard();
   document.getElementById('cardOv').classList.add('open');
   playClick(600,.08);
+
+  // إذا لم توجد ألوان/قياسات، حاول جلبها من الرابط
+  if(!b.colors && !b.sizes && b.url){
+    fetchProductDetails(b.url, id);
+  }
+}
+
+async function fetchProductDetails(url, bagId){
+  try{
+    const enc = encodeURIComponent(url);
+    // جرب Shopify JSON أولاً
+    const u = new URL(url);
+    const m = u.pathname.match(/\/products\/([^/?#]+)/);
+    if(m){
+      const jsonUrl = `${u.origin}/products/${m[1]}.json`;
+      let pd = null;
+      try{
+        const r = await fetch(jsonUrl, {signal: AbortSignal.timeout(5000)});
+        if(r.ok) pd = await r.json();
+      }catch(e){
+        // جرب عبر proxy
+        try{
+          const r2 = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(jsonUrl)}`, {signal: AbortSignal.timeout(7000)});
+          const d = await r2.json();
+          pd = JSON.parse(d.contents || '{}');
+        }catch(e2){}
+      }
+      if(pd?.product){
+        const p = pd.product;
+        // استخرج الألوان من variants/options
+        let colors = '';
+        let sizes = '';
+        if(p.options){
+          for(const opt of p.options){
+            const n = opt.name?.toLowerCase() || '';
+            if(n.includes('renk') || n.includes('color') || n.includes('colour') || n.includes('لون')){
+              colors = opt.values?.join(', ') || '';
+            }
+            if(n.includes('beden') || n.includes('size') || n.includes('ölçü') || n.includes('قياس') || n.includes('مقاس')){
+              sizes = opt.values?.join(', ') || '';
+            }
+          }
+          // إذا لم نجد بالاسم، خذ أول option كألوان وثاني كقياسات
+          if(!colors && p.options[0]) colors = p.options[0].values?.join(', ') || '';
+          if(!sizes && p.options[1]) sizes = p.options[1].values?.join(', ') || '';
+        }
+        // حفظ في بيانات المنتج
+        const bagIdx = bags.findIndex(b=>b.id===bagId);
+        if(bagIdx>=0){
+          if(colors) bags[bagIdx].colors = colors;
+          if(sizes) bags[bagIdx].sizes = sizes;
+          if(!bags[bagIdx].price && p.variants?.[0]?.price){
+            bags[bagIdx].price = p.variants[0].price + ' TL';
+          }
+          saveL();
+        }
+        // حدّث الحقول إذا كانت البطاقة مفتوحة
+        if(_curCardId === bagId){
+          if(colors) document.getElementById('cmColorsInp').value = colors;
+          if(sizes) document.getElementById('cmSizesInp').value = sizes;
+          if(!document.getElementById('cmPriceInp').value && bags[bagIdx]?.price){
+            document.getElementById('cmPriceInp').value = bags[bagIdx].price;
+          }
+          updateCard();
+          toast(lang==='ar' ? '✅ تم جلب التفاصيل' : '✅ Details fetched');
+        }
+        return;
+      }
+    }
+    // fallback: استخرج من HTML
+    const r = await fetch(`https://api.allorigins.win/get?url=${enc}`, {signal: AbortSignal.timeout(8000)});
+    const d = await r.json();
+    const h = d.contents || '';
+    // ابحث عن variants JSON في Shopify
+    const vm = h.match(/"variants"\s*:\s*(\[[\s\S]{0,3000}?\])/);
+    if(vm){
+      try{
+        const variants = JSON.parse(vm[1]);
+        const colorSet = new Set(), sizeSet = new Set();
+        variants.forEach(v=>{
+          if(v.option1) colorSet.add(v.option1);
+          if(v.option2) sizeSet.add(v.option2);
+        });
+        const colors = [...colorSet].join(', ');
+        const sizes = [...sizeSet].join(', ');
+        const bagIdx = bags.findIndex(b=>b.id===bagId);
+        if(bagIdx>=0){
+          if(colors) bags[bagIdx].colors = colors;
+          if(sizes) bags[bagIdx].sizes = sizes;
+          saveL();
+        }
+        if(_curCardId === bagId){
+          if(colors) document.getElementById('cmColorsInp').value = colors;
+          if(sizes) document.getElementById('cmSizesInp').value = sizes;
+          updateCard();
+          toast(lang==='ar' ? '✅ تم جلب التفاصيل' : '✅ Details fetched');
+        }
+      }catch(e){}
+    }
+  }catch(e){}
 }
 
 function closeCardModal(){
@@ -912,7 +1024,6 @@ function updateCard(){
 
 async function getCardCanvas(){
   const card = document.getElementById('cmCard');
-  // استخدم html2canvas
   if(!window.html2canvas){
     await new Promise((res,rej)=>{
       const s=document.createElement('script');
@@ -921,9 +1032,17 @@ async function getCardCanvas(){
     });
   }
   return await html2canvas(card,{
-    scale:2,useCORS:true,allowTaint:true,
-    backgroundColor: null,
-    logging:false
+    scale:3,
+    useCORS:true,
+    allowTaint:true,
+    backgroundColor:'#ffffff',
+    logging:false,
+    imageTimeout:10000,
+    onclone:(doc)=>{
+      // تأكد ظهور كل المعلومات في النسخة المحولة
+      const clonedCard = doc.getElementById('cmCard');
+      if(clonedCard) clonedCard.style.borderRadius='0';
+    }
   });
 }
 
