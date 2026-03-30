@@ -524,18 +524,9 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
    <div class="cm-title" id="cmTitle">بطاقة المنتج</div>
    <button class="cm-close" onclick="closeCardModal()">✕</button>
   </div>
-  <!-- بطاقة المعاينة -->
-  <div class="cm-preview" id="cmPreview">
-   <div class="cm-card" id="cmCard">
-    <div class="cm-img-wrap"><img id="cmImg" src="" alt=""></div>
-    <div class="cm-info">
-     <div class="cm-name" id="cmName"></div>
-     <div class="cm-price" id="cmPrice"></div>
-     <div class="cm-colors-row" id="cmColors"></div>
-     <div class="cm-sizes-row" id="cmSizes"></div>
-     <div class="cm-brand">Trendy Gallery</div>
-    </div>
-   </div>
+  <!-- معاينة البطاقة -->
+  <div class="cm-preview">
+   <div id="cmPreview" style="padding:4px 0 8px;"></div>
   </div>
   <!-- حقول إدخال الألوان والقياسات -->
   <div class="cm-fields">
@@ -872,158 +863,83 @@ function openCardModal(id){
   const b = bags.find(x=>x.id===id);
   if(!b) return;
   _curCardId = id;
-
-  // صورة
-  const img = document.getElementById('cmImg');
-  if(b.img){
-    img.src = b.img;
-    img.style.display = 'block';
-  } else {
-    img.style.display = 'none';
-  }
-
-  // اسم
   document.getElementById('cmName').textContent = b.name || urlToName(b.url);
-
-  // سعر
-  document.getElementById('cmPriceInp').value = b.price || '';
-
-  // ألوان — من بيانات المنتج المحفوظة
   document.getElementById('cmColorsInp').value = b.colors || '';
-
-  // قياسات — من بيانات المنتج المحفوظة
   document.getElementById('cmSizesInp').value = b.sizes || '';
-
-  // حدّث عرض البطاقة
-  updateCard();
+  document.getElementById('cmPriceInp').value = b.price || '';
   document.getElementById('cardOv').classList.add('open');
   playClick(600,.08);
-
-  // إذا لم توجد ألوان/قياسات، حاول جلبها من الرابط
-  if(!b.colors && !b.sizes && b.url){
-    fetchProductDetails(b.url, id);
-  }
-}
-
-async function fetchProductDetails(url, bagId){
-  try{
-    const enc = encodeURIComponent(url);
-    // جرب Shopify JSON أولاً
-    const u = new URL(url);
-    const m = u.pathname.match(/\/products\/([^/?#]+)/);
-    if(m){
-      const jsonUrl = `${u.origin}/products/${m[1]}.json`;
-      let pd = null;
-      try{
-        const r = await fetch(jsonUrl, {signal: AbortSignal.timeout(5000)});
-        if(r.ok) pd = await r.json();
-      }catch(e){
-        // جرب عبر proxy
-        try{
-          const r2 = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(jsonUrl)}`, {signal: AbortSignal.timeout(7000)});
-          const d = await r2.json();
-          pd = JSON.parse(d.contents || '{}');
-        }catch(e2){}
-      }
-      if(pd?.product){
-        const p = pd.product;
-        // استخرج الألوان من variants/options
-        let colors = '';
-        let sizes = '';
-        if(p.options){
-          for(const opt of p.options){
-            const n = opt.name?.toLowerCase() || '';
-            if(n.includes('renk') || n.includes('color') || n.includes('colour') || n.includes('لون')){
-              colors = opt.values?.join(', ') || '';
-            }
-            if(n.includes('beden') || n.includes('size') || n.includes('ölçü') || n.includes('قياس') || n.includes('مقاس')){
-              sizes = opt.values?.join(', ') || '';
-            }
-          }
-          // إذا لم نجد بالاسم، خذ أول option كألوان وثاني كقياسات
-          if(!colors && p.options[0]) colors = p.options[0].values?.join(', ') || '';
-          if(!sizes && p.options[1]) sizes = p.options[1].values?.join(', ') || '';
-        }
-        // حفظ في بيانات المنتج
-        const bagIdx = bags.findIndex(b=>b.id===bagId);
-        if(bagIdx>=0){
-          if(colors) bags[bagIdx].colors = colors;
-          if(sizes) bags[bagIdx].sizes = sizes;
-          if(!bags[bagIdx].price && p.variants?.[0]?.price){
-            bags[bagIdx].price = p.variants[0].price + ' TL';
-          }
-          saveL();
-        }
-        // حدّث الحقول إذا كانت البطاقة مفتوحة
-        if(_curCardId === bagId){
-          if(colors) document.getElementById('cmColorsInp').value = colors;
-          if(sizes) document.getElementById('cmSizesInp').value = sizes;
-          if(!document.getElementById('cmPriceInp').value && bags[bagIdx]?.price){
-            document.getElementById('cmPriceInp').value = bags[bagIdx].price;
-          }
-          updateCard();
-          toast(lang==='ar' ? '✅ تم جلب التفاصيل' : '✅ Details fetched');
-        }
-        return;
-      }
-    }
-    // fallback: استخرج من HTML
-    const r = await fetch(`https://api.allorigins.win/get?url=${enc}`, {signal: AbortSignal.timeout(8000)});
-    const d = await r.json();
-    const h = d.contents || '';
-    // ابحث عن variants JSON في Shopify
-    const vm = h.match(/"variants"\s*:\s*(\[[\s\S]{0,3000}?\])/);
-    if(vm){
-      try{
-        const variants = JSON.parse(vm[1]);
-        const colorSet = new Set(), sizeSet = new Set();
-        variants.forEach(v=>{
-          if(v.option1) colorSet.add(v.option1);
-          if(v.option2) sizeSet.add(v.option2);
-        });
-        const colors = [...colorSet].join(', ');
-        const sizes = [...sizeSet].join(', ');
-        const bagIdx = bags.findIndex(b=>b.id===bagId);
-        if(bagIdx>=0){
-          if(colors) bags[bagIdx].colors = colors;
-          if(sizes) bags[bagIdx].sizes = sizes;
-          saveL();
-        }
-        if(_curCardId === bagId){
-          if(colors) document.getElementById('cmColorsInp').value = colors;
-          if(sizes) document.getElementById('cmSizesInp').value = sizes;
-          updateCard();
-          toast(lang==='ar' ? '✅ تم جلب التفاصيل' : '✅ Details fetched');
-        }
-      }catch(e){}
-    }
-  }catch(e){}
+  // ارسم البطاقة
+  setTimeout(()=>drawCard(b), 100);
+  // جلب تفاصيل إذا لم تكن موجودة
+  if(!b.colors && !b.sizes && b.url) fetchProductDetails(b.url, id);
 }
 
 function closeCardModal(){
   document.getElementById('cardOv').classList.remove('open');
 }
 
-function updateCard(){
-  const colorsStr = document.getElementById('cmColorsInp').value;
-  const sizesStr = document.getElementById('cmSizesInp').value;
-  const price = document.getElementById('cmPriceInp').value;
+async function drawCard(b){
+  const colors = document.getElementById('cmColorsInp').value.trim();
+  const sizes  = document.getElementById('cmSizesInp').value.trim();
+  const price  = document.getElementById('cmPriceInp').value.trim();
+  const name   = b.name || urlToName(b.url);
+
+  // بناء HTML البطاقة في div مخفي
+  const preview = document.getElementById('cmPreview');
+  const isAr = document.documentElement.getAttribute('data-lang')==='ar';
+  const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+
   // ألوان
-  const colors = colorsStr.split(/[,،]/).map(c=>c.trim()).filter(Boolean);
-  document.getElementById('cmColors').innerHTML = colors.map(c=>
-    `<div class="cm-color-chip"><div class="cm-color-dot" style="background:${cHex(c)}"></div>${c}</div>`
+  const colorArr = colors ? colors.split(/[,،]/).map(c=>c.trim()).filter(Boolean) : [];
+  const colorDots = colorArr.map(c=>
+    `<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(0,0,0,.05);border-radius:20px;padding:3px 9px 3px 5px;font-size:12px;margin:2px">
+      <span style="width:10px;height:10px;border-radius:50%;background:${cHex(c)};display:inline-block;border:1px solid rgba(0,0,0,.1)"></span>${c}
+    </span>`
   ).join('');
-  // قياسات
-  const sizes = sizesStr.split(/[,،\s]+/).map(s=>s.trim()).filter(Boolean);
-  document.getElementById('cmSizes').innerHTML = sizes.map(s=>
-    `<div class="cm-size-chip">${s}</div>`
+
+  const sizeArr = sizes ? sizes.split(/[,، ]+/).map(s=>s.trim()).filter(Boolean) : [];
+  const sizeChips = sizeArr.map(s=>
+    `<span style="background:rgba(0,0,0,.06);border-radius:6px;padding:3px 9px;font-size:12px;font-weight:600;margin:2px;display:inline-block">${s}</span>`
   ).join('');
-  // سعر
-  document.getElementById('cmPrice').textContent = price ? '💲 ' + price : '';
+
+  const cardBg = isDark ? '#1c1c1c' : '#fff';
+  const txtColor = isDark ? '#ede8e0' : '#1a1410';
+  const txt2Color = isDark ? '#888' : '#777';
+
+  preview.innerHTML = `
+    <div id="cmCardHtml" style="
+      background:${cardBg};
+      border-radius:14px;
+      overflow:hidden;
+      font-family:Tajawal,sans-serif;
+      direction:${isAr?'rtl':'ltr'};
+      color:${txtColor};
+      width:100%;
+      max-width:360px;
+      margin:0 auto;
+      box-shadow:0 4px 20px rgba(0,0,0,.15);
+    ">
+      ${b.img ? `<img src="${b.img}" style="width:100%;display:block;object-fit:contain;background:#f5f5f5;" crossorigin="anonymous">` : `<div style="width:100%;height:200px;background:#f0ede8;display:flex;align-items:center;justify-content:center;font-size:48px">👜</div>`}
+      <div style="padding:12px 14px 14px">
+        ${name ? `<div style="font-size:14px;font-weight:700;margin-bottom:5px;line-height:1.4">${name}</div>` : ''}
+        ${price ? `<div style="font-size:13px;color:#c8962e;font-weight:700;margin-bottom:8px">💲 ${price}</div>` : ''}
+        ${colorArr.length ? `<div style="margin-bottom:6px"><div style="font-size:11px;color:${txt2Color};margin-bottom:3px">🎨 الألوان</div><div style="display:flex;flex-wrap:wrap;gap:2px">${colorDots}</div></div>` : ''}
+        ${sizeArr.length ? `<div style="margin-bottom:6px"><div style="font-size:11px;color:${txt2Color};margin-bottom:3px">📏 القياسات</div><div style="display:flex;flex-wrap:wrap;gap:2px">${sizeChips}</div></div>` : ''}
+        <div style="font-size:9px;color:${txt2Color};text-align:${isAr?'left':'right'};margin-top:6px;opacity:.5">Trendy Gallery</div>
+      </div>
+    </div>`;
+}
+
+function updateCard(){
+  const b = bags.find(x=>x.id===_curCardId);
+  if(b) drawCard(b);
 }
 
 async function getCardCanvas(){
-  const card = document.getElementById('cmCard');
+  const b = bags.find(x=>x.id===_curCardId);
+  if(b) await drawCard(b);
+  // تحميل html2canvas إذا لم يكن موجوداً
   if(!window.html2canvas){
     await new Promise((res,rej)=>{
       const s=document.createElement('script');
@@ -1031,18 +947,15 @@ async function getCardCanvas(){
       s.onload=res;s.onerror=rej;document.head.appendChild(s);
     });
   }
-  return await html2canvas(card,{
-    scale:3,
-    useCORS:true,
-    allowTaint:true,
-    backgroundColor:'#ffffff',
-    logging:false,
-    imageTimeout:10000,
-    onclone:(doc)=>{
-      // تأكد ظهور كل المعلومات في النسخة المحولة
-      const clonedCard = doc.getElementById('cmCard');
-      if(clonedCard) clonedCard.style.borderRadius='0';
-    }
+  const el = document.getElementById('cmCardHtml');
+  if(!el) throw new Error('No card');
+  return await html2canvas(el, {
+    scale: 3,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: null,
+    logging: false,
+    imageTimeout: 15000,
   });
 }
 
@@ -1050,30 +963,38 @@ async function shareCard(){
   try{
     toast(lang==='ar'?'⏳ جاري التجهيز...':'⏳ Preparing...');
     const canvas = await getCardCanvas();
+    const b = bags.find(x=>x.id===_curCardId);
     canvas.toBlob(async blob=>{
-      const b = bags.find(x=>x.id===_curCardId);
       const file = new File([blob],'product-card.png',{type:'image/png'});
       if(navigator.share && navigator.canShare({files:[file]})){
         await navigator.share({files:[file],title:b?.name||'Trendy Gallery'});
+        toast(lang==='ar'?'✅ تمت المشاركة':'✅ Shared');
       } else {
-        // fallback: download
-        downloadCard();
+        _downloadCanvas(canvas, b?.name);
       }
-    },'image/png');
-  }catch(e){toast('⚠️ ' + e.message);}
+    },'image/png',1.0);
+  }catch(e){
+    if(e.name!=='AbortError') toast('⚠️ '+e.message);
+  }
 }
 
 async function downloadCard(){
   try{
-    toast(lang==='ar'?'⏳ جاري التحميل...':'⏳ Downloading...');
+    toast(lang==='ar'?'⏳ جاري التحميل...':'⏳ Preparing...');
     const canvas = await getCardCanvas();
     const b = bags.find(x=>x.id===_curCardId);
-    const a = document.createElement('a');
-    a.download = (b?.name||'product')+'.png';
-    a.href = canvas.toDataURL('image/png');
-    a.click();
-    toast(lang==='ar'?'✅ تم التحميل':'✅ Downloaded');
-  }catch(e){toast('⚠️ ' + e.message);}
+    _downloadCanvas(canvas, b?.name);
+  }catch(e){toast('⚠️ '+e.message);}
+}
+
+function _downloadCanvas(canvas, name){
+  const a = document.createElement('a');
+  a.download = (name||'product-card')+'.png';
+  a.href = canvas.toDataURL('image/png',1.0);
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  toast(lang==='ar'?'✅ تم التحميل':'✅ Downloaded');
 }
 
 // Copy image — try clipboard API, fallback: open in new tab
