@@ -220,8 +220,8 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .am-field input:focus{border-color:var(--gold);}
 /* ── NEW ADD MODAL LAYOUT ── */
 .am-body{padding:8px 10px 8px;display:flex;flex-direction:column;gap:7px;flex:1;min-height:0;}
-.am-top{display:flex;gap:7px;flex:1;min-height:0;overflow:hidden;}
-.am-btns{display:flex;flex-direction:column;gap:6px;width:42%;flex-shrink:0;}
+.am-top{display:flex;flex-direction:row;gap:8px;flex:1;min-height:0;}
+.am-btns{display:flex;flex-direction:column;gap:7px;width:40%;flex-shrink:0;}
 .am-btn{width:100%;flex:1;border-radius:8px;border:1px solid var(--border);background:var(--card);font-family:inherit;font-size:11px;font-weight:600;color:var(--text2);cursor:pointer;display:flex;align-items:center;padding:0 10px;gap:6px;transition:all .15s;
   box-shadow:0 1px 3px rgba(0,0,0,.06),0 2px 6px rgba(0,0,0,.04);}
 .am-btn:active{border-color:var(--gold);box-shadow:none;}
@@ -423,16 +423,15 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
   </div>
   <div class="am-body">
    <input type="file" id="fileIn" accept="image/*" style="display:none" onchange="handleFile(event)">
-   <!-- TOP SECTION: big image LEFT + 4 buttons RIGHT -->
+   <!-- TOP: image LEFT | buttons RIGHT — side by side -->
    <div class="am-top">
-    <!-- Image box -->
-    <div class="am-img-col-wrap">
+    <!-- LEFT: image box -->
     <div class="am-img-box" id="amImgBox">
      <span id="amImgPH">🛍️</span>
      <div class="am-spin" id="amSpin"><div class="fs-ring"></div></div>
      <div class="am-retry" id="amRetry"><button class="am-retry-btn" onclick="retryFetch()">↻</button></div>
     </div>
-    <!-- 4 stacked buttons -->
+    <!-- RIGHT: 4 buttons stacked -->
     <div class="am-btns">
      <button class="am-btn" onclick="triggerFile()"><span class="am-btn-ico">📁</span><span id="lbl-upload">رفع صورة</span></button>
      <button class="am-btn" onclick="toggleManual()"><span class="am-btn-ico">🔗</span><span id="lbl-manual">رابط الصورة</span></button>
@@ -444,17 +443,16 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
      </button>
     </div>
    </div>
-   <!-- manual img url (shown when toggled) -->
+   <!-- manual img url -->
    <div class="am-manual" id="amManual">
     <input type="url" id="imgInp" placeholder="https://... رابط الصورة" class="am-inp">
    </div>
-   <!-- BOTTOM: URL + Name -->
+   <!-- BOTTOM: URL + Name full width -->
    <div class="am-bottom">
     <input type="url" id="urlInp" placeholder="https:// رابط المنتج" class="am-inp" autocomplete="off">
     <input type="text" id="nameInp" placeholder="الاسم (اختياري)" class="am-inp am-inp-name" autocomplete="off">
    </div>
    <input type="hidden" id="editId">
-   <!-- hidden save btn for JS compatibility -->
    <button id="saveBtn" onclick="saveBag()" disabled style="display:none">
     <span id="saveTxt">حفظ</span>
     <div class="sp" id="saveSpin"></div>
