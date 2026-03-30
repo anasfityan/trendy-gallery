@@ -184,10 +184,10 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .lb-x{position:absolute;top:12px;right:12px;width:30px;height:30px;background:rgba(255,255,255,.1);border-radius:50%;border:none;color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 
 /* ══ ADD PANEL — compact modal ══ */
-.add-modal-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);z-index:150;opacity:0;pointer-events:none;transition:opacity .2s;transform:translateZ(0);}
+.add-modal-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);z-index:150;opacity:0;pointer-events:none;transition:opacity .2s;}
 .add-modal-ov.open{pointer-events:all;}
 .add-modal-ov.open{opacity:1;pointer-events:all;}
-.add-modal{position:fixed;top:0;left:0;right:0;width:100%;background:var(--drawer);border-radius:0 0 18px 18px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,.25);z-index:151;display:flex;flex-direction:column;transform:translateZ(0);-webkit-transform:translateZ(0);}
+.add-modal{position:fixed;top:0;left:0;right:0;width:100%;background:var(--drawer);border-radius:0 0 18px 18px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,.25);z-index:151;display:flex;flex-direction:column;will-change:height;}
 .add-modal::-webkit-scrollbar{width:0;}
 .am-head{padding:10px 14px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--drawer);z-index:1;}
 [data-theme="dark"] .am-head{border-color:rgba(255,255,255,.06);}
@@ -843,10 +843,19 @@ function openAdd(){
   document.getElementById('addTitle').textContent=t('add_t');lastUrl='';curImg='';saving=false;
   fillCatSel('catInp',curCat);
   _modalH = 0;
+  const modal = document.getElementById('addModal');
+  // تنظيف أي inline styles قديمة
+  modal.style.top = '';
+  modal.style.left = '';
+  modal.style.width = '';
+  modal.style.height = '';
   document.getElementById('addOv').classList.add('open');
-  document.getElementById('addModal').style.display='flex';
-  resizeModal();
-  setTimeout(()=>document.getElementById('urlInp').focus(), 180);
+  modal.style.display = 'flex';
+  // ضبط الارتفاع بعد ظهور النافذة
+  requestAnimationFrame(()=>{
+    resizeModal();
+    setTimeout(()=>document.getElementById('urlInp').focus(), 150);
+  });
   playClick();
 }
 function closeAdd(){
@@ -875,24 +884,18 @@ function resizeModal(){
   const modal = document.getElementById('addModal');
   if(!modal || modal.style.display==='none') return;
   const vp = window.visualViewport;
-  if(vp){
-    // تصحيح موضع النافذة ليكون دائماً في أعلى الـ viewport الفعلي
-    modal.style.top = vp.offsetTop + 'px';
-    modal.style.left = vp.offsetLeft + 'px';
-    modal.style.width = vp.width + 'px';
-    const available = vp.height;
-    if(_modalH === 0) _modalH = available;
-    // تصغير فقط عند فتح الكيبورد، لا تكبير
-    const h = available < _modalH ? available - 4 : _modalH - 4;
-    modal.style.height = h + 'px';
-  } else {
-    if(_modalH === 0) _modalH = window.innerHeight;
-    modal.style.height = (_modalH - 4) + 'px';
+  const newH = vp ? vp.height : window.innerHeight;
+  // سجّل الارتفاع الأول مرة واحدة فقط
+  if(_modalH === 0) _modalH = newH;
+  // فقط عند تصغير الـ viewport (فتح الكيبورد)
+  if(newH < _modalH - 50){
+    modal.style.height = (newH - 4) + 'px';
   }
+  // عند إغلاق الكيبورد: لا تفعل شيئاً — الحجم يبقى كما هو
 }
 if(window.visualViewport){
-  window.visualViewport.addEventListener('resize', ()=>setTimeout(resizeModal, 20));
-  window.visualViewport.addEventListener('scroll', ()=>setTimeout(resizeModal, 0));
+  // فقط عند تغيير الحجم (الكيبورد)، لا عند التمرير
+  window.visualViewport.addEventListener('resize', ()=>setTimeout(resizeModal, 80));
 }
 
 function loadPrefs(){
