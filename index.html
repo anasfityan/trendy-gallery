@@ -184,9 +184,9 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .lb-x{position:absolute;top:12px;right:12px;width:30px;height:30px;background:rgba(255,255,255,.1);border-radius:50%;border:none;color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 
 /* ══ ADD PANEL — compact modal ══ */
-.add-modal-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:150;opacity:0;pointer-events:none;transition:opacity .2s;}
+.add-modal-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);backdrop-filter:blur(5px);z-index:150;opacity:0;pointer-events:none;transition:opacity .2s;touch-action:none;overscroll-behavior:none;}
 .add-modal-ov.open{opacity:1;pointer-events:all;}
-.add-modal{position:fixed;top:0;left:0;right:0;width:100%;background:var(--drawer);border-radius:0 0 18px 18px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,.25);z-index:151;display:flex;flex-direction:column;}
+.add-modal{position:fixed;top:0;left:0;right:0;width:100%;background:var(--drawer);border-radius:0 0 18px 18px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,.25);z-index:151;display:flex;flex-direction:column;touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
 .add-modal::-webkit-scrollbar{width:0;}
 .am-head{padding:10px 14px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--drawer);z-index:1;}
 [data-theme="dark"] .am-head{border-color:rgba(255,255,255,.06);}
@@ -811,9 +811,12 @@ function openAdd(){
   document.getElementById('amManual').style.display='none';manualOpen=false;
   document.getElementById('addTitle').textContent=t('add_t');lastUrl='';curImg='';saving=false;
   fillCatSel('catInp',curCat);
-  _modalInitH = 0; // reset so it recalculates
+  _modalInitH = 0;
   document.getElementById('addOv').classList.add('open');
   document.getElementById('addModal').style.display='flex';
+  document.body.style.overflow='hidden';
+  document.body.style.position='fixed';
+  document.body.style.width='100%';
   resizeModal();
   setTimeout(()=>{resizeModal();document.getElementById('urlInp').focus();},200);
   playClick();
@@ -822,6 +825,9 @@ function closeAdd(){
   document.getElementById('addOv').classList.remove('open');
   const modal=document.getElementById('addModal');
   if(modal){modal.style.display='none';modal.style.height='';}
+  document.body.style.overflow='';
+  document.body.style.position='';
+  document.body.style.width='';
 }
 function bgCloseAdd(e){if(e.target.id==='addOv')closeAdd();}
 // Prevent background scroll when modal open
@@ -844,17 +850,25 @@ function resizeModal(){
   const modal = document.getElementById('addModal');
   if(!modal || modal.style.display==='none') return;
   const vp = window.visualViewport;
-  const availH = vp ? vp.height : window.innerHeight;
-  // On first open, record full height
-  if(_modalInitH === 0) _modalInitH = availH;
-  // Only use available height (shrinks with keyboard, never grows past init)
-  const h = Math.min(availH, _modalInitH) - 6;
-  modal.style.height = h + 'px';
+  if(vp){
+    if(_modalInitH === 0) _modalInitH = vp.height;
+    // When keyboard opens: vp.height shrinks — use it directly
+    // When keyboard closes: cap at initial height
+    const h = Math.min(vp.height, _modalInitH) - 4;
+    modal.style.height = h + 'px';
+  } else {
+    if(_modalInitH === 0) _modalInitH = window.innerHeight;
+    modal.style.height = (_modalInitH - 4) + 'px';
+  }
 }
 if(window.visualViewport){
-  window.visualViewport.addEventListener('resize', ()=>{
-    // Small delay to let keyboard settle
-    setTimeout(resizeModal, 50);
+  window.visualViewport.addEventListener('resize', ()=>setTimeout(resizeModal, 30));
+  window.visualViewport.addEventListener('scroll', ()=>{
+    // Keep modal pinned at top even if viewport scrolls
+    const modal = document.getElementById('addModal');
+    if(modal && modal.style.display!=='none'){
+      modal.style.top = window.visualViewport.offsetTop + 'px';
+    }
   });
 }
 
