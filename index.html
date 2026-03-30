@@ -184,9 +184,11 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .lb-x{position:absolute;top:12px;right:12px;width:30px;height:30px;background:rgba(255,255,255,.1);border-radius:50%;border:none;color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 
 /* ══ ADD PANEL — compact modal ══ */
-.add-modal-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);backdrop-filter:blur(5px);z-index:150;opacity:0;pointer-events:none;transition:opacity .2s;touch-action:none;overscroll-behavior:none;}
+.add-modal-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);z-index:150;opacity:0;pointer-events:none;transition:opacity .2s;}
+.add-modal-ov.open{pointer-events:all;touch-action:none;}
+.add-modal-ov.open::after{content:'';position:fixed;inset:0;z-index:149;}
 .add-modal-ov.open{opacity:1;pointer-events:all;}
-.add-modal{position:fixed;top:0;left:0;right:0;width:100%;background:var(--drawer);border-radius:0 0 18px 18px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,.25);z-index:151;display:flex;flex-direction:column;touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
+.add-modal{position:fixed;top:0;left:0;right:0;width:100%;background:var(--drawer);border-radius:0 0 18px 18px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,.25);z-index:151;display:flex;flex-direction:column;}
 .add-modal::-webkit-scrollbar{width:0;}
 .am-head{padding:10px 14px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--drawer);z-index:1;}
 [data-theme="dark"] .am-head{border-color:rgba(255,255,255,.06);}
@@ -427,8 +429,8 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 <div class="lb" id="lb" onclick="closeLB()"><button class="lb-x" onclick="closeLB()">✕</button><img id="lbImg" src="" alt=""></div>
 
 <!-- ADD MODAL (compact, above keyboard) -->
-<div class="add-modal-ov" id="addOv" onclick="bgCloseAdd(event)"></div>
-<div class="add-modal" id="addModal" style="display:none">
+<div class="add-modal-ov" id="addOv" onclick="bgCloseAdd(event)" ontouchmove="event.preventDefault()" ontouchstart="event.stopPropagation()"></div>
+<div class="add-modal" id="addModal" style="display:none" ontouchstart="event.stopPropagation()" ontouchmove="event.stopPropagation()">
   <div class="am-head">
    <div class="am-title" id="addTitle">إضافة</div>
    <button class="am-close" onclick="closeAdd()">✕</button>
@@ -595,10 +597,7 @@ function toggleTheme(){
   document.getElementById('thmTr').classList.toggle('on',dark);document.getElementById('hThBtn').textContent=dark?'☀️':'🌙';
   document.getElementById('sbThLbl').textContent=dark?t('light'):t('dark');document.getElementById('sbThIco').textContent=dark?'☀️':'🌙';
   localStorage.setItem('tg_dark',dark?'1':'0');
-  // Fix: ensure body position not stuck after theme change
-  if(!document.getElementById('addOv').classList.contains('open')){
-    document.body.style.position='';document.body.style.overflow='';document.body.style.width='';
-  }
+  // nothing needed — body is never modified now
   playClick();
 }
 
@@ -845,12 +844,6 @@ function openAdd(){
   document.getElementById('addTitle').textContent=t('add_t');lastUrl='';curImg='';saving=false;
   fillCatSel('catInp',curCat);
   _modalH = 0;
-  // Save scroll position to restore later
-  const _scrollY = window.scrollY;
-  document.body.style.top = `-${_scrollY}px`;
-  document.body.style.overflow='hidden';
-  document.body.style.position='fixed';
-  document.body.style.width='100%';
   document.getElementById('addOv').classList.add('open');
   document.getElementById('addModal').style.display='flex';
   resizeModal();
@@ -861,10 +854,6 @@ function closeAdd(){
   document.getElementById('addOv').classList.remove('open');
   const modal=document.getElementById('addModal');
   if(modal){modal.style.display='none';modal.style.height='';}
-  const scrollY = parseInt(document.body.style.top||'0')*-1;
-  document.body.style.position='';document.body.style.overflow='';
-  document.body.style.width='';document.body.style.top='';
-  window.scrollTo(0, scrollY);
 }
 function bgCloseAdd(e){if(e.target.id==='addOv')closeAdd();}
 // Prevent background scroll when modal open
