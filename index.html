@@ -880,52 +880,232 @@ async function drawCard(b){
   const colors = document.getElementById('cmColorsInp').value.trim();
   const sizes  = document.getElementById('cmSizesInp').value.trim();
   const price  = document.getElementById('cmPriceInp').value.trim();
-  const name   = b.name || urlToName(b.url);
+  const name   = (b.name || urlToName(b.url) || '').slice(0,55);
 
-  // بناء HTML البطاقة في div مخفي
   const preview = document.getElementById('cmPreview');
-  const isAr = document.documentElement.getAttribute('data-lang')==='ar';
-  const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+  if(!preview) return;
 
-  // ألوان
+  // ── تحميل الصورة أولاً لمعرفة الأبعاد ──
+  let imgEl = null;
+  if(b.img){
+    imgEl = await new Promise(res=>{
+      const i = new Image();
+      i.crossOrigin = 'anonymous';
+      i.onload  = ()=>res(i);
+      i.onerror = ()=>res(null);
+      i.src = b.img + (b.img.includes('?')?'&':'?') + '_t=' + Date.now();
+    });
+  }
+
+  // ── أبعاد البطاقة ──
+  const W   = 400;          // عرض البطاقة بالـ px
+  const PAD = 20;
+  const R   = 20;           // زوايا منحنية
+
+  // الصورة بأبعادها الحقيقية داخل عرض W
+  const IMG_W = W;
+  let   IMG_H = 300;
+  if(imgEl && imgEl.naturalWidth > 0){
+    IMG_H = Math.round(IMG_W * imgEl.naturalHeight / imgEl.naturalWidth);
+    IMG_H = Math.min(IMG_H, 520); // حد أقصى
+  }
+
+  // منطقة المعلومات السفلية
   const colorArr = colors ? colors.split(/[,،]/).map(c=>c.trim()).filter(Boolean) : [];
-  const colorDots = colorArr.map(c=>
-    `<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(0,0,0,.05);border-radius:20px;padding:3px 9px 3px 5px;font-size:12px;margin:2px">
-      <span style="width:10px;height:10px;border-radius:50%;background:${cHex(c)};display:inline-block;border:1px solid rgba(0,0,0,.1)"></span>${c}
-    </span>`
-  ).join('');
+  const sizeArr  = sizes  ? sizes.split(/[,، \/]+/).map(s=>s.trim()).filter(Boolean) : [];
 
-  const sizeArr = sizes ? sizes.split(/[,، ]+/).map(s=>s.trim()).filter(Boolean) : [];
-  const sizeChips = sizeArr.map(s=>
-    `<span style="background:rgba(0,0,0,.06);border-radius:6px;padding:3px 9px;font-size:12px;font-weight:600;margin:2px;display:inline-block">${s}</span>`
-  ).join('');
+  let infoH = PAD;
+  if(name)          infoH += 28;
+  if(price)         infoH += 24;
+  if(colorArr.length) infoH += 40;
+  if(sizeArr.length)  infoH += 34;
+  infoH += 24; // brand row
 
-  const cardBg = isDark ? '#1c1c1c' : '#fff';
-  const txtColor = isDark ? '#ede8e0' : '#1a1410';
-  const txt2Color = isDark ? '#888' : '#777';
+  const TOTAL_H = IMG_H + infoH;
 
-  preview.innerHTML = `
-    <div id="cmCardHtml" style="
-      background:${cardBg};
-      border-radius:14px;
-      overflow:hidden;
-      font-family:Tajawal,sans-serif;
-      direction:${isAr?'rtl':'ltr'};
-      color:${txtColor};
-      width:100%;
-      max-width:360px;
-      margin:0 auto;
-      box-shadow:0 4px 20px rgba(0,0,0,.15);
-    ">
-      ${b.img ? `<img src="${b.img}" style="width:100%;display:block;object-fit:contain;background:#f5f5f5;" crossorigin="anonymous">` : `<div style="width:100%;height:200px;background:#f0ede8;display:flex;align-items:center;justify-content:center;font-size:48px">👜</div>`}
-      <div style="padding:12px 14px 14px">
-        ${name ? `<div style="font-size:14px;font-weight:700;margin-bottom:5px;line-height:1.4">${name}</div>` : ''}
-        ${price ? `<div style="font-size:13px;color:#c8962e;font-weight:700;margin-bottom:8px">💲 ${price}</div>` : ''}
-        ${colorArr.length ? `<div style="margin-bottom:6px"><div style="font-size:11px;color:${txt2Color};margin-bottom:3px">🎨 الألوان</div><div style="display:flex;flex-wrap:wrap;gap:2px">${colorDots}</div></div>` : ''}
-        ${sizeArr.length ? `<div style="margin-bottom:6px"><div style="font-size:11px;color:${txt2Color};margin-bottom:3px">📏 القياسات</div><div style="display:flex;flex-wrap:wrap;gap:2px">${sizeChips}</div></div>` : ''}
-        <div style="font-size:9px;color:${txt2Color};text-align:${isAr?'left':'right'};margin-top:6px;opacity:.5">Trendy Gallery</div>
-      </div>
-    </div>`;
+  // ── إنشاء Canvas ──
+  const canvas = document.createElement('canvas');
+  const DPR = 2;
+  canvas.width  = W * DPR;
+  canvas.height = TOTAL_H * DPR;
+  canvas.style.cssText = `width:100%;border-radius:${R}px;display:block;box-shadow:0 6px 28px rgba(0,0,0,.18);`;
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(DPR, DPR);
+
+  // ── خلفية بيضاء مع زوايا منحنية ──
+  ctx.fillStyle = '#ffffff';
+  roundedRect(ctx, 0, 0, W, TOTAL_H, R);
+  ctx.fill();
+
+  // ── الصورة ──
+  if(imgEl){
+    ctx.save();
+    roundedRect(ctx, 0, 0, IMG_W, IMG_H, R);
+    ctx.clip();
+    // object-fit: contain — نحسب الموضع الصحيح
+    const scale = Math.min(IMG_W/imgEl.naturalWidth, IMG_H/imgEl.naturalHeight);
+    const drawW = imgEl.naturalWidth * scale;
+    const drawH = imgEl.naturalHeight * scale;
+    const dx = (IMG_W - drawW)/2;
+    const dy = (IMG_H - drawH)/2;
+    // خلفية فاتحة تحت الصورة
+    ctx.fillStyle = '#f5f3f0';
+    ctx.fillRect(0,0,IMG_W,IMG_H);
+    ctx.drawImage(imgEl, dx, dy, drawW, drawH);
+    ctx.restore();
+
+    // ── شعار "Trend Store" في الزاوية العلوية اليسرى ──
+    const labelW = 100, labelH = 26, labelR = 8, margin = 12;
+    ctx.fillStyle = 'rgba(10,8,6,0.72)';
+    roundedRect(ctx, margin, margin, labelW, labelH, labelR);
+    ctx.fill();
+    ctx.fillStyle = '#c8962e';
+    ctx.font = '700 11px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Trend Store', margin + labelW/2, margin + labelH/2);
+  } else {
+    // placeholder
+    ctx.fillStyle = '#ede9e3';
+    roundedRect(ctx, 0, 0, IMG_W, IMG_H, R);
+    ctx.fill();
+    ctx.font = '64px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('👜', IMG_W/2, IMG_H/2);
+    // شعار على placeholder
+    const labelW=100,labelH=26,margin=12,labelR=8;
+    ctx.fillStyle='rgba(10,8,6,.72)';
+    roundedRect(ctx,margin,margin,labelW,labelH,labelR);
+    ctx.fill();
+    ctx.fillStyle='#c8962e';
+    ctx.font='700 11px Inter,sans-serif';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText('Trend Store',margin+labelW/2,margin+labelH/2);
+  }
+
+  // ── خط فاصل ناعم ──
+  ctx.strokeStyle = 'rgba(0,0,0,.06)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, IMG_H);
+  ctx.lineTo(W, IMG_H);
+  ctx.stroke();
+
+  // ── منطقة المعلومات ──
+  let y = IMG_H + PAD;
+  const isAr = document.documentElement.getAttribute('data-lang')==='ar';
+  ctx.textAlign = isAr ? 'right' : 'left';
+  ctx.textBaseline = 'top';
+  const xT = isAr ? W - PAD : PAD;
+
+  // الاسم
+  if(name){
+    ctx.fillStyle = '#1a1410';
+    ctx.font = '700 14px Tajawal, sans-serif';
+    ctx.fillText(name, xT, y);
+    y += 28;
+  }
+
+  // السعر
+  if(price){
+    ctx.fillStyle = '#c8962e';
+    ctx.font = '700 13px Tajawal, sans-serif';
+    ctx.fillText('💲 ' + price, xT, y);
+    y += 24;
+  }
+
+  // الألوان
+  if(colorArr.length){
+    ctx.fillStyle = '#888';
+    ctx.font = '500 11px Tajawal, sans-serif';
+    ctx.fillText('الألوان:', xT, y);
+    y += 16;
+    let cx = isAr ? W - PAD : PAD;
+    for(const col of colorArr){
+      const hex = cHex(col);
+      const chipW = col.length*8 + 24;
+      // خلفية الـ chip
+      ctx.fillStyle = 'rgba(0,0,0,.05)';
+      roundedRect(ctx, isAr? cx-chipW : cx, y, chipW, 20, 10);
+      ctx.fill();
+      // نقطة اللون
+      ctx.fillStyle = hex;
+      ctx.beginPath();
+      ctx.arc(isAr? cx-chipW+14 : cx+10, y+10, 5, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,.1)';
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+      // النص
+      ctx.fillStyle = '#555';
+      ctx.font = '500 10px Tajawal, sans-serif';
+      ctx.textAlign = isAr?'right':'left';
+      ctx.fillText(col, isAr? cx-chipW+22: cx+19, y+6);
+      cx += isAr? -(chipW+6) : chipW+6;
+      if((isAr && cx < PAD) || (!isAr && cx > W-PAD)) break;
+    }
+    y += 28;
+  }
+
+  // القياسات
+  if(sizeArr.length){
+    ctx.fillStyle = '#888';
+    ctx.font = '500 11px Tajawal, sans-serif';
+    ctx.textAlign = isAr?'right':'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText('القياسات:', xT, y);
+    y += 16;
+    let sx = isAr? W-PAD : PAD;
+    for(const sz of sizeArr){
+      const sw = Math.max(sz.length*9, 28) + 14;
+      ctx.fillStyle = 'rgba(200,150,46,.12)';
+      roundedRect(ctx, isAr?sx-sw:sx, y, sw, 20, 6);
+      ctx.fill();
+      ctx.fillStyle = '#c8962e';
+      ctx.font = '600 11px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(sz, isAr?sx-sw/2:sx+sw/2, y+10);
+      sx += isAr ? -(sw+5) : sw+5;
+      if((isAr && sx < PAD+30) || (!isAr && sx > W-PAD-30)) break;
+    }
+    y += 26;
+  }
+
+  // ── Brand ──
+  ctx.fillStyle = '#bbb';
+  ctx.font = '400 9px Inter, sans-serif';
+  ctx.textAlign = isAr ? 'left' : 'right';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Trendy Gallery', isAr? PAD : W-PAD, TOTAL_H - 12);
+
+  // ── حدود البطاقة ──
+  ctx.strokeStyle = 'rgba(0,0,0,.07)';
+  ctx.lineWidth = 1;
+  roundedRect(ctx, 0.5, 0.5, W-1, TOTAL_H-1, R);
+  ctx.stroke();
+
+  // ── أظهر في المعاينة ──
+  preview.innerHTML = '';
+  preview.appendChild(canvas);
+  preview._canvas = canvas;
+}
+
+function roundedRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h);
+  ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r);
+  ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
 }
 
 function updateCard(){
@@ -936,24 +1116,10 @@ function updateCard(){
 async function getCardCanvas(){
   const b = bags.find(x=>x.id===_curCardId);
   if(b) await drawCard(b);
-  // تحميل html2canvas إذا لم يكن موجوداً
-  if(!window.html2canvas){
-    await new Promise((res,rej)=>{
-      const s=document.createElement('script');
-      s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-      s.onload=res;s.onerror=rej;document.head.appendChild(s);
-    });
-  }
-  const el = document.getElementById('cmCardHtml');
-  if(!el) throw new Error('No card');
-  return await html2canvas(el, {
-    scale: 3,
-    useCORS: true,
-    allowTaint: true,
-    backgroundColor: null,
-    logging: false,
-    imageTimeout: 15000,
-  });
+  const preview = document.getElementById('cmPreview');
+  const canvas = preview?._canvas || preview?.querySelector('canvas');
+  if(!canvas) throw new Error('No canvas');
+  return canvas;
 }
 
 async function shareCard(){
