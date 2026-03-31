@@ -130,7 +130,9 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .srch-x{font-size:15px;color:var(--text2);cursor:pointer;border:none;background:none;}
 
 /* ══ GALLERY ══ */
-.gallery{display:grid;grid-template-columns:repeat(var(--cols,2),1fr);gap:6px;padding:6px 6px 86px;}
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:6px 6px 86px;}
+.gallery.cols-3{grid-template-columns:repeat(3,1fr);}
+.gallery.cols-1{grid-template-columns:repeat(1,1fr);}
 .sz-row{display:flex;align-items:center;gap:6px;padding:4px 2px;}
 .sz-btn{width:28px;height:28px;border:1.5px solid rgba(255,255,255,.08);border-radius:7px;background:rgba(255,255,255,.04);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0;}
 .sz-btn.on{border-color:rgba(200,150,46,.5);background:rgba(200,150,46,.12);}
@@ -350,8 +352,14 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .toast{position:fixed;bottom:68px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--deep);color:#fff;border-radius:20px;padding:7px 16px;font-size:12px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;white-space:nowrap;z-index:500;border:1px solid rgba(255,255,255,.07);}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
-@media(min-width:480px){.gallery{grid-template-columns:repeat(3,1fr);}}
-@media(min-width:700px){.gallery{grid-template-columns:repeat(4,1fr);}}
+@media(min-width:480px){
+  .gallery:not(.cols-1):not(.cols-3){grid-template-columns:repeat(3,1fr);}
+  .gallery.cols-3{grid-template-columns:repeat(4,1fr);}
+}
+@media(min-width:700px){
+  .gallery:not(.cols-1){grid-template-columns:repeat(4,1fr);}
+  .gallery.cols-3{grid-template-columns:repeat(5,1fr);}
+}
 @media(min-width:800px){
   .drawer{max-width:440px;left:50%;right:auto;transform:translateX(-50%) translateY(100%);border-radius:18px;bottom:28px;}
   .ov.open .drawer{transform:translateX(-50%) translateY(0);}
@@ -1175,8 +1183,15 @@ document.addEventListener('touchmove',function(e){
 let _t;function toast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('show');clearTimeout(_t);_t=setTimeout(()=>el.classList.remove('show'),2600);}
 
 function setSize(n){
-  document.documentElement.style.setProperty('--cols', n);
-  [1,2,3].forEach(i=>{document.getElementById('sz'+i)?.classList.toggle('on',i===n);});
+  const g = document.getElementById('gallery');
+  if(g){
+    g.classList.remove('cols-1','cols-2','cols-3');
+    if(n!==2) g.classList.add('cols-'+n);
+  }
+  [1,2,3].forEach(i=>{
+    const btn = document.getElementById('sz'+i);
+    if(btn) btn.classList.toggle('on', i===n);
+  });
   localStorage.setItem('tg_cols', n);
 }
 let _modalH = 0;
