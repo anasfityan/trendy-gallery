@@ -742,10 +742,83 @@ async function tryFetch(url){
 async function doFetch(url){
   const spinTxt = document.getElementById('amSpinTxt');
   if(spinTxt) spinTxt.textContent = lang==='ar' ? 'جاري الجلب...' : 'Fetching...';
-  lastUrl=url;curImg='';showSpin(true);showRetry(false);clearImgBox();
-  const res=await tryFetch(url);showSpin(false);
-  if(res?.img){curImg=res.img;setImgBox(res.img);if(res.name&&!document.getElementById('nameInp').value)document.getElementById('nameInp').value=res.name;document.getElementById('catInp').value=detectCat(url,res.name);document.getElementById('amManual').style.display='none';toast(t('fok'));}
-  else{showRetry(true);toast(t('ffail'));}
+  lastUrl=url; curImg=''; curFetchedColors=''; curFetchedSizes=''; curFetchedPrice='';
+  showSpin(true); showRetry(false); clearImgBox();
+  const res = await tryFetch(url);
+  showSpin(false);
+  if(res?.img){
+    curImg = res.img;
+    setImgBox(res.img);
+    if(res.name && !document.getElementById('nameInp').value)
+      document.getElementById('nameInp').value = res.name;
+    document.getElementById('catInp').value = detectCat(url, res.name);
+    document.getElementById('amManual').style.display = 'none';
+    toast(t('fok'));
+    // جلب الألوان والقياسات في الخلفية
+    fetchColorsAndSizes(url);
+  } else {
+    showRetry(true); toast(t('ffail'));
+  }
+}
+
+let curFetchedColors='', curFetchedSizes='', curFetchedPrice='';
+
+async function fetchColorsAndSizes(url){
+  try{
+    const u = new URL(url);
+    const m = u.pathname.match(/\/products\/([^/?#]+)/);
+    if(!m) return;
+
+    const jsonUrl = `${u.origin}/products/${m[1]}.json`;
+    let pd = null;
+
+    // محاولة مباشرة أولاً
+    try{
+      const r = await fetch(jsonUrl, {signal: AbortSignal.timeout(5000)});
+      if(r.ok) pd = await r.json();
+    }catch(e){}
+
+    // ثم عبر proxy
+    if(!pd){
+      try{
+        const enc = encodeURIComponent(jsonUrl);
+        const r = await fetch(`https://api.allorigins.win/get?url=${enc}`, {signal: AbortSignal.timeout(8000)});
+        const d = await r.json();
+        pd = JSON.parse(d.contents || '{}');
+      }catch(e){}
+    }
+
+    if(!pd?.product) return;
+
+    const p = pd.product;
+    let colors = '', sizes = '';
+
+    // استخرج من options
+    if(p.options){
+      for(const opt of p.options){
+        const n = (opt.name||'').toLowerCase();
+        if(/renk|color|colour|لون/.test(n)){
+          colors = (opt.values||[]).join(', ');
+        } else if(/beden|size|ölçü|قياس|مقاس/.test(n)){
+          sizes = (opt.values||[]).join(', ');
+        }
+      }
+      // إذا لم نجد بالاسم خذ أول option
+      if(!colors && p.options[0]) colors = (p.options[0].values||[]).join(', ');
+      if(!sizes && p.options[1])  sizes  = (p.options[1].values||[]).join(', ');
+    }
+
+    // السعر
+    const price = p.variants?.[0]?.price ? p.variants[0].price + ' TL' : '';
+
+    curFetchedColors = colors;
+    curFetchedSizes  = sizes;
+    curFetchedPrice  = price;
+
+    if(colors || sizes || price){
+      toast(lang==='ar' ? '✅ تم جلب الألوان والقياسات' : '✅ Colors & sizes fetched');
+    }
+  }catch(e){}
 }
 function showSpin(on){document.getElementById('amSpin').classList.toggle('show',on);}
 function showRetry(on){document.getElementById('amRetry').classList.toggle('show',on);}
@@ -800,7 +873,7 @@ async function saveBag(){
   if(document.getElementById('saveTxtTop'))document.getElementById('saveTxtTop').textContent='';
   document.getElementById('saveBtnTop').disabled=true;
   const cat=document.getElementById('catInp').value||'bags';
-  const bag={id:eid||Date.now().toString(36)+Math.random().toString(36).slice(2,5),name:document.getElementById('nameInp').value.trim()||urlToName(url),url,img:curImg||document.getElementById('imgInp').value.trim(),price:'',colors:'',sizes:'',note:'',status:'available',cat,addedAt:eid?(bags.find(b=>b.id===eid)?.addedAt||new Date().toISOString()):new Date().toISOString()};
+  const bag={id:eid||Date.now().toString(36)+Math.random().toString(36).slice(2,5),name:document.getElementById('nameInp').value.trim()||urlToName(url),url,img:curImg||document.getElementById('imgInp').value.trim(),price:curFetchedPrice||'',colors:curFetchedColors||'',sizes:curFetchedSizes||'',note:'',status:'available',cat,addedAt:eid?(bags.find(b=>b.id===eid)?.addedAt||new Date().toISOString()):new Date().toISOString()};
   if(eid){const i=bags.findIndex(b=>b.id===eid);if(i>=0)bags[i]=bag;else bags.unshift(bag);}else bags.unshift(bag);
   saveL();pushSheets();
   document.getElementById('saveSpin').classList.remove('show');document.getElementById('saveCheck').classList.add('show');btn.classList.add('done');
