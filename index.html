@@ -143,7 +143,7 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 @keyframes pop{from{opacity:0;transform:scale(.9);}to{opacity:1;transform:scale(1);}}
 .card-thumb{width:100%;aspect-ratio:1/1;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:28px;position:relative;overflow:hidden;cursor:zoom-in;}
 [data-theme="dark"] .card-thumb{background:#111;}
-.card-thumb img{width:100%;height:100%;object-fit:contain;display:block;}
+.card-thumb img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;}
 /* dark mode image overlay to reduce harshness */
 [data-theme="dark"] .card-thumb img{filter:brightness(.88) contrast(.95);}
 .sdot{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;border:1.5px solid rgba(255,255,255,.9);}
@@ -753,8 +753,15 @@ async function tryFetch(url){
   };
   const fns=[
     shopifyJson,
-    async()=>{const r=await fetch(`https://api.allorigins.win/get?url=${enc}`,{signal:AbortSignal.timeout(7000)});const d=await r.json();const h=d.contents||'';const name=((h.match(/<title[^>]*>([^<]+)<\/title>/i)||[])[1]||'').trim().slice(0,50);// collect all og:image + large <img> srcs
-const ogImgs=[...h.matchAll(/(?:property=["']og:image["'][^>]*content=["']|content=["'][^"']*["'][^>]*property=["']og:image["'][^>]*content=["'])([^"']+)/gi)].map(m=>m[1]).filter(s=>s.startsWith('http'));const pgImgs=[...h.matchAll(/<img[^>]+src=["']([^"']+)["'][^>]*>/gi)].map(m=>m[1]).filter(s=>s.startsWith('http')&&!/logo|icon|sprite|pixel|track/i.test(s));const allImgs=[...new Set([...ogImgs,...pgImgs])].slice(0,10);if(allImgs.length)return{img:allImgs[0],imgs:allImgs,name};throw'x';},
+    async()=>{const r=await fetch(`https://api.allorigins.win/get?url=${enc}`,{signal:AbortSignal.timeout(7000)});const d=await r.json();const h=d.contents||'';const name=((h.match(/<title[^>]*>([^<]+)<\/title>/i)||[])[1]||'').trim().slice(0,50);
+// 1) كل og:image
+const ogImgs=[...h.matchAll(/content=["']([^"']+)["'][^>]*property=["']og:image["']|property=["']og:image["'][^>]*content=["']([^"']+)["']/gi)].map(m=>m[1]||m[2]).filter(Boolean);
+// 2) صور lazy-load (data-src, data-lazy, data-original)
+const lazyImgs=[...h.matchAll(/data-(?:src|lazy|original|zoom-image)=["']([^"']+)["']/gi)].map(m=>m[1]).filter(s=>s.startsWith('http')&&/\.(jpg|jpeg|png|webp)/i.test(s));
+// 3) صور عادية كبيرة (نستثني الـ svg والأيقونات والشعارات)
+const pgImgs=[...h.matchAll(/<img[^>]+src=["']([^"']+)["'][^>]*>/gi)].map(m=>m[1]).filter(s=>s.startsWith('http')&&/\.(jpg|jpeg|png|webp)/i.test(s)&&!/logo|icon|sprite|pixel|track|thumb-xs|_50|_60|_70|_80|_100/i.test(s));
+const allImgs=[...new Set([...ogImgs,...lazyImgs,...pgImgs])].filter(s=>s.length>10).slice(0,12);
+if(allImgs.length)return{img:allImgs[0],imgs:allImgs,name};throw'x';},
     async()=>{const r=await fetch(`https://corsproxy.io/?${enc}`,{signal:AbortSignal.timeout(7000)});const h=await r.text();const m=h.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/i)||h.match(/content=["']([^"']+)["'][^>]*property=["']og:image["']/i);if(m&&m[1]&&m[1].startsWith('http'))return{img:m[1],name:''};throw'x';},
     async()=>{const r=await fetch(`https://api.microlink.io/?url=${enc}`,{signal:AbortSignal.timeout(7000)});const d=await r.json();if(d?.data?.image?.url)return{img:d.data.image.url,name:d.data?.title||''};throw'x';},
     async()=>{const r=await fetch(`https://jsonlink.io/api/extract?url=${enc}`,{signal:AbortSignal.timeout(7000)});const d=await r.json();if(d?.images?.[0])return{img:d.images[0],imgs:d.images.filter(s=>s.startsWith('http')).slice(0,10),name:d.title||''};throw'x';},
@@ -861,7 +868,7 @@ function render(){
     const db=urlC[b.url]>1?`<div class="dup-badge">!</div>`:'';
     const carr=(b.colors||'').split(',').map(c=>c.trim()).filter(Boolean);
     const cd=carr.length?`<div class="cdots">${carr.slice(0,8).map(c=>`<div class="cdot-c" style="background:${cHex(c)}"></div>`).join('')}</div>`:'';
-    const nm=(b.name||b.price)?`<div class="card-name"><span class="card-name-txt">${b.name||''}</span>${b.price?`<span class="card-name-price">💲${b.price}</span>`:''}</div>`:'';
+    const nm=(b.name||b.price)?`<div class="card-name"><span class="card-name-txt">${b.name||''}</span>${b.price?`<span class="card-name-price">₺${b.price}</span>`:''}</div>`:'';
     const su=(b.url||'').replace(/'/g,"&#39;");const si=(b.img||'').replace(/'/g,"&#39;");
     return`<div class="card" style="animation-delay:${i*.02}s">
       <div class="card-thumb" onclick="openLB('${si}')">${imgH}<div class="sdot sk"></div>${db}</div>
@@ -1003,7 +1010,7 @@ async function drawCard(b){
   // السعر
   if(priceVal){
     ctx.fillStyle='#c8962e'; ctx.font='700 13px Inter,sans-serif';
-    ctx.textAlign='right'; ctx.fillText('💲 '+priceVal,W-PAD,y); y+=28;
+    ctx.textAlign='right'; ctx.fillText('₺ '+priceVal,W-PAD,y); y+=28;
   }
 
   // ── الألوان ──
@@ -1149,7 +1156,7 @@ function openDetail(id){
   const ico=CATS.find(c=>c.id===b.cat)?.ico||'👜';
   document.getElementById('detImgWrap').innerHTML=b.img?`<img class="det-img" src="${b.img}" onclick="openLB('${b.img.replace(/'/g,"&#39;")}')" onerror="this.outerHTML='<div class=det-img-ph>${ico}</div>'" alt="">`:`<div class="det-img-ph">${ico}</div>`;
   document.getElementById('detName').textContent=b.name||'';
-  const pEl=document.getElementById('detPrice');pEl.textContent=b.price?'💲 '+b.price:'';pEl.style.display=b.price?'block':'none';
+  const pEl=document.getElementById('detPrice');pEl.textContent=b.price?'₺ '+b.price:'';pEl.style.display=b.price?'block':'none';
   document.getElementById('detStatus').className='det-status ds-k';document.getElementById('detStatus').textContent='';
   const carr=(b.colors||'').split(',').map(c=>c.trim()).filter(Boolean);
   document.getElementById('detColors').innerHTML=carr.map(c=>`<div class="det-sw"><div class="det-sd" style="background:${cHex(c)}"></div>${c}</div>`).join('');
