@@ -770,6 +770,8 @@ async function tryFetch(url){
     }catch(e){throw'x';}
   };
   const fns=[
+    // microlink أول — يفتح الصفحة كمتصفح حقيقي
+    async()=>{const r=await fetch(`https://api.microlink.io/?url=${enc}&meta=true`,{signal:AbortSignal.timeout(10000)});const d=await r.json();if(d?.status==='success'&&d?.data?.image?.url){const main=d.data.image.url;const extras=(d.data.images||[]).map(i=>typeof i==='string'?i:(i?.url||'')).filter(s=>s&&s.startsWith('http'));const imgs=[main,...extras].filter((s,i,a)=>a.indexOf(s)===i).slice(0,12);return{img:imgs[0],imgs,name:d.data?.title||''};}throw'x';},
     shopifyJson,
     async()=>{const r=await fetch(`https://api.allorigins.win/get?url=${enc}`,{signal:AbortSignal.timeout(7000)});const d=await r.json();const h=d.contents||'';const name=((h.match(/<title[^>]*>([^<]+)<\/title>/i)||[])[1]||'').trim().slice(0,50);
 // 1) كل og:image
@@ -781,7 +783,7 @@ const pgImgs=[...h.matchAll(/<img[^>]+src=["']([^"']+)["'][^>]*>/gi)].map(m=>m[1
 const allImgs=[...new Set([...ogImgs,...lazyImgs,...pgImgs])].filter(s=>s.length>10).slice(0,12);
 if(allImgs.length)return{img:allImgs[0],imgs:allImgs,name};throw'x';},
     async()=>{const r=await fetch(`https://corsproxy.io/?${enc}`,{signal:AbortSignal.timeout(7000)});const h=await r.text();const m=h.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/i)||h.match(/content=["']([^"']+)["'][^>]*property=["']og:image["']/i);if(m&&m[1]&&m[1].startsWith('http'))return{img:m[1],name:''};throw'x';},
-    async()=>{const r=await fetch(`https://api.microlink.io/?url=${enc}`,{signal:AbortSignal.timeout(7000)});const d=await r.json();if(d?.data?.image?.url)return{img:d.data.image.url,name:d.data?.title||''};throw'x';},
+    async()=>{const r=await fetch(`https://api.microlink.io/?url=${enc}&screenshot=false&meta=true&video=false`,{signal:AbortSignal.timeout(10000)});const d=await r.json();if(d?.data?.image?.url){const imgs=[d.data.image.url,...(d.data.images||[]).map(i=>typeof i==='string'?i:i?.url||'').filter(s=>s&&s.startsWith('http'))].filter((s,i,a)=>a.indexOf(s)===i).slice(0,12);return{img:imgs[0],imgs,name:d.data?.title||''};}throw'x';},
     async()=>{const r=await fetch(`https://jsonlink.io/api/extract?url=${enc}`,{signal:AbortSignal.timeout(7000)});const d=await r.json();if(d?.images?.[0])return{img:d.images[0],imgs:d.images.filter(s=>s.startsWith('http')).slice(0,10),name:d.title||''};throw'x';},
   ];
   const rs=await Promise.allSettled(fns.map(f=>f()));
