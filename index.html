@@ -202,7 +202,7 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .am-img-col{flex-shrink:0;width:42%;display:flex;flex-direction:column;}
 .am-img-box{width:100%;flex:1;min-height:150px;background:var(--bg);border-radius:9px;border:1.5px solid var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:28px;position:relative;}
 [data-theme="dark"] .am-img-box{background:#111;}
-.am-img-box img{width:100%;height:100%;object-fit:contain;position:absolute;inset:0;}
+.am-img-box img{width:100%;height:100%;object-fit:cover;object-position:center 60%;position:absolute;inset:0;}
 .am-spin{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:var(--bg);}
 [data-theme="dark"] .am-spin{background:#111;}
 .am-spin.show{display:flex;}
@@ -255,6 +255,23 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .am-inp:focus{border-color:var(--gold);}
 .am-inp::placeholder{color:var(--text2);font-size:12px;}
 .am-manual{display:none;}
+/* crop preview overlay on image box */
+.am-crop-ov{position:absolute;inset:0;pointer-events:none;z-index:3;}
+.am-crop-frame{position:absolute;left:0;right:0;top:0;bottom:0;box-shadow:0 0 0 2px var(--gold),inset 0 0 0 1px rgba(200,150,46,.3);border-radius:0;}
+/* crop corner marks */
+.am-crop-frame::before,.am-crop-frame::after{content:'';position:absolute;width:14px;height:14px;border-color:var(--gold);border-style:solid;}
+.am-crop-frame::before{top:-1px;right:-1px;border-width:2px 2px 0 0;}
+.am-crop-frame::after{bottom:-1px;left:-1px;border-width:0 0 2px 2px;}
+/* inner crop shadow to show what gets cut */
+.am-crop-inner{position:absolute;border:1px dashed rgba(200,150,46,.5);border-radius:0;}
+/* thumbnail strip improved */
+.am-thumbs{display:flex;gap:5px;overflow-x:auto;padding:3px 0;scrollbar-width:none;flex-shrink:0;}
+.am-thumbs::-webkit-scrollbar{display:none;}
+.am-thumb{width:48px;height:48px;border-radius:7px;border:2px solid var(--border);overflow:hidden;cursor:pointer;flex-shrink:0;transition:border-color .15s,transform .15s,box-shadow .15s;background:var(--bg2);position:relative;}
+.am-thumb img{width:100%;height:100%;object-fit:cover;object-position:center 60%;display:block;}
+.am-thumb.sel{border-color:var(--gold);box-shadow:0 0 0 2px rgba(200,150,46,.3);}
+.am-thumb:active{transform:scale(.92);}
+.am-thumb-num{position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,.55);color:#fff;font-size:7px;font-weight:700;border-radius:3px;padding:1px 3px;line-height:1.2;}
 /* price field */
 .am-price-field{font-family:inherit;font-size:12px;color:var(--text);outline:none;text-align:right;cursor:text;}
 [data-lang="en"] .am-price-field{text-align:left;}
@@ -512,6 +529,7 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
       <div class="am-spin-txt" id="amSpinTxt">جاري الجلب...</div>
      </div>
      <div class="am-retry" id="amRetry"><button class="am-retry-btn" onclick="retryFetch()">↻</button></div>
+     <div class="am-crop-ov" id="amCropOv" style="display:none"><div class="am-crop-frame"></div></div>
     </div>
     <!-- RIGHT: buttons stacked -->
     <div class="am-btns">
@@ -780,10 +798,10 @@ async function doFetch(url){
 }
 function showSpin(on){document.getElementById('amSpin').classList.toggle('show',on);}
 function showRetry(on){document.getElementById('amRetry').classList.toggle('show',on);}
-function clearImgBox(){const b=document.getElementById('amImgBox');const i=b.querySelector('img');if(i)i.remove();document.getElementById('amImgPH').style.display='flex';}
-function setImgBox(src){const b=document.getElementById('amImgBox');document.getElementById('amImgPH').style.display='none';let img=b.querySelector('img');if(!img){img=document.createElement('img');b.appendChild(img);}img.src=src;img.onerror=()=>{img.remove();document.getElementById('amImgPH').style.display='flex';showRetry(true);curImg='';};}
+function clearImgBox(){const b=document.getElementById('amImgBox');const i=b.querySelector('img');if(i)i.remove();document.getElementById('amImgPH').style.display='flex';const ov=document.getElementById('amCropOv');if(ov)ov.style.display='none';}
+function setImgBox(src){const b=document.getElementById('amImgBox');document.getElementById('amImgPH').style.display='none';let img=b.querySelector('img');if(!img){img=document.createElement('img');b.appendChild(img);}img.src=src;img.onload=()=>{const ov=document.getElementById('amCropOv');if(ov)ov.style.display='block';};img.onerror=()=>{img.remove();document.getElementById('amImgPH').style.display='flex';showRetry(true);curImg='';const ov=document.getElementById('amCropOv');if(ov)ov.style.display='none';};}img.src=src;img.onerror=()=>{img.remove();document.getElementById('amImgPH').style.display='flex';showRetry(true);curImg='';};}
 function retryFetch(){const u=document.getElementById('urlInp').value.trim();if(u){playClick();doFetch(u);}}
-function showThumbs(imgs){const strip=document.getElementById('amThumbs');if(!imgs||imgs.length<1){strip.style.display='none';strip.innerHTML='';return;}strip.innerHTML=imgs.slice(0,10).map((src,i)=>`<div class="am-thumb${i===0?' sel':''}" onclick="selectThumb(this,'${src.replace(/'/g,"\'")}')"><img src="${src}" onerror="this.parentNode.style.display='none'" alt=""></div>`).join('');strip.style.display='flex';}
+function showThumbs(imgs){const strip=document.getElementById('amThumbs');if(!imgs||imgs.length<1){strip.style.display='none';strip.innerHTML='';return;}strip.innerHTML=imgs.slice(0,12).map((src,i)=>`<div class="am-thumb${i===0?' sel':''}" onclick="selectThumb(this,'${src.replace(/'/g,"\'")}')"><img src="${src}" onerror="this.parentNode.remove()" alt=""><span class="am-thumb-num">${i+1}</span></div>`).join('');strip.style.display='flex';}
 function hideThumbs(){const s=document.getElementById('amThumbs');s.style.display='none';s.innerHTML='';}
 function selectThumb(el,src){document.querySelectorAll('.am-thumb').forEach(t=>t.classList.remove('sel'));el.classList.add('sel');curImg=src;setImgBox(src);}
 function handleImgBoxClick(){if(!curImg)triggerFile();}
