@@ -652,6 +652,7 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
  <button onclick="document.getElementById('iosHint').style.display='none'" style="background:var(--gold);color:#000;border:none;border-radius:8px;padding:6px 18px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">حسناً</button>
 </div>
 <div class="toast" id="toast"></div>
+<iframe id="pgFrame" style="display:none;width:1px;height:1px;position:fixed;top:-9999px;left:-9999px;" sandbox="allow-scripts allow-same-origin"></iframe>
 
 <script>
 const GS='https://script.google.com/macros/s/AKfycbwAsRo6SpOYqMfcWxFbl2gqLLjbEYjVvecSIVAfO-IFrM0Gek4uc0vhhukZqwH71hI/exec';
@@ -748,43 +749,62 @@ async function pushSheets(){try{await fetch(GS,{method:'POST',body:JSON.stringif
 // IMAGE FETCH
 async function tryFetch(url){
   const enc=encodeURIComponent(url);
-  // Shopify/altuda special: try product JSON API
+
+  // ── طريقة iframe: نفتح الصفحة الحقيقية ونسحب صورها ──
+  const iframeFetch=()=>new Promise((resolve,reject)=>{
+    const fr=document.getElementById('pgFrame');
+    if(!fr){reject('no iframe');return;}
+    const timer=setTimeout(()=>{fr.onload=null;reject('timeout');},9000);
+    fr.onload=()=>{
+      clearTimeout(timer);
+      try{
+        const doc=fr.contentDocument||fr.contentWindow?.document;
+        if(!doc){reject('no doc');return;}
+        // جمع كل الصور
+        const imgs=[...doc.querySelectorAll('img')].map(i=>i.src||i.dataset.src||i.dataset.lazy||i.dataset.original||'').filter(s=>s&&s.startsWith('http')&&/\.(jpg|jpeg|png|webp)/i.test(s.split('?')[0])&&!/logo|icon|sprite|pixel|svg/i.test(s));
+        const title=doc.title||'';
+        const uniq=[...new Set(imgs)].slice(0,12);
+        if(uniq.length){resolve({img:uniq[0],imgs:uniq,name:title});}
+        else reject('no imgs');
+      }catch(e){reject('cors:'+e);}
+    };
+    fr.onerror=()=>{clearTimeout(timer);reject('load error');};
+    fr.src=url;
+  });
+
   const shopifyJson=async()=>{
     try{
       const u=new URL(url);
-      // handle: /products/slug or /products/slug?...
       const m=u.pathname.match(/\/products\/([^/?#]+)/);
       if(!m)throw'x';
       const jsonUrl=`${u.origin}/products/${m[1]}.json`;
       const enc2=encodeURIComponent(jsonUrl);
-      // try direct first (some shops allow CORS)
       try{
         const r=await fetch(jsonUrl,{signal:AbortSignal.timeout(5000)});
         if(r.ok){const d=await r.json();const imgs=d?.product?.images;if(imgs?.length)return{img:imgs[0].src,imgs:imgs.map(i=>i.src),name:d.product.title||''};}
       }catch(e){}
-      // then via proxy
       const r=await fetch(`https://api.allorigins.win/get?url=${enc2}`,{signal:AbortSignal.timeout(7000)});
       const d=await r.json();const pd=JSON.parse(d.contents||'{}');
       const imgs=pd?.product?.images;if(imgs?.length)return{img:imgs[0].src,imgs:imgs.map(i=>i.src),name:pd.product.title||''};
       throw'x';
     }catch(e){throw'x';}
   };
+
+  // جرب iframe أولاً (يعطي أفضل نتيجة إذا السماح بـ CORS)
+  try{const res=await iframeFetch();if(res?.imgs?.length>1)return res;}catch(e){}
+
   const fns=[
-    // microlink أول — يفتح الصفحة كمتصفح حقيقي
+    // microlink
     async()=>{const r=await fetch(`https://api.microlink.io/?url=${enc}&meta=true`,{signal:AbortSignal.timeout(10000)});const d=await r.json();if(d?.status==='success'&&d?.data?.image?.url){const main=d.data.image.url;const extras=(d.data.images||[]).map(i=>typeof i==='string'?i:(i?.url||'')).filter(s=>s&&s.startsWith('http'));const imgs=[main,...extras].filter((s,i,a)=>a.indexOf(s)===i).slice(0,12);return{img:imgs[0],imgs,name:d.data?.title||''};}throw'x';},
     shopifyJson,
     async()=>{const r=await fetch(`https://api.allorigins.win/get?url=${enc}`,{signal:AbortSignal.timeout(7000)});const d=await r.json();const h=d.contents||'';const name=((h.match(/<title[^>]*>([^<]+)<\/title>/i)||[])[1]||'').trim().slice(0,50);
-// 1) كل og:image
 const ogImgs=[...h.matchAll(/content=["']([^"']+)["'][^>]*property=["']og:image["']|property=["']og:image["'][^>]*content=["']([^"']+)["']/gi)].map(m=>m[1]||m[2]).filter(Boolean);
-// 2) صور lazy-load (data-src, data-lazy, data-original)
 const lazyImgs=[...h.matchAll(/data-(?:src|lazy|original|zoom-image)=["']([^"']+)["']/gi)].map(m=>m[1]).filter(s=>s.startsWith('http')&&/\.(jpg|jpeg|png|webp)/i.test(s));
-// 3) صور عادية كبيرة (نستثني الـ svg والأيقونات والشعارات)
-const pgImgs=[...h.matchAll(/<img[^>]+src=["']([^"']+)["'][^>]*>/gi)].map(m=>m[1]).filter(s=>s.startsWith('http')&&/\.(jpg|jpeg|png|webp)/i.test(s)&&!/logo|icon|sprite|pixel|track|thumb-xs|_50|_60|_70|_80|_100/i.test(s));
+const pgImgs=[...h.matchAll(/<img[^>]+src=["']([^"']+)["'][^>]*>/gi)].map(m=>m[1]).filter(s=>s.startsWith('http')&&/\.(jpg|jpeg|png|webp)/i.test(s)&&!/logo|icon|sprite|pixel|track|_50|_60|_70|_80|_100/i.test(s));
 const allImgs=[...new Set([...ogImgs,...lazyImgs,...pgImgs])].filter(s=>s.length>10).slice(0,12);
 if(allImgs.length)return{img:allImgs[0],imgs:allImgs,name};throw'x';},
     async()=>{const r=await fetch(`https://corsproxy.io/?${enc}`,{signal:AbortSignal.timeout(7000)});const h=await r.text();const m=h.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/i)||h.match(/content=["']([^"']+)["'][^>]*property=["']og:image["']/i);if(m&&m[1]&&m[1].startsWith('http'))return{img:m[1],name:''};throw'x';},
-    async()=>{const r=await fetch(`https://api.microlink.io/?url=${enc}&screenshot=false&meta=true&video=false`,{signal:AbortSignal.timeout(10000)});const d=await r.json();if(d?.data?.image?.url){const imgs=[d.data.image.url,...(d.data.images||[]).map(i=>typeof i==='string'?i:i?.url||'').filter(s=>s&&s.startsWith('http'))].filter((s,i,a)=>a.indexOf(s)===i).slice(0,12);return{img:imgs[0],imgs,name:d.data?.title||''};}throw'x';},
-    async()=>{const r=await fetch(`https://jsonlink.io/api/extract?url=${enc}`,{signal:AbortSignal.timeout(7000)});const d=await r.json();if(d?.images?.[0])return{img:d.images[0],imgs:d.images.filter(s=>s.startsWith('http')).slice(0,10),name:d.title||''};throw'x';},
+    async()=>{const r=await fetch(`https://jsonlink.io/api/extract?url=${enc}`,{signal:AbortSignal.timeout(7000)});const d=await r.json();if(d?.images?.[0])return{img:d.images[0],imgs:d.images.filter(s=>s.startsWith('http')).slice(0,12),name:d.title||''};throw'x';},
   ];
   const rs=await Promise.allSettled(fns.map(f=>f()));
   for(const r of rs){if(r.status==='fulfilled'&&r.value?.img)return r.value;}
