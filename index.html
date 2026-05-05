@@ -1010,7 +1010,7 @@ async function drawCard(b){
   }
 
   // ── تحميل صور المنتجات الأخرى من نفس التصنيف ──
-  const others = bags.filter(x=>x.id!==b.id && x.cat===b.cat && x.img).slice(0,5);
+  const others = bags.filter(x=>x.id!==b.id && x.cat===b.cat && x.img).slice(0,4);
   const thumbEls = await Promise.all(others.map(o=>new Promise(res=>{
     const i=new Image(); i.crossOrigin='anonymous';
     i.onload=()=>res(i); i.onerror=()=>res(null);
@@ -1019,19 +1019,33 @@ async function drawCard(b){
   const validThumbs = thumbEls.filter(Boolean);
 
   const W=400, PAD=16, R=18, DPR=2;
-  const IMG_H = imgEl
-    ? Math.min(Math.round(W * imgEl.naturalHeight/imgEl.naturalWidth), Math.round(W*1.05))
-    : 240;
-
-  // ── شريط الصور المصغّرة ──
-  const THUMB_S=70, THUMB_R=10, THUMB_GAP=7;
   const hasThumb = validThumbs.length > 0;
-  const THUMB_ROW_H = hasThumb ? THUMB_S + 18 : 0;
 
-  // ── حساب ارتفاع القسم السفلي ──
+  // ── أبعاد القسمين (يسار/يمين) ──
+  const MAIN_W  = hasThumb ? 262 : W;   // عرض الصورة الكبيرة
+  const DIV_GAP = hasThumb ? 5 : 0;     // الفاصل بين العمودين
+  const THUMB_COL_X = MAIN_W + DIV_GAP;
+  const THUMB_X_PAD = 7;
+  const THUMB_INNER_X = THUMB_COL_X + THUMB_X_PAD;
+  const THUMB_W = W - THUMB_INNER_X - THUMB_X_PAD;
+  const THUMB_GAP = 6;
+  const N = validThumbs.length;
+
+  // ارتفاع القسم العلوي مبني على نسبة الصورة الرئيسية
+  const TOP_H = imgEl
+    ? Math.min(Math.max(Math.round(MAIN_W * imgEl.naturalHeight/imgEl.naturalWidth), 230), 360)
+    : 260;
+
+  // ارتفاع كل صورة مصغّرة يملأ الطول كاملاً بالتساوي
+  const THUMB_H = N > 0
+    ? Math.floor((TOP_H - 2*THUMB_X_PAD - Math.max(N-1,0)*THUMB_GAP) / N)
+    : 0;
+  const totalThumbH = N*THUMB_H + Math.max(N-1,0)*THUMB_GAP;
+  const THUMB_Y0 = Math.round((TOP_H - totalThumbH) / 2);
+
+  // ── ارتفاع قسم المعلومات ──
   const colorArr = colorsVal ? colorsVal.split(/[,،]/).map(c=>c.trim()).filter(Boolean) : [];
   const sizeArr  = sizesVal  ? sizesVal.split(/[,،\/ ]+/).map(s=>s.trim()).filter(Boolean) : [];
-
   let INFO = PAD;
   if(nameVal)          INFO+=32;
   if(priceVal)         INFO+=28;
@@ -1041,74 +1055,86 @@ async function drawCard(b){
   if(!sizeArr.length)  INFO+=22;
   INFO+=24;
 
-  const H = IMG_H + THUMB_ROW_H + INFO;
-  const canvas=document.createElement('canvas');
+  const H = TOP_H + INFO;
+  const canvas = document.createElement('canvas');
   canvas.width=W*DPR; canvas.height=H*DPR;
   canvas.style.cssText=`width:100%;display:block;border-radius:${R}px;
     box-shadow:0 10px 40px rgba(0,0,0,.2),0 2px 8px rgba(0,0,0,.1);`;
-  const ctx=canvas.getContext('2d');
+  const ctx = canvas.getContext('2d');
   ctx.scale(DPR,DPR);
 
-  // ── خلفية ──
+  // ── خلفية البطاقة ──
   ctx.fillStyle='#faf9f7';
   rr(ctx,0,0,W,H,R); ctx.fill();
 
-  // ── الصورة الرئيسية الكبيرة ──
+  // ── خلفية عمود الصور المصغّرة ──
+  if(hasThumb){
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(THUMB_COL_X,0); ctx.lineTo(W-R,0);
+    ctx.quadraticCurveTo(W,0,W,R);
+    ctx.lineTo(W,TOP_H); ctx.lineTo(THUMB_COL_X,TOP_H);
+    ctx.closePath();
+    ctx.fillStyle='#ece8e2'; ctx.fill();
+    ctx.restore();
+  }
+
+  // ── الصورة الرئيسية الكبيرة (يسار) ──
   ctx.save();
-  rr(ctx,0,0,W,IMG_H, hasThumb?0:R); ctx.clip();
-  ctx.fillStyle='#f0ede8'; ctx.fillRect(0,0,W,IMG_H);
+  ctx.beginPath();
+  ctx.moveTo(R,0); ctx.lineTo(MAIN_W,0);
+  ctx.lineTo(MAIN_W,TOP_H); ctx.lineTo(0,TOP_H);
+  ctx.lineTo(0,R); ctx.quadraticCurveTo(0,0,R,0);
+  ctx.closePath(); ctx.clip();
+  ctx.fillStyle='#f0ede8'; ctx.fillRect(0,0,MAIN_W,TOP_H);
   if(imgEl){
-    const s=Math.min(W/imgEl.naturalWidth, IMG_H/imgEl.naturalHeight);
+    const s=Math.min(MAIN_W/imgEl.naturalWidth, TOP_H/imgEl.naturalHeight);
     const dw=imgEl.naturalWidth*s, dh=imgEl.naturalHeight*s;
-    ctx.drawImage(imgEl,(W-dw)/2,(IMG_H-dh)/2,dw,dh);
+    ctx.drawImage(imgEl,(MAIN_W-dw)/2,(TOP_H-dh)/2,dw,dh);
   } else {
     ctx.font='64px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('👜',W/2,IMG_H/2);
+    ctx.fillText(CATS.find(c=>c.id===b.cat)?.ico||'👜',MAIN_W/2,TOP_H/2);
   }
   ctx.restore();
 
-  // ── Trend Store فوق الصورة ──
+  // ── "Trend Store" فوق الصورة ──
   ctx.font='700 13px Inter,sans-serif';
-  ctx.textBaseline='top'; ctx.shadowColor='rgba(0,0,0,.5)'; ctx.shadowBlur=8;
-  ctx.fillStyle='#ffffff'; ctx.fillText('Trend ',14,13);
+  ctx.textBaseline='top'; ctx.shadowColor='rgba(0,0,0,.55)'; ctx.shadowBlur=8;
+  ctx.fillStyle='#fff'; ctx.fillText('Trend ',14,13);
   const tW=ctx.measureText('Trend ').width;
   ctx.fillStyle='#c8962e'; ctx.fillText('Store',14+tW,13);
   ctx.shadowBlur=0; ctx.shadowColor='transparent';
 
-  // ── خط فاصل ذهبي بعد الصورة الرئيسية ──
-  const g=ctx.createLinearGradient(0,IMG_H,W,IMG_H);
-  g.addColorStop(0,'transparent'); g.addColorStop(.4,'rgba(200,150,46,.4)');
-  g.addColorStop(.6,'rgba(200,150,46,.4)'); g.addColorStop(1,'transparent');
-  ctx.strokeStyle=g; ctx.lineWidth=1.5;
-  ctx.beginPath(); ctx.moveTo(0,IMG_H); ctx.lineTo(W,IMG_H); ctx.stroke();
-
-  // ── شريط الصور المصغّرة لبقية المنتجات ──
+  // ── فاصل رفيع ذهبي بين العمودين ──
   if(hasThumb){
-    const ty = IMG_H + 9;
-    let tx = PAD;
-    for(const th of validThumbs){
-      ctx.save();
-      rr(ctx,tx,ty,THUMB_S,THUMB_S,THUMB_R); ctx.clip();
-      ctx.fillStyle='#ece8e2'; ctx.fillRect(tx,ty,THUMB_S,THUMB_S);
-      const s=Math.min(THUMB_S/th.naturalWidth, THUMB_S/th.naturalHeight);
-      const dw=th.naturalWidth*s, dh=th.naturalHeight*s;
-      ctx.drawImage(th, tx+(THUMB_S-dw)/2, ty+(THUMB_S-dh)/2, dw, dh);
-      ctx.restore();
-      ctx.strokeStyle='rgba(0,0,0,.09)'; ctx.lineWidth=1;
-      ctx.beginPath(); rr(ctx,tx+.5,ty+.5,THUMB_S-1,THUMB_S-1,THUMB_R); ctx.stroke();
-      tx += THUMB_S + THUMB_GAP;
-      if(tx + THUMB_S > W - PAD) break;
-    }
-    // خط فاصل بعد الصور المصغّرة
-    const sep = IMG_H + THUMB_ROW_H - 4;
-    ctx.strokeStyle='rgba(0,0,0,.06)'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(PAD,sep); ctx.lineTo(W-PAD,sep); ctx.stroke();
+    ctx.strokeStyle='rgba(200,150,46,.28)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(THUMB_COL_X,0); ctx.lineTo(THUMB_COL_X,TOP_H); ctx.stroke();
   }
 
-  // ── معلومات ──
-  let y = IMG_H + THUMB_ROW_H + PAD;
-  ctx.textBaseline='top';
+  // ── الصور المصغّرة (يمين) ──
+  for(let i=0;i<N;i++){
+    const th=validThumbs[i]; if(!th) continue;
+    const ty=THUMB_Y0 + i*(THUMB_H+THUMB_GAP);
+    ctx.save();
+    rr(ctx,THUMB_INNER_X,ty,THUMB_W,THUMB_H,7); ctx.clip();
+    ctx.fillStyle='#e4dfd8'; ctx.fillRect(THUMB_INNER_X,ty,THUMB_W,THUMB_H);
+    const s=Math.min(THUMB_W/th.naturalWidth, THUMB_H/th.naturalHeight);
+    const dw=th.naturalWidth*s, dh=th.naturalHeight*s;
+    ctx.drawImage(th,THUMB_INNER_X+(THUMB_W-dw)/2,ty+(THUMB_H-dh)/2,dw,dh);
+    ctx.restore();
+    ctx.strokeStyle='rgba(0,0,0,.08)'; ctx.lineWidth=1;
+    ctx.beginPath(); rr(ctx,THUMB_INNER_X+.5,ty+.5,THUMB_W-1,THUMB_H-1,7); ctx.stroke();
+  }
 
+  // ── خط ذهبي فاصل أسفل القسم العلوي ──
+  const gd=ctx.createLinearGradient(0,TOP_H,W,TOP_H);
+  gd.addColorStop(0,'transparent'); gd.addColorStop(.35,'rgba(200,150,46,.45)');
+  gd.addColorStop(.65,'rgba(200,150,46,.45)'); gd.addColorStop(1,'transparent');
+  ctx.strokeStyle=gd; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(0,TOP_H); ctx.lineTo(W,TOP_H); ctx.stroke();
+
+  // ── معلومات المنتج ──
+  let y=TOP_H+PAD; ctx.textBaseline='top';
   if(nameVal){
     ctx.fillStyle='#1a1410'; ctx.font='700 14px Tajawal,sans-serif';
     ctx.textAlign='right'; ctx.fillText(nameVal,W-PAD,y); y+=32;
@@ -1117,7 +1143,6 @@ async function drawCard(b){
     ctx.fillStyle='#c8962e'; ctx.font='700 13px Inter,sans-serif';
     ctx.textAlign='right'; ctx.fillText('₺ '+priceVal,W-PAD,y); y+=28;
   }
-
   ctx.fillStyle='#aaa'; ctx.font='600 9px Inter,sans-serif';
   ctx.textAlign='left'; ctx.fillText('COLORS',PAD,y); y+=14;
   if(colorArr.length){
@@ -1137,7 +1162,6 @@ async function drawCard(b){
     ctx.fillStyle='#ccc'; ctx.font='400 11px sans-serif';
     ctx.textAlign='left'; ctx.fillText('★  —',PAD,y); y+=22;
   }
-
   ctx.fillStyle='#aaa'; ctx.font='600 9px Inter,sans-serif';
   ctx.textAlign='left'; ctx.textBaseline='top';
   ctx.fillText('SIZES',PAD,y); y+=14;
@@ -1158,11 +1182,11 @@ async function drawCard(b){
     ctx.fillStyle='#ccc'; ctx.font='400 11px sans-serif';
     ctx.textAlign='left'; ctx.fillText('★  —',PAD,y); y+=26;
   }
-
   ctx.fillStyle='rgba(0,0,0,.2)'; ctx.font='400 9px Inter,sans-serif';
   ctx.textAlign='right'; ctx.textBaseline='bottom';
   ctx.fillText('Gacela Gallery',W-PAD,H-8);
 
+  // ── حدود البطاقة ──
   ctx.strokeStyle='rgba(0,0,0,.06)'; ctx.lineWidth=1;
   ctx.beginPath(); rr(ctx,.5,.5,W-1,H-1,R); ctx.stroke();
 
