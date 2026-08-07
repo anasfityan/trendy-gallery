@@ -1,5 +1,6 @@
-const CACHE = 'tg-v10';
-const CORE = ['./index.html','./manifest.json','./logo.png','./icon-192.png'];
+const CACHE = 'tg-v11';
+const CORE = ['./index.html','./manifest.json','./logo.png','./icon-192.png','./enhancements.js'];
+const ENHANCEMENT_TAG = '<script src="./enhancements.js"></script>';
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)));
@@ -43,19 +44,46 @@ async function putSafe(request, response) {
   await cache.put(request, response.clone());
 }
 
+async function injectEnhancements(response) {
+  if (!response || !response.ok) return response;
+  const type = response.headers.get('content-type') || '';
+  if (!type.includes('text/html')) return response;
+
+  const html = await response.text();
+  if (html.includes('enhancements.js')) {
+    return new Response(html, { status: response.status, statusText: response.statusText, headers: response.headers });
+  }
+
+  const enhanced = html.includes('</body>')
+    ? html.replace('</body>', `${ENHANCEMENT_TAG}\n</body>`)
+    : `${html}\n${ENHANCEMENT_TAG}`;
+
+  const headers = new Headers(response.headers);
+  headers.delete('content-length');
+  return new Response(enhanced, { status: response.status, statusText: response.statusText, headers });
+}
+
+async function networkFirstDocument(request) {
+  try {
+    const raw = await fetch(request);
+    const response = await injectEnhancements(raw);
+    await putSafe(request, response);
+    return response;
+  } catch (error) {
+    const cached = await caches.match(request, { ignoreSearch: true }) || await caches.match('./index.html');
+    if (cached) return injectEnhancements(cached);
+    throw error;
+  }
+}
+
 async function networkFirst(request) {
   try {
     const response = await fetch(request);
     await putSafe(request, response);
     return response;
   } catch (error) {
-    const cached = await caches.match(request, { ignoreSearch: request.mode === 'navigate' });
+    const cached = await caches.match(request);
     if (cached) return cached;
-
-    if (request.mode === 'navigate') {
-      const fallback = await caches.match('./index.html');
-      if (fallback) return fallback;
-    }
     throw error;
   }
 }
@@ -97,7 +125,7 @@ self.addEventListener('fetch', event => {
   if (!isSameOrigin(request)) return;
 
   if (request.mode === 'navigate' || request.destination === 'document') {
-    event.respondWith(networkFirst(request));
+    event.respondWith(networkFirstDocument(request));
     return;
   }
 
@@ -113,5 +141,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Unknown same-origin GET requests stay network-only by default.
+  if (new URL(request.url).pathname.endsWith('/enhancements.js')) {
+    event.respondWith(networkFirst(request));
+  }
 });
