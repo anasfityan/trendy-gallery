@@ -23,23 +23,25 @@ The Apps Script source is not stored in this repository, so these controls must 
 9. Restrict deployment permissions to the minimum access level required by the application.
 10. Log failed and rejected write attempts without logging sensitive values.
 
-## Client-side hardening still required in `index.html`
+## Client-side hardening
 
-The main application file is intentionally not rewritten wholesale during the first hardening pass because it is a large single-file application and preserving the approved UI/behavior is a priority.
+The approved UI remains in `index.html`. Targeted product-import/card improvements are isolated in `enhancements.js` so they can be reviewed or reverted without rewriting the main UI.
 
-Before treating imported/synced data as trusted, the following changes should be made in a controlled refactor:
+The enhancement layer validates imported image URLs, filters obvious logos/icons/tracking images, prefers structured product data (Shopify JSON and JSON-LD), stores alternate images on the same product record, uses those images in the customer card, and disables automatic background refresh while preserving the manual sync action.
 
-- Replace dynamic HTML interpolation of product-controlled values with DOM APIs (`textContent`, `setAttribute`) or strict escaping.
-- Validate `http:`/`https:` URLs before assigning them to `src`, `href`, iframe, clipboard-open, or `window.open` flows.
-- Remove the hidden cross-origin iframe importer. Same-origin policy makes it unreliable, and it increases the attack surface.
-- Sanitize/validate data received from Google Apps Script before merging it into local state.
-- Put maximum lengths on names, notes, colors, sizes, URLs, and imported metadata.
-- Validate numeric price values rather than storing arbitrary strings.
-- Avoid storing uploaded image Data URLs in `localStorage` as the catalog grows; use IndexedDB or managed object storage.
+The existing importer remains available as a fallback for sites that do not expose enough structured metadata.
+
+Further work should still replace dynamic HTML interpolation of product-controlled values in `index.html` with DOM APIs or strict escaping, remove the legacy hidden iframe importer, validate synced Google Apps Script data before merging it into local state, cap user/imported field lengths, and validate numeric prices.
+
+## Storage
+
+Avoid storing large uploaded image Data URLs in `localStorage` as the catalog grows. IndexedDB or managed object storage is the preferred future storage path for larger catalogs.
 
 ## Service Worker policy
 
-The Service Worker must only persist same-origin static application resources. Google Apps Script responses, third-party import proxy responses, remote stores, and third-party product images remain network-only and must not be stored in the application cache.
+The Service Worker persists only same-origin application resources. Google Apps Script responses, third-party import proxy responses, remote stores, and third-party product images remain network-only and are not persisted in the application cache.
+
+The Service Worker injects the isolated `enhancements.js` layer into HTML navigation responses so the approved monolithic UI file does not have to be rewritten for this targeted upgrade.
 
 ## Secrets
 
