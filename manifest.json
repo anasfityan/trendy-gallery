@@ -1,13 +1,17 @@
 {
+  "id": "./",
   "name": "Trendy Gallery",
   "short_name": "Trendy",
   "description": "ترندي معرض",
+  "lang": "ar",
+  "dir": "rtl",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#0d0d0d",
   "orientation": "portrait-primary",
+  "prefer_related_applications": false,
   "icons": [
     {"src":"icon-96.png","sizes":"96x96","type":"image/png","purpose":"any"},
     {"src":"icon-144.png","sizes":"144x144","type":"image/png","purpose":"any"},
