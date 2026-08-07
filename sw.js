@@ -1,18 +1,147 @@
-const CACHE = 'tg-v8';
-const CORE = ['./index.html','./manifest.json','./logo.png','./icon-192.png'];
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)));
+const CACHE = 'tg-v11';
+const CORE = ['./index.html','./manifest.json','./logo.png','./icon-192.png','./enhancements.js'];
+const ENHANCEMENT_TAG = '<script src="./enhancements.js"></script>';
+
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)));
   self.skipWaiting();
 });
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))));
-  clients.claim();
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))
+    )
+  );
+  self.clients.claim();
 });
-self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
-  e.respondWith(fetch(e.request).then(r => {
-    const rc = r.clone();
-    caches.open(CACHE).then(c => c.put(e.request, rc));
-    return r;
-  }).catch(() => caches.match(e.request)));
+
+function isSameOrigin(request) {
+  try {
+    return new URL(request.url).origin === self.location.origin;
+  } catch {
+    return false;
+  }
+}
+
+function canStore(request, response) {
+  if (!isSameOrigin(request)) return false;
+  if (!response || !response.ok || response.type !== 'basic') return false;
+  if (request.method !== 'GET') return false;
+
+  const destination = request.destination;
+  return destination === 'document' ||
+    destination === 'style' ||
+    destination === 'script' ||
+    destination === 'image' ||
+    destination === 'manifest' ||
+    destination === 'font';
+}
+
+async function putSafe(request, response) {
+  if (!canStore(request, response)) return;
+  const cache = await caches.open(CACHE);
+  await cache.put(request, response.clone());
+}
+
+async function injectEnhancements(response) {
+  if (!response || !response.ok) return response;
+  const type = response.headers.get('content-type') || '';
+  if (!type.includes('text/html')) return response;
+
+  const html = await response.text();
+  if (html.includes('enhancements.js')) {
+    return new Response(html, { status: response.status, statusText: response.statusText, headers: response.headers });
+  }
+
+  const enhanced = html.includes('</body>')
+    ? html.replace('</body>', `${ENHANCEMENT_TAG}\n</body>`)
+    : `${html}\n${ENHANCEMENT_TAG}`;
+
+  const headers = new Headers(response.headers);
+  headers.delete('content-length');
+  return new Response(enhanced, { status: response.status, statusText: response.statusText, headers });
+}
+
+async function networkFirstDocument(request) {
+  try {
+    const raw = await fetch(request);
+    const response = await injectEnhancements(raw);
+    await putSafe(request, response);
+    return response;
+  } catch (error) {
+    const cached = await caches.match(request, { ignoreSearch: true }) || await caches.match('./index.html');
+    if (cached) return injectEnhancements(cached);
+    throw error;
+  }
+}
+
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request);
+    await putSafe(request, response);
+    return response;
+  } catch (error) {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    throw error;
+  }
+}
+
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+
+  const response = await fetch(request);
+  await putSafe(request, response);
+  return response;
+}
+
+async function staleWhileRevalidate(request, event) {
+  const cached = await caches.match(request);
+  const refresh = fetch(request)
+    .then(async response => {
+      await putSafe(request, response);
+      return response;
+    })
+    .catch(() => null);
+
+  if (cached) {
+    event.waitUntil(refresh);
+    return cached;
+  }
+
+  const fresh = await refresh;
+  if (fresh) return fresh;
+  throw new Error('Network unavailable and resource is not cached');
+}
+
+self.addEventListener('fetch', event => {
+  const { request } = event;
+  if (request.method !== 'GET') return;
+
+  // External APIs, Google Apps Script, import proxies and remote product images
+  // are intentionally left to the browser. They are never persisted by this SW.
+  if (!isSameOrigin(request)) return;
+
+  if (request.mode === 'navigate' || request.destination === 'document') {
+    event.respondWith(networkFirstDocument(request));
+    return;
+  }
+
+  if (request.destination === 'image' || request.destination === 'font') {
+    event.respondWith(cacheFirst(request));
+    return;
+  }
+
+  if (request.destination === 'style' ||
+      request.destination === 'script' ||
+      request.destination === 'manifest') {
+    event.respondWith(staleWhileRevalidate(request, event));
+    return;
+  }
+
+  if (new URL(request.url).pathname.endsWith('/enhancements.js')) {
+    event.respondWith(networkFirst(request));
+  }
 });
