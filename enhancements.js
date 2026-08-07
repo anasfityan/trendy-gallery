@@ -12,9 +12,13 @@
     try { const u = new URL(value); return u.protocol === 'http:' || u.protocol === 'https:'; }
     catch { return false; }
   };
-  const safeImages = images => uniq(images).filter(validHttpUrl).filter(src => !/logo|icon|sprite|pixel|avatar|favicon|payment|badge/i.test(src)).slice(0, 12);
+  const safeImages = images => uniq(images)
+    .map(x => typeof x === 'string' ? x : (x?.url || x?.src || x?.contentUrl || ''))
+    .filter(validHttpUrl)
+    .filter(src => !/logo|icon|sprite|pixel|avatar|favicon|payment|badge|placeholder/i.test(src))
+    .slice(0, 12);
   const normalizePrice = value => {
-    const s = clean(value).replace(/\s/g, '');
+    const s = clean(value).replace(/\s/g, '').replace(/₺|TL|TRY/gi, '');
     const m = s.match(/\d[\d.,]*/);
     return m ? m[0] : '';
   };
@@ -46,7 +50,8 @@
 
   function meta(doc, ...keys) {
     for (const key of keys) {
-      const el = doc.querySelector(`meta[property="${CSS.escape(key)}"],meta[name="${CSS.escape(key)}"]`);
+      const escaped = window.CSS?.escape ? CSS.escape(key) : key.replace(/"/g, '\\"');
+      const el = doc.querySelector(`meta[property="${escaped}"],meta[name="${escaped}"]`);
       if (el?.content) return clean(el.content);
     }
     return '';
@@ -58,19 +63,11 @@
       const name = clean(opt?.name).toLowerCase();
       if (keyword.test(name)) values.push(...(opt?.values || []));
     });
-    if (!values.length) {
-      (product?.variants || []).forEach(v => {
-        [v.option1, v.option2, v.option3].forEach(x => {
-          const s = clean(x);
-          if (s && !/^default title$/i.test(s)) values.push(s);
-        });
-      });
-    }
-    return uniq(values.map(clean).filter(Boolean));
+    return uniq(values.map(clean).filter(Boolean).filter(v => !/^default title$/i.test(v)));
   }
 
   async function viaAllOrigins(url) {
-    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(9000) });
+    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(10000) });
     if (!r.ok) throw new Error('allorigins');
     const d = await r.json();
     return d.contents || '';
@@ -84,25 +81,29 @@
       const jsonUrl = `${u.origin}/products/${m[1]}.json`;
       let data;
       try {
-        const direct = await fetch(jsonUrl, { signal: AbortSignal.timeout(5000) });
+        const direct = await fetch(jsonUrl, { signal: AbortSignal.timeout(6000) });
         if (direct.ok) data = await direct.json();
       } catch {}
       if (!data) data = JSON.parse(await viaAllOrigins(jsonUrl));
       const p = data?.product;
       if (!p) return null;
-      const imgs = safeImages((p.images || []).map(i => i?.src));
+
+      const imgs = safeImages(p.images || []);
+      const availableVariant = (p.variants || []).find(v => v?.available !== false) || p.variants?.[0] || {};
+      const rawPrice = first(availableVariant.price, availableVariant.compare_at_price, p.price);
+      const price = normalizePrice(rawPrice);
       const colorOpt = optionValuesFromShopify(p, /color|colour|renk|لون/i);
       const sizeOpt = optionValuesFromShopify(p, /size|beden|numara|ölçü|مقاس|قياس/i);
-      const price = normalizePrice(p.variants?.find(v => v?.available !== false)?.price || p.variants?.[0]?.price || '');
+
       return {
         name: clean(p.title),
         img: imgs[0] || '',
         imgs,
         price,
-        currency: 'TRY',
+        currency: first(availableVariant.currency, 'TRY'),
         colors: colorOpt,
         sizes: sizeOpt,
-        productType: first(p.product_type, ...(p.tags || []))
+        productType: first(p.product_type, Array.isArray(p.tags) ? p.tags.join(' ') : p.tags)
       };
     } catch { return null; }
   }
@@ -111,22 +112,27 @@
     const doc = new DOMParser().parseFromString(html, 'text/html');
     const nodes = parseJsonLd(doc);
     const p = findProductLd(nodes);
-    const offers = Array.isArray(p?.offers) ? p.offers[0] : p?.offers;
+    const offerList = Array.isArray(p?.offers) ? p.offers : p?.offers ? [p.offers] : [];
+    const offer = offerList.find(o => o?.availability?.includes?.('InStock')) || offerList[0] || {};
 
     const ldImages = Array.isArray(p?.image) ? p.image : p?.image ? [p.image] : [];
-    const ogImages = [...doc.querySelectorAll('meta[property="og:image"],meta[name="twitter:image"]')].map(x => x.content);
+    const ogImages = [...doc.querySelectorAll('meta[property="og:image"],meta[name="twitter:image"],meta[property="product:image"]')].map(x => x.content);
     const productImgs = [...doc.querySelectorAll('img')]
-      .map(i => i.currentSrc || i.src || i.dataset.src || i.dataset.zoomImage || i.dataset.original || '')
+      .map(i => i.currentSrc || i.src || i.dataset.src || i.dataset.zoomImage || i.dataset.original || i.dataset.lazy || '')
       .filter(src => validHttpUrl(src));
     const imgs = safeImages([...ldImages, ...ogImages, ...productImgs]);
 
     const price = normalizePrice(first(
-      offers?.price,
-      meta(doc, 'product:price:amount', 'og:price:amount'),
+      offer?.price,
+      offer?.lowPrice,
+      meta(doc, 'product:price:amount', 'og:price:amount', 'twitter:data1'),
       doc.querySelector('[itemprop="price"]')?.getAttribute('content'),
-      doc.querySelector('[itemprop="price"]')?.textContent
+      doc.querySelector('[itemprop="price"]')?.textContent,
+      doc.querySelector('[data-product-price]')?.textContent,
+      doc.querySelector('[data-price]')?.getAttribute('data-price'),
+      doc.querySelector('.price')?.textContent
     ));
-    const currency = first(offers?.priceCurrency, meta(doc, 'product:price:currency', 'og:price:currency'), 'TRY');
+    const currency = first(offer?.priceCurrency, meta(doc, 'product:price:currency', 'og:price:currency'), 'TRY');
     const colors = textList(first(p?.color, meta(doc, 'product:color')));
     const sizes = textList(first(p?.size, meta(doc, 'product:size')));
     const productType = first(p?.category, meta(doc, 'product:category'), meta(doc, 'og:type'));
@@ -143,20 +149,19 @@
       const d = await r.json();
       if (d?.status === 'success') {
         const imgs = safeImages([d.data?.image?.url, ...(d.data?.images || []).map(i => typeof i === 'string' ? i : i?.url)]);
-        candidates.push({ name: clean(d.data?.title), img: imgs[0] || '', imgs, price: '', currency: '', colors: [], sizes: [], productType: '' });
+        candidates.push({ name: clean(d.data?.title), img: imgs[0] || '', imgs, price: normalizePrice(d.data?.price || ''), currency: '', colors: [], sizes: [], productType: '' });
       }
     } catch {}
 
     return candidates.sort((a, b) => {
-      const score = x => (x.price ? 5 : 0) + (x.imgs?.length || 0) + (x.name ? 2 : 0) + (x.colors?.length || 0) + (x.sizes?.length || 0);
+      const score = x => (x.price ? 20 : 0) + Math.min(x.imgs?.length || 0, 8) + (x.name ? 4 : 0) + (x.colors?.length || 0) + (x.sizes?.length || 0);
       return score(b) - score(a);
     })[0] || null;
   }
 
   async function importProduct(url) {
     if (!validHttpUrl(url)) return null;
-    const shopify = await importShopify(url);
-    const generic = await importGeneric(url);
+    const [shopify, generic] = await Promise.all([importShopify(url), importGeneric(url)]);
     const best = shopify || generic;
     if (!best) return null;
 
@@ -175,13 +180,12 @@
     return best;
   }
 
-  // Preserve the original functions so this layer can safely fall back.
   const originalDoFetch = window.doFetch;
   const originalSaveBag = window.saveBag;
   const originalDrawCard = window.drawCard;
   const originalSyncSheets = window.syncSheets;
 
-  // Disable automatic refresh. Manual click on the existing sync button still works.
+  // Disable background refreshes. Manual sync button still calls the original.
   if (typeof originalSyncSheets === 'function') {
     window.syncSheets = function(...args) {
       const ev = window.event;
@@ -196,9 +200,21 @@
     lastUrl = url; curImg = ''; showSpin(true); showRetry(false); clearImgBox();
 
     try {
-      const data = await importProduct(url);
+      let data = await importProduct(url);
+      if (!data?.img && typeof originalDoFetch === 'function') {
+        // Let the old importer find an image, but never use unrelated products later in the card.
+        await originalDoFetch.call(this, url);
+        data = {
+          name: document.getElementById('nameInp')?.value || '',
+          img: curImg || '',
+          imgs: curImg ? [curImg] : [],
+          price: document.getElementById('priceInp')?.value || '',
+          currency: 'TRY', colors: [], sizes: [], productType: ''
+        };
+      }
       showSpin(false);
       if (!data?.img) throw new Error('no image');
+
       state.imported = data;
       window.__tgImportData = data;
       curImg = data.img;
@@ -206,21 +222,21 @@
       showThumbs(data.imgs || [data.img]);
 
       const nameInput = document.getElementById('nameInp');
-      if (data.name && nameInput && !nameInput.value) nameInput.value = clean(data.name).slice(0, 80);
+      if (data.name && nameInput) nameInput.value = clean(data.name).slice(0, 100);
       const priceInput = document.getElementById('priceInp');
-      if (data.price && priceInput) priceInput.value = data.price;
+      if (priceInput) priceInput.value = data.price || '';
       const categorySignal = [data.productType, data.name, url].filter(Boolean).join(' ');
       const catInput = document.getElementById('catInp');
       if (catInput) catInput.value = detectCat(categorySignal, data.name || '');
 
       document.getElementById('amManual').style.display = 'none';
-      toast(lang === 'ar' ? `✅ تم جلب ${data.imgs?.length || 1} صورة وبيانات المنتج` : '✅ Product imported');
+      toast(lang === 'ar'
+        ? `✅ تم جلب ${data.imgs?.length || 1} صورة${data.price ? ' والسعر' : ''}`
+        : '✅ Product imported');
     } catch (e) {
       state.imported = null;
       window.__tgImportData = null;
       showSpin(false);
-      // Fall back to the original importer so existing supported sites continue working.
-      if (typeof originalDoFetch === 'function') return originalDoFetch.call(this, url);
       showRetry(true); hideThumbs(); toast(t('ffail'));
     }
   };
@@ -229,6 +245,16 @@
     window.saveBag = async function(...args) {
       const url = document.getElementById('urlInp')?.value.trim() || '';
       const imported = state.imported && lastUrl === url ? state.imported : null;
+
+      // Put imported values into the original form BEFORE it creates the record.
+      if (imported) {
+        const p = document.getElementById('priceInp');
+        if (p && imported.price) p.value = imported.price;
+        const n = document.getElementById('nameInp');
+        if (n && imported.name && !n.value) n.value = imported.name;
+        if (imported.img) curImg = imported.img;
+      }
+
       await originalSaveBag.apply(this, args);
       if (!imported) return;
 
@@ -236,26 +262,29 @@
       if (!bag) return;
       bag.imgs = safeImages(imported.imgs || [bag.img]);
       if (bag.img && !bag.imgs.includes(bag.img)) bag.imgs.unshift(bag.img);
-      bag.currency = imported.currency || bag.currency || 'TRY';
-      if (!bag.price && imported.price) bag.price = imported.price;
-      if (!bag.colors && imported.colors?.length) bag.colors = imported.colors.join(', ');
-      if (!bag.sizes && imported.sizes?.length) bag.sizes = imported.sizes.join(', ');
-      bag.productType = imported.productType || bag.productType || '';
+      bag.currency = imported.currency || 'TRY';
+      if (imported.price) bag.price = imported.price;
+      if (imported.colors?.length) bag.colors = imported.colors.join(', ');
+      if (imported.sizes?.length) bag.sizes = imported.sizes.join(', ');
+      bag.productType = imported.productType || '';
       saveL(); pushSheets(); render(); buildCats();
       state.imported = null;
       window.__tgImportData = null;
     };
   }
 
-  // Make the existing Canvas card use alternate photos of THIS product.
+  // Critical rule: card thumbnails may ONLY come from this exact product.
   if (typeof originalDrawCard === 'function') {
     window.drawCard = async function(b) {
-      const images = safeImages(b?.imgs || []).filter(src => src !== b?.img).slice(0, 4);
-      if (!images.length) return originalDrawCard.call(this, b);
+      const images = safeImages(b?.imgs || [])
+        .filter(src => src !== b?.img)
+        .slice(0, 4);
 
+      // The old renderer discovers thumbnails by scanning `bags`.
+      // Give it ONLY the current product + synthetic rows made from this product's own images.
       const originalBags = bags;
       const synthetic = images.map((img, i) => ({
-        id: `__card_thumb_${i}`,
+        id: `__same_product_${i}`,
         cat: b.cat,
         img,
         name: b.name,
@@ -270,7 +299,6 @@
     };
   }
 
-  // Clear imported temporary state every time a fresh Add dialog starts.
   const originalOpenAdd = window.openAdd;
   if (typeof originalOpenAdd === 'function') {
     window.openAdd = function(...args) {
