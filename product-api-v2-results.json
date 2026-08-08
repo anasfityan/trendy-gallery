@@ -1,0 +1,44 @@
+{
+  "shulebags": {
+    "name": "Giglio Spor Omuz Çantası Vizon",
+    "price": "929,90",
+    "discountPrice": null,
+    "images": 11,
+    "unique_images": 11,
+    "duplicate_images": 0,
+    "colors": [
+      "Vizon"
+    ],
+    "sizes": [],
+    "details": [
+      "Giglio Spor Omuz Çantası Vizon",
+      "{{translate 'UrunListesi_UrunuIncele'}} {{/each }} {{#if settings.is3dImageActive}}"
+    ],
+    "source": "direct-ticimax-v2",
+    "error": null
+  },
+  "nisantasishoes": {
+    "name": "Lorea Kahve Saten Puantiye Desenli Fiyonk Detaylı Kadın Topuklu Ayakkabı",
+    "price": "1689.90",
+    "discountPrice": "1,520.91",
+    "images": 10,
+    "unique_images": 10,
+    "duplicate_images": 0,
+    "colors": [
+      "KAHVE PUANTİYELİ SATEN"
+    ],
+    "sizes": [
+      "35",
+      "36",
+      "37",
+      "38",
+      "39",
+      "40"
+    ],
+    "details": [
+      "Yeni sezonun en sevilen Lorea Kahve Saten Puantiye Desenli Fiyonk Detaylı Kadın Topuklu Ayakkabı modelini en iyi fiyat avantajıyla satın alın."
+    ],
+    "source": "direct-ikas-v2",
+    "error": null
+  }
+}
