@@ -1,0 +1,117 @@
+{
+  "gratis": {
+    "http": 200,
+    "upstream_status": 200,
+    "bytes": 310412,
+    "title": "Bee Beauty Doğal Kiraz Çiçeği Özü El Kremi 75 ml - Gratis",
+    "jsonld_count": 2,
+    "has_product_jsonld": true,
+    "product_jsonld_preview": "{\"@context\":\"https://schema.org\",\"@type\":\"Product\",\"name\":\"Bee Beauty Doğal Kiraz Çiçeği Özü El Kremi 75 ml\",\"image\":\"https://api.gratis.retter.io/1oakekr4e/CALL/Image/getImage/10194839-fH9wrDJCwO-01_1024x1024.jpg\",\"description\":\"\\u003cb\\u003eBee Beauty Doğal Kiraz Çiçeği Özü El Kremi 75 ml\\u003c/b\\u003e\\u003cbr\\u003e \\u003cbr\\u003e Kadifemsi yumuşaklığa sahip, neme doymuş ellere sahip olmak düşünüldüğü kadar zor değil. Elleri derinlemesine nemlendirmek ve ellerde erken yaşlanma belirtilerinin oluşmasını önlemek üzere geliştirilen Bee Beauty Doğal Kiraz Çiçeği Özü El Kremi 75 ml sahip olduğu değerli bileşenlerin etkileri ve mis kokusuyla sizin de severek kullanacağınız kişisel bakım ürünlerinden olmaya aday.\\u003cbr\\u003e \\u003cbr\\u003e Cilt sağlığı için önemli kil takviyelerine ek olarak kiraz çiçeği özü içeren Bee Beauty Doğal Kiraz Çiçeği Özü El Kremi 75 ml cildin yoğun bir şekilde nemlendirilmesini sağlıyor. İçerdiği E vitamini ile nemin cilde hapsolmasını mümkün kılarak cilt elastikiyetini artırıyor. Antioksidan bakımından oldukça zengin olan kiraz çiçeği özü kuru cilt problemi yaşayanların sorunlarını minimize ediyor.\\u003cbr\\u003e \\u003cbr\\u003e İhtiyaç duyulan her an uygula",
+    "price_signals": [
+      "priceCurrency\":\"TRY\",\"price\":\"76.00\",\"availability\":\"https://schema.org/InStock\",\"itemCondition\":\"https://schema.org/NewCondi",
+      "fiyatına göre gayet iyi bir ürün\",\"reviewRating\":{\"@type\":\"Rating\",\"ratingValue\":5,\"bestRating\":5,\"worstRating\":1}},{\"@type\":"
+    ],
+    "size_signals": [
+      "size-adjust\" content=\"\"/><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"/><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin=\"anonymous\"/><link rel=\"preconn",
+      "sizes=\"32x32\"/><script src=\"/_next/static/chunks/polyfills-42372ed130431b0a.js\" noModule=\"\"></script></head><body class=\"__className_8331b8 antialiased\"><div hidden=\"\"><!--$--><!--/$--",
+      "size en yakın kargo şubesinden ücretsiz olarak gönderebilir,ya da dilediğiniz mağazamıza teslim edebilirsiniz.</p></div><img src=\"/images/return-step-three.png\" alt=\"Gratis Koşulsuz İa"
+    ],
+    "color_signals": [
+      "color:#490E6F;border-left-color:#490E6F;border-radius:50%;-webkit-animation:nprogress-spinner 400ms linear infinite;animation:nprogress-spinner 400ms linear infinite}.nprogress-custom-p",
+      "color=\"#FFFFFF\"><mask id=\"mask0_35618_27750\" style=\"mask-type:alpha\" maskUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\" width=\"24\" height=\"24\"><rect width=\"24\" height=\"24\" fill=\"#D9D9D9\"></rect></m",
+      "color=\"#FFFFFF\"><mask id=\"a\" width=\"24\" height=\"24\" x=\"0\" y=\"0\" maskUnits=\"userSpaceOnUse\" style=\"mask-type:alpha\"><path fill=\"#D9D9D9\" d=\"M0 0h24v24H0z\"></path></mask><g mask=\"url(#a)\""
+    ],
+    "error": null
+  },
+  "hepsiburada": {
+    "http": 200,
+    "upstream_status": 403,
+    "bytes": 1753,
+    "title": "Hepsiburada | Güvenlik",
+    "jsonld_count": 0,
+    "has_product_jsonld": false,
+    "product_jsonld_preview": null,
+    "price_signals": [],
+    "size_signals": [],
+    "color_signals": [
+      "color: #fff;",
+      "color: #f3f3f3;",
+      "color: #333;"
+    ],
+    "error": null
+  },
+  "shulebags": {
+    "http": 200,
+    "upstream_status": 200,
+    "bytes": 697892,
+    "title": "Giglio Spor Omuz Çantası Vizon",
+    "jsonld_count": 1,
+    "has_product_jsonld": true,
+    "product_jsonld_preview": "{\"@context\": \"https://schema.org/\",\"@type\": \"Product\",\"name\": \"Giglio Spor Omuz Çantası Vizon\",\"image\": [\"https://static.ticimax.cloud/55374/uploads/urunresimleri/buyuk/94822e8d-dee3-4dfb-aa2f-6a2f602e2f52-3c8-81.jpeg\",\"https://static.ticimax.cloud/55374/uploads/urunresimleri/buyuk/80ac043c-cc2f-4c1d-9fb1-483589b95410-d50558.jpg\",\"https://static.ticimax.cloud/55374/uploads/urunresimleri/buyuk/9d000da0-12a6-4e4d-913f-d4910e690f59-0-d45e.jpeg\",\"https://static.ticimax.cloud/55374/uploads/urunresimleri/buyuk/9d8f944a-7032-4050-94b0-2d1418379baf--898d0.jpg\",\"https://static.ticimax.cloud/55374/uploads/urunresimleri/buyuk/af2ce009-cc7b-4e7b-9477-8773b9b4fcee-0-c5c7.jpeg\",\"https://static.ticimax.cloud/55374/uploads/urunresimleri/buyuk/054ce4db-9fa4-46a0-a602-898acc0d5ed6-ad03-c.jpeg\",\"https://static.ticimax.cloud/55374/uploads/urunresimleri/buyuk/d9aa0405-3368-41d0-b907-640de773c957--433e-.jpg\",\"https://static.ticimax.cloud/55374/uploads/urunresimleri/buyuk/325c169a-e9bc-4a87-bdd1-a7935e564792-e688a9.jpg\",\"https://static.ticimax.cloud/55374/uploads/urunresimleri/buyuk/dca8249a-bbbf-4e24-b7a6-1f3ef8dddad6-0dc-44.jpg\",\"https://static.ticimax.cloud/55374/uploads/urunresimleri/buyuk/fef681e0-f",
+    "price_signals": [
+      "FiyatUyeGoster\":false,\"pasifSekmeMesaji\":{\"mesaj\":\"Seni Bekliyoruz ❤️\",\"dil\":\"tr\"},\"criteoAccountId\":\"\",\"seoAnalytics\":\"\",\"ak",
+      "FiyatCarpanAktif\":false},\"urunFiyatGoster\":true,\"urunDetayZoom\":{\"zoomPozisyon\":\"17\",\"zoomTipi\":0},\"uyelikSayfaParametre\":{\"a"
+    ],
+    "size_signals": [
+      "sizeActive\":true,\"imageCustomResize\":{\"web\":{\"liste\":{\"aktif\":true,\"size\":0,\"kalite\":99,\"webpAktif\":true},\"detay\":{\"aktif\":true,\"size\":585,\"kalite\":99,\"webpAktif\":true},\"detayKucukResi",
+      "size\":585,\"kalite\":99,\"webpAktif\":false},\"banner\":{\"aktif\":true,\"size\":0,\"kalite\":99,\"webpAktif\":true}},\"mobil\":{\"liste\":{\"aktif\":true,\"size\":540,\"kalite\":99,\"webpAktif\":true},\"detay\":",
+      "size\":540,\"kalite\":99,\"webpAktif\":true},\"detayKucukResim\":{\"aktif\":false,\"size\":540,\"kalite\":85,\"webpAktif\":false},\"banner\":{\"aktif\":true,\"size\":800,\"kalite\":99,\"webpAktif\":false}}},\"i"
+    ],
+    "color_signals": [
+      "color: #ff0000;\\\">Kişisel verilerimin korunmasını</a></strong> kabul ediyorum.\",\"GlobalMasterPage_Anasayfa\":\"Anasayfa\",\"GlobalMasterPage_Iletisim\":\"İletişim\",\"GlobalMasterPage_SepetGene",
+      "color:black;\\\">Ürün favorilerinize eklenmiştir.</p>\",\"GlobalMasterPage_UyariMaksAlim\":\"Bu ürün için <b>en fazla</b> {0} {1} alım koşulu vardır.\",\"GlobalMasterPage_UyariMaksKampanyaUrunA",
+      "color=\\\"#0066ff\\\">tıklayınız.</font></a><b><i><a name=\\\"aciklama\\\"></a></i></b>\",\"Odeme_MobilOdemeTurkcellAciklama\":\"Ödeme hizmeti Mobilepax tarafından Turkcell aboneleri için Turkcell "
+    ],
+    "error": null
+  },
+  "nisantasi": {
+    "http": 200,
+    "upstream_status": 200,
+    "bytes": 1502730,
+    "title": "Lorea Kahve Saten Puantiye Desenli Fiyonk Detaylı Kadın Topuklu Ayakkabı",
+    "jsonld_count": 4,
+    "has_product_jsonld": true,
+    "product_jsonld_preview": "{\"@context\":\"https://schema.org/\",\"@type\":\"Product\",\"name\":\"Lorea Kahve Saten Puantiye Desenli Fiyonk Detaylı Kadın Topuklu Ayakkabı\",\"description\":\"Yeni sezonun en sevilen Lorea Kahve Saten Puantiye Desenli Fiyonk Detaylı Kadın Topuklu Ayakkabı modelini en iyi fiyat avantajıyla satın alın.\",\"image\":[\"https://cdn.myikas.com/images/4986bc63-964e-482b-bc1c-6739ed185f15/efbf5d42-f500-4e23-a1cd-49b6d8d2adf9/image_1080.webp\",\"https://cdn.myikas.com/images/4986bc63-964e-482b-bc1c-6739ed185f15/1c300963-b41f-4919-b090-14e385b51d55/image_1080.webp\",\"https://cdn.myikas.com/images/4986bc63-964e-482b-bc1c-6739ed185f15/aa8bbf5a-531d-45be-8c99-31163de523e8/image_1080.webp\",\"https://cdn.myikas.com/images/4986bc63-964e-482b-bc1c-6739ed185f15/1061e9f2-642e-43cc-9716-fbdeff15a38c/image_1080.webp\",\"https://cdn.myikas.com/images/4986bc63-964e-482b-bc1c-6739ed185f15/f83a2241-52e6-492e-83e6-3b3a3cb86acc/image_1080.webp\",\"https://cdn.myikas.com/images/4986bc63-964e-482b-bc1c-6739ed185f15/82996758-4874-4530-9945-9bf865967678/image_1080.webp\",\"https://cdn.myikas.com/images/4986bc63-964e-482b-bc1c-6739ed185f15/5f1956d1-b7d1-4c3b-af85-465ffba7b153/image_1080.webp\",\"https://cdn.myikas.com/images/4986bc63-964e",
+    "price_signals": [
+      "fiyat avantajıyla satın alın.\"/><link rel=\"alternate\" hrefLang=\"tr-TR\" href=\"https://www.nisantasishoes.com/lorea-kahve-saten",
+      "fiyat avantajıyla satın alın.\"/><meta property=\"og:url\" content=\"https://www.nisantasishoes.com/lorea-kahve-saten-puantiye-de"
+    ],
+    "size_signals": [
+      "numara=36\"/><meta property=\"og:image\" content=\"https://cdn.myikas.com/images/4986bc63-964e-482b-bc1c-6739ed185f15/efbf5d42-f500-4e23-a1cd-49b6d8d2adf9/image_1080.jpg\"/><link rel=\"canonic",
+      "sizes=\"(max-width: 1280px) 131px, 144px\" srcSet=\"https://cdn.myikas.com/images/theme-images/8ce75eda-8e43-4d4d-9702-bf66970ce64c/image_180.webp 16w, https://cdn.myikas.com/images/theme",
+      "size-9 min-w-9 items-center justify-center rounded-full bg-white shadow-home-banner\"><svg aria-hidden=\"true\" focusable=\"false\" width=\"14\" viewBox=\"0 0 14 14\"><path d=\"M9.432 9.432a4.94"
+    ],
+    "color_signals": [
+      "color\",\"#f3f3f3ff\");\r",
+      "color\",\"#ffffff00\");\r",
+      "color\",\"#ffffffff\");\r"
+    ],
+    "error": null
+  },
+  "stradivarius": {
+    "http": 200,
+    "upstream_status": 403,
+    "bytes": 196,
+    "title": "Service Unavailable",
+    "jsonld_count": 0,
+    "has_product_jsonld": false,
+    "product_jsonld_preview": null,
+    "price_signals": [],
+    "size_signals": [],
+    "color_signals": [],
+    "error": null
+  },
+  "bershka": {
+    "http": 200,
+    "upstream_status": 403,
+    "bytes": 196,
+    "title": "Service Unavailable",
+    "jsonld_count": 0,
+    "has_product_jsonld": false,
+    "product_jsonld_preview": null,
+    "price_signals": [],
+    "size_signals": [],
+    "color_signals": [],
+    "error": null
+  }
+}
