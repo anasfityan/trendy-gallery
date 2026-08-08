@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Test GET and POST
+      - name: Test GET and POST v2
         shell: bash
         run: |
           set +e
@@ -34,7 +34,7 @@ jobs:
           except Exception as e: out['get_error']=str(e)
           try:
               d=json.load(open('lab-post.json',encoding='utf-8'))
-              out['post_result']={'name':d.get('name'),'price':d.get('price'),'images':len(d.get('images') or []),'colors':d.get('colors') or [],'sizes':d.get('sizes') or [],'error':d.get('error')}
+              out['post_result']={'name':d.get('name'),'price':d.get('price'),'images':len(d.get('images') or []),'colors':d.get('colors') or [],'sizes':d.get('sizes') or [],'source':d.get('source'),'error':d.get('error')}
           except Exception as e:
               out['post_error']=str(e)
               try: out['post_raw']=open('lab-post.json',encoding='utf-8').read()[:500]
