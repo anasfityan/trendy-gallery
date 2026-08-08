@@ -1,0 +1,39 @@
+name: Inspect protected image hosts
+on:
+  push:
+    paths:
+      - '.github/workflows/inspect-protected-image-hosts.yml'
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Collect protected image hosts
+        run: |
+          python - <<'PY'
+          import json, urllib.request, urllib.parse
+          endpoint='https://trendy-gallery.vercel.app/api/protected'
+          urls={
+            'hepsiburada':'https://www.hepsiburada.com/pirok-store-samsung-galaxy-s26-ultra-magsafe-uyumlu-kablosuz-sarj-destekli-yumusak-soft-mukemmel-manyetik-esnek-lansman-silikon-kilif-p-HBCV0000D2MAO4',
+            'stradivarius':'https://www.stradivarius.com/tr/en/graphic-vneck-tshirt-l06703295?categoryId=1718528&colorId=100&pelement=520351835',
+            'bershka':'https://www.bershka.com/tr/kargo-parasut-pantolon-l03046335-c0p227042041.html'
+          }
+          out={}
+          for k,u in urls.items():
+            req=urllib.request.Request(endpoint,data=json.dumps({'url':u}).encode(),headers={'content-type':'application/json'},method='POST')
+            with urllib.request.urlopen(req,timeout=120) as r:
+              d=json.loads(r.read().decode())
+            images=d.get('images') or []
+            out[k]={'hosts':sorted({urllib.parse.urlparse(x).hostname for x in images if x}),'firstImages':images[:3]}
+          open('protected-image-hosts.json','w').write(json.dumps(out,ensure_ascii=False,indent=2))
+          print(json.dumps(out,ensure_ascii=False,indent=2))
+          PY
+      - name: Commit result
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add protected-image-hosts.json
+          git diff --cached --quiet || git commit -m 'Record protected image hosts'
+          git push
