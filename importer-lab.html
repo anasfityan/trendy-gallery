@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Product Importer Lab</title>
+<style>
+:root{--bg:#0b0d10;--panel:#14171b;--panel2:#1a1e23;--line:#2a3037;--gold:#d6a84b;--green:#4fce91;--red:#df6d72;--text:#f5f1e8;--muted:#929aa5}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Noto Sans Arabic",sans-serif;min-height:100vh}.wrap{width:min(1180px,calc(100% - 28px));margin:0 auto;padding:34px 0 70px}.top{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;margin-bottom:22px}.title{font-size:28px;font-weight:800}.sub{color:var(--muted);margin-top:7px;font-size:14px}.badge{border:1px solid #4a3d23;background:#211c12;color:#e8c878;padding:8px 12px;border-radius:999px;font-size:12px}.box{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px}.form{display:grid;grid-template-columns:1fr auto;gap:10px}.input{width:100%;height:52px;border:1px solid var(--line);border-radius:13px;background:#0d1013;color:var(--text);padding:0 15px;outline:none;font-size:14px;direction:ltr;text-align:left}.input:focus{border-color:#6b572c}.btn{height:52px;border:0;border-radius:13px;background:var(--gold);color:#17130c;font-weight:800;padding:0 24px;cursor:pointer}.btn:disabled{opacity:.55;cursor:wait}.samples{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.sample{border:1px solid var(--line);background:var(--panel2);color:#d4d8dd;border-radius:10px;padding:8px 11px;font-size:12px;cursor:pointer}.sample:hover{border-color:#69582e;color:#f2d989}.status{margin-top:14px;display:none;align-items:center;gap:10px;color:var(--muted);font-size:13px}.status.on{display:flex}.spin{width:16px;height:16px;border:2px solid #444;border-top-color:var(--gold);border-radius:50%;animation:rot .7s linear infinite}@keyframes rot{to{transform:rotate(360deg)}}.error{margin-top:14px;padding:12px 14px;border-radius:12px;border:1px solid #592d31;background:#241416;color:#f2a7ab;display:none}.result{display:none;margin-top:18px}.result.on{display:block}.summary{display:grid;grid-template-columns:repeat(6,1fr);gap:9px;margin-bottom:12px}.metric{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px}.metric .k{font-size:11px;color:var(--muted);margin-bottom:7px}.metric .v{font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ok{color:var(--green)}.no{color:var(--red)}.content{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(310px,.6fr);gap:12px}.gallery,.info,.json{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px}.main-img{width:100%;aspect-ratio:1/1;object-fit:contain;background:#fff;border-radius:14px;display:block}.thumbs{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-top:8px}.thumb{width:100%;aspect-ratio:1/1;object-fit:cover;background:#fff;border:1px solid var(--line);border-radius:9px;cursor:pointer}.info h2{font-size:18px;line-height:1.5;margin:2px 0 15px}.price{font-size:25px;color:var(--green);font-weight:900;margin-bottom:17px}.row{padding:12px 0;border-top:1px solid var(--line)}.label{font-size:11px;color:var(--muted);margin-bottom:7px}.chips{display:flex;flex-wrap:wrap;gap:7px}.chip{border:1px solid #3a4048;background:#101317;border-radius:999px;padding:7px 9px;font-size:12px}.empty{color:#666;font-size:13px}.json{margin-top:12px}.json summary{cursor:pointer;color:#d6bd83;font-size:13px}.json pre{direction:ltr;text-align:left;white-space:pre-wrap;word-break:break-word;color:#aeb8c4;font-size:12px;line-height:1.6;margin-bottom:0}@media(max-width:800px){.wrap{width:min(100% - 18px,680px);padding-top:18px}.top{align-items:flex-start;flex-direction:column}.title{font-size:22px}.form{grid-template-columns:1fr}.btn{width:100%}.summary{grid-template-columns:repeat(2,1fr)}.content{grid-template-columns:1fr}.thumbs{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div><div class="title">مختبر استيراد المنتجات</div><div class="sub">نطوّر المستورد هنا أولًا، ثم ننقله إلى Trendy Gallery بعد اعتماده.</div></div><div class="badge">Standalone Lab · v1</div></div>
+  <div class="box">
+    <div class="form"><input id="url" class="input" placeholder="ألصق رابط المنتج هنا"><button id="go" class="btn">استيراد المنتج</button></div>
+    <div class="samples" id="samples"></div>
+    <div class="status" id="status"><span class="spin"></span><span>جاري قراءة صفحة المنتج واستخراج البيانات…</span></div>
+    <div class="error" id="error"></div>
+  </div>
+  <div class="result" id="result">
+    <div class="summary">
+      <div class="metric"><div class="k">الاسم</div><div class="v" id="mName">—</div></div>
+      <div class="metric"><div class="k">السعر</div><div class="v" id="mPrice">—</div></div>
+      <div class="metric"><div class="k">الصور</div><div class="v" id="mImages">—</div></div>
+      <div class="metric"><div class="k">الألوان</div><div class="v" id="mColors">—</div></div>
+      <div class="metric"><div class="k">المقاسات</div><div class="v" id="mSizes">—</div></div>
+      <div class="metric"><div class="k">التصنيف</div><div class="v" id="mCat">—</div></div>
+    </div>
+    <div class="content">
+      <div class="gallery"><img id="main" class="main-img" alt=""><div class="thumbs" id="thumbs"></div></div>
+      <div class="info"><h2 id="name">—</h2><div class="price" id="price">—</div><div class="row"><div class="label">اللون</div><div class="chips" id="colors"></div></div><div class="row"><div class="label">المقاسات</div><div class="chips" id="sizes"></div></div><div class="row"><div class="label">التصنيف / المصدر</div><div class="chips"><span class="chip" id="category">—</span><span class="chip" id="source">—</span></div></div></div>
+    </div>
+    <details class="json"><summary>عرض JSON الخام</summary><pre id="raw"></pre></details>
+  </div>
+</div>
+<script>
+const ENDPOINT='https://uoydoungeplepusrsill.supabase.co/functions/v1/import-reader';
+const KEY='sb_publishable_4N5mjsKVHFfKZglcUO-yBw_iCC9owhz';
+const EXAMPLES=[
+ ['Shulebags','https://www.shulebags.com/giglio-spor-omuz-cantasi-vizon'],
+ ['Nişantaşı Shoes','https://www.nisantasishoes.com/lorea-kahve-saten-puantiye-desenli-fiyonk-detayli-kadin-topuklu-ayakkabi-14833?numara=39'],
+ ['Altuda','https://altuda.com.tr/products/kadin-seritli-shopper-omuz-cantasi-boris-pembe'],
+ ['Gratis','https://www.gratis.com/el-vucut-kremleri/bee-beauty-dogal-kiraz-cicegi-ozu-el-kremi-75-ml-p-10194839'],
+ ['Hepsiburada','https://www.hepsiburada.com/pirok-store-samsung-galaxy-s26-ultra-magsafe-uyumlu-kablosuz-sarj-destekli-yumusak-soft-mukemmel-manyetik-esnek-lansman-silikon-kilif-p-HBCV0000D2MAO4'],
+ ['Stradivarius','https://www.stradivarius.com/tr/en/graphic-vneck-tshirt-l06703295?categoryId=1718528&colorId=100&pelement=520351835'],
+ ['Bershka','https://www.bershka.com/tr/erkek/giyim/pantolon-n3288.html?celement=1010193241']
+];
+const $=id=>document.getElementById(id);
+EXAMPLES.forEach(([name,url])=>{const b=document.createElement('button');b.className='sample';b.textContent=name;b.onclick=()=>{$('url').value=url;run()};$('samples').appendChild(b)});
+function chips(id,arr){const el=$(id);el.innerHTML='';if(!arr?.length){el.innerHTML='<span class="empty">غير موجود</span>';return}arr.forEach(x=>{const s=document.createElement('span');s.className='chip';s.textContent=x;el.appendChild(s)})}
+function metric(id,ok,text){const el=$(id);el.textContent=text;el.className='v '+(ok?'ok':'no')}
+function categoryName(c){return ({bags:'حقائب',shoes:'أحذية',clothes:'ملابس',acc:'إكسسوارات'})[c]||c||'—'}
+async function run(){
+ const url=$('url').value.trim();if(!url)return;
+ $('go').disabled=true;$('status').classList.add('on');$('error').style.display='none';$('result').classList.remove('on');
+ try{
+  const r=await fetch(ENDPOINT,{method:'POST',headers:{'content-type':'application/json','apikey':KEY,'authorization':'Bearer '+KEY},body:JSON.stringify({url})});
+  const d=await r.json();if(!r.ok)throw new Error(d.error||('HTTP '+r.status));
+  const imgs=d.images||[];
+  metric('mName',!!d.name,d.name?'موجود':'مفقود');metric('mPrice',!!d.price,d.price||'مفقود');metric('mImages',imgs.length>0,String(imgs.length));metric('mColors',(d.colors||[]).length>0,String((d.colors||[]).length));metric('mSizes',(d.sizes||[]).length>0,String((d.sizes||[]).length));metric('mCat',!!d.category,categoryName(d.category));
+  $('name').textContent=d.name||'بدون اسم';$('price').textContent=d.price?(d.price+' '+(d.currency||'TRY')):'السعر غير موجود';$('category').textContent=categoryName(d.category);$('source').textContent=d.source||'—';chips('colors',d.colors);chips('sizes',d.sizes);$('raw').textContent=JSON.stringify(d,null,2);
+  $('thumbs').innerHTML='';if(imgs[0]){$('main').src=imgs[0];$('main').style.display='block'}else{$('main').removeAttribute('src');$('main').style.display='none'}
+  imgs.forEach(src=>{const im=document.createElement('img');im.className='thumb';im.src=src;im.loading='lazy';im.onclick=()=>{$('main').src=src};$('thumbs').appendChild(im)});
+  $('result').classList.add('on');
+ }catch(e){$('error').textContent='فشل الاستيراد: '+e.message;$('error').style.display='block'}finally{$('go').disabled=false;$('status').classList.remove('on')}
+}
+$('go').onclick=run;$('url').addEventListener('keydown',e=>{if(e.key==='Enter')run()});
+</script>
+</body>
+</html>
