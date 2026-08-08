@@ -11,7 +11,7 @@
       "closure": "Fermuar",
       "compartments": "6"
     },
-    "source": "customer-specs-v2"
+    "source": "customer-specs-v3"
   },
   "nisantasi": {
     "http": 200,
@@ -19,9 +19,9 @@
     "name": "Lorea Kahve Saten Puantiye Desenli Fiyonk Detaylı Kadın Topuklu Ayakkabı",
     "brand": "",
     "keySpecs": {
-      "material": "Deri"
+      "material": "Saten"
     },
-    "source": "customer-specs-v2"
+    "source": "customer-specs-v3"
   },
   "gratis_cream": {
     "http": 200,
@@ -30,10 +30,9 @@
     "brand": "Bee Beauty",
     "keySpecs": {
       "amount": "75 ml",
-      "variant": "Kiraz Çiçeği",
-      "skinType": "Tüm Cilt Tipleri Çeşit Tekli Tip Tü"
+      "variant": "Kiraz Çiçeği"
     },
-    "source": "customer-specs-v2"
+    "source": "customer-specs-v3"
   },
   "gratis_deodorant": {
     "http": 200,
@@ -44,7 +43,7 @@
       "amount": "150 ml",
       "variant": "Confidence"
     },
-    "source": "customer-specs-v2"
+    "source": "customer-specs-v3"
   },
   "altuda": {
     "http": 200,
@@ -55,6 +54,6 @@
       "material": "Suni Deri",
       "closure": "Fermuar"
     },
-    "source": "customer-specs-v2"
+    "source": "customer-specs-v3"
   }
 }
