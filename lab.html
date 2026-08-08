@@ -27,7 +27,7 @@
 </style></head>
 <body>
 <div class="wrap">
-  <div class="head"><div><div class="title">مختبر استيراد المنتجات</div><div class="sub">يستخرج المعلومات التي يحتاجها الزبون فعليًا بحسب نوع المنتج.</div></div><div class="tag">General Import · v8</div></div>
+  <div class="head"><div><div class="title">مختبر استيراد المنتجات</div><div class="sub">يستخرج المعلومات التي يحتاجها الزبون فعليًا بحسب نوع المنتج.</div></div><div class="tag">General Import · v9</div></div>
   <div class="box">
     <div class="form"><input id="url" class="input" placeholder="ألصق رابط المنتج"><button id="go" class="btn">استيراد</button></div>
     <div class="samples">
@@ -42,7 +42,6 @@
     </div>
     <div id="status" class="status">جاري تحليل المنتج واستخراج مواصفاته المهمة…</div><div id="err" class="err"></div>
   </div>
-
   <div id="result" class="result">
     <div class="grid">
       <div class="panel"><img id="main" class="main" alt="صورة المنتج"><div id="thumbs" class="thumbs"></div></div>
@@ -52,7 +51,6 @@
         <div id="measureRow" class="row hidden"><div id="measureLabel" class="label">المقاسات / الأبعاد</div><div id="sizes" class="chips"></div></div>
         <div id="specRow" class="row hidden"><div class="label">المواصفات المهمة</div><div id="specs" class="specs"></div></div>
         <div id="extraRow" class="row hidden"><div class="label">معلومات إضافية</div><div id="extra" class="chips"></div></div>
-
         <div id="cardRow" class="row hidden">
           <div class="label">بطاقة الزبون PNG</div>
           <div class="pickerTitle">اختر الصورة الرئيسية والصور الإضافية أسفل البطاقة</div>
@@ -65,7 +63,6 @@
           <div class="cardActions" style="margin-top:10px"><button id="previewCard" class="cardBtn">معاينة البطاقة</button><button id="downloadCard" class="cardBtn primary">تنزيل PNG</button><button id="shareCard" class="cardBtn">مشاركة</button></div>
           <img id="cardPreview" class="cardPreview" alt="معاينة بطاقة المنتج">
         </div>
-
         <div class="row"><div class="label">التصنيف / المصدر</div><div class="chips"><span id="cat" class="chip"></span><span id="source" class="chip"></span><span id="count" class="chip"></span></div></div>
         <details class="row"><summary class="label" style="cursor:pointer">الوصف الأصلي — للمرجع فقط</summary><ul id="details" class="details"></ul></details>
       </div>
@@ -73,8 +70,7 @@
     <details class="panel raw"><summary>JSON الخام</summary><pre id="raw"></pre></details>
   </div>
 </div>
-
-<script src="./lab-card.js?v=4"></script>
+<script src="./lab-card.js?v=5"></script>
 <script>
 const API='https://uoydoungeplepusrsill.supabase.co/functions/v1/product-unified-api';
 const IMAGE_PROXY='https://uoydoungeplepusrsill.supabase.co/functions/v1/product-image-proxy';
