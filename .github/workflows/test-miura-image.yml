@@ -1,0 +1,54 @@
+name: Test Miura image filtering
+
+on:
+  push:
+    paths:
+      - '.github/workflows/test-miura-image.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test Miura product and first image
+        shell: bash
+        run: |
+          set -e
+          API='https://uoydoungeplepusrsill.supabase.co/functions/v1/product-import-api'
+          URL='https://www.shulebags.com/miura-charm-detayli-orgu-omuz-kahve-6528'
+          curl -sS -o miura.json -X POST "$API" -H 'content-type: application/json' --data "{\"url\":\"$URL\"}"
+          python - <<'PY'
+          import json, urllib.parse
+          d=json.load(open('miura.json',encoding='utf-8'))
+          imgs=d.get('images') or []
+          open('first-url.txt','w').write(imgs[0] if imgs else '')
+          out={
+            'name':d.get('name'),'price':d.get('price'),'colors':d.get('colors') or [],
+            'sizes':d.get('sizes') or [],'images':imgs,'image_count':len(imgs),'source':d.get('source'),
+            'details':d.get('details') or []
+          }
+          open('miura-image-results.json','w',encoding='utf-8').write(json.dumps(out,ensure_ascii=False,indent=2))
+          PY
+          FIRST=$(cat first-url.txt)
+          if [ -n "$FIRST" ]; then
+            ENC=$(python -c "import urllib.parse; print(urllib.parse.quote(open('first-url.txt').read(),safe=''))")
+            curl -sS -D first.headers -o first.img "${API}?image=${ENC}"
+            python - <<'PY'
+          import json,re,os
+          p='miura-image-results.json'; d=json.load(open(p,encoding='utf-8'))
+          txt=open('first.headers',encoding='latin1').read()
+          m=re.search(r'HTTP/\S+\s+(\d+)',txt); c=re.search(r'(?im)^content-type:\s*([^\r\n]+)',txt)
+          d['first_image_proxy']={'http':int(m.group(1)) if m else None,'content_type':c.group(1).strip() if c else None,'bytes':os.path.getsize('first.img')}
+          open(p,'w',encoding='utf-8').write(json.dumps(d,ensure_ascii=False,indent=2))
+          PY
+          fi
+      - name: Commit result
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add miura-image-results.json
+          git diff --cached --quiet || git commit -m 'Record Miura image validation'
+          git push
