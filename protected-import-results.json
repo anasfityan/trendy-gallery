@@ -54,15 +54,31 @@
     "source": "protected-stradivarius-itxrest"
   },
   "bershka": {
-    "name": "",
-    "price": "",
+    "name": "Kargo paraşüt pantolon",
+    "price": "1990.00",
     "currency": "TRY",
     "category": "clothes",
-    "images": 0,
-    "colors": [],
-    "sizes": [],
+    "images": 16,
+    "colors": [
+      "Kırmızı",
+      "Siyah",
+      "Kum rengi"
+    ],
+    "sizes": [
+      "XXS",
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
     "brand": "Bershka",
-    "keySpecs": {},
+    "keySpecs": {
+      "composition": [
+        "100% pamuk"
+      ],
+      "modelSize": "S"
+    },
     "description": "",
     "source": "protected-bershka-itxrest"
   }
