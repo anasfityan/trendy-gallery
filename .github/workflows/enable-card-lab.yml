@@ -1,0 +1,47 @@
+name: Enable customer PNG cards in lab
+on:
+  push:
+    paths:
+      - '.github/workflows/enable-card-lab.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add card controls and unified image proxy
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('lab.html'); s=p.read_text()
+          s=s.replace('.details li+li{margin-top:5px}.raw{margin-top:10px}', '.details li+li{margin-top:5px}.cardActions{display:flex;gap:8px;flex-wrap:wrap}.cardBtn{border:1px solid #3a4149;background:#1a1e23;color:#f5f1e8;border-radius:10px;padding:9px 13px;font-weight:700;cursor:pointer}.cardBtn.primary{background:#d6a84b;color:#111;border-color:#d6a84b}.cardBtn:disabled{opacity:.55;cursor:wait}.cardPreview{display:none;width:100%;margin-top:10px;border:1px solid #2a3037;border-radius:12px}.raw{margin-top:10px}')
+          anchor='<div id="extraRow" class="row hidden"><div class="label">معلومات إضافية</div><div id="extra" class="chips"></div></div>'
+          card=anchor+'<div id="cardRow" class="row hidden"><div class="label">بطاقة الزبون PNG</div><div class="cardActions"><button id="previewCard" class="cardBtn">معاينة البطاقة</button><button id="downloadCard" class="cardBtn primary">تنزيل PNG</button><button id="shareCard" class="cardBtn">مشاركة</button></div><img id="cardPreview" class="cardPreview" alt="معاينة بطاقة المنتج"></div>'
+          if anchor not in s: raise SystemExit('extra row anchor not found')
+          s=s.replace(anchor,card,1)
+          s=s.replace('<script>\nconst IMPORT_API=', '<script src="./lab-card.js?v=1"></script>\n<script>\nconst IMPORT_API=',1)
+          old="const IMPORT_API='https://uoydoungeplepusrsill.supabase.co/functions/v1/product-import-api';\nconst API='https://uoydoungeplepusrsill.supabase.co/functions/v1/product-unified-api';"
+          new="const API='https://uoydoungeplepusrsill.supabase.co/functions/v1/product-unified-api';\nconst IMAGE_PROXY='https://uoydoungeplepusrsill.supabase.co/functions/v1/product-image-proxy';\nlet lastProduct=null;"
+          if old not in s: raise SystemExit('api constants block not found')
+          s=s.replace(old,new,1)
+          import re
+          s=re.sub(r"const PROXY_HOSTS=new Set\(\[[^\n]+\nconst proxy=src=>\{[^\n]+", "const proxy=src=>IMAGE_PROXY+'?image='+encodeURIComponent(src);", s, count=1)
+          start="async function run(){const url=$('url').value.trim();if(!url)return;$('go').disabled=true;$('status').classList.add('on');$('err').classList.remove('on');$('result').classList.remove('on');try{const d=await fetchJson(API,url);"
+          repl="async function run(){const url=$('url').value.trim();if(!url)return;$('go').disabled=true;$('status').classList.add('on');$('err').classList.remove('on');$('result').classList.remove('on');showRow('cardRow',false);$('cardPreview').style.display='none';lastProduct=null;try{const d=await fetchJson(API,url);lastProduct=d;showRow('cardRow',true);"
+          if start not in s: raise SystemExit('run start not found')
+          s=s.replace(start,repl,1)
+          bind="$('go').onclick=run;document.querySelectorAll('.sample').forEach(b=>b.onclick=()=>{$('url').value=b.dataset.url;run()});$('url').onkeydown=e=>{if(e.key==='Enter')run()};"
+          cardbind="async function cardAction(btn,fn){if(!lastProduct)return;btn.disabled=true;$('err').classList.remove('on');try{await fn()}catch(e){$('err').textContent='فشل إنشاء البطاقة: '+e.message;$('err').classList.add('on')}finally{btn.disabled=false}}\n$('previewCard').onclick=()=>cardAction($('previewCard'),()=>TrendyCard.preview(lastProduct,proxy,$('cardPreview')));\n$('downloadCard').onclick=()=>cardAction($('downloadCard'),()=>TrendyCard.download(lastProduct,proxy));\n$('shareCard').onclick=()=>cardAction($('shareCard'),()=>TrendyCard.share(lastProduct,proxy));\n"+bind
+          if bind not in s: raise SystemExit('binding anchor not found')
+          s=s.replace(bind,cardbind,1)
+          s=s.replace('General Import · v5','General Import · v6')
+          p.write_text(s)
+          PY
+      - name: Commit lab update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add lab.html
+          git diff --cached --quiet || git commit -m 'Add customer PNG card actions to lab'
+          git push
