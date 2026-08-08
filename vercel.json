@@ -1,8 +1,8 @@
 {
   "functions": {
-    "api/import-product.js": {
-      "maxDuration": 30,
-      "memory": 1024
+    "api/protected.py": {
+      "maxDuration": 60,
+      "memory": 512
     }
   },
   "headers": [
