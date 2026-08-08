@@ -1,13 +1,17 @@
 {
   "shulebags": {
     "http": 200,
-    "category": "shoes",
+    "category": "bags",
     "name": "Giglio Spor Omuz Çantası Vizon",
     "brand": "Shule Bags",
     "keySpecs": {
-      "material": "Bondit Kumaş 6 Bölmeden Oluşmaktadır. Ayakkabı saklama bölmesi bulunmaktadır. Da"
+      "dimensions": "45 × 15 × 30 cm",
+      "strapLength": "55 cm",
+      "material": "Bondit Kumaş",
+      "closure": "Fermuar",
+      "compartments": "6"
     },
-    "source": "customer-specs-v1"
+    "source": "customer-specs-v2"
   },
   "nisantasi": {
     "http": 200,
@@ -15,10 +19,9 @@
     "name": "Lorea Kahve Saten Puantiye Desenli Fiyonk Detaylı Kadın Topuklu Ayakkabı",
     "brand": "",
     "keySpecs": {
-      "material": "Deri",
-      "sole": "KADIN LOAFER TERLİK ₺ 1,899.90 Sepete Ekle Yorumla"
+      "material": "Deri"
     },
-    "source": "customer-specs-v1"
+    "source": "customer-specs-v2"
   },
   "gratis_cream": {
     "http": 200,
@@ -27,11 +30,10 @@
     "brand": "Bee Beauty",
     "keySpecs": {
       "amount": "75 ml",
-      "variant": "ikler Günlük Nemlendirici Kremler",
-      "shade": "ikler Günlük Nemlendirici Kremler",
-      "skinType": "Tüm Cilt Tipleri Çeşit Tekli Tip Tüp Kullanım Amacı Nemlendi"
+      "variant": "Kiraz Çiçeği",
+      "skinType": "Tüm Cilt Tipleri Çeşit Tekli Tip Tü"
     },
-    "source": "customer-specs-v1"
+    "source": "customer-specs-v2"
   },
   "gratis_deodorant": {
     "http": 200,
@@ -40,10 +42,9 @@
     "brand": "Rexona",
     "keySpecs": {
       "amount": "150 ml",
-      "variant": "ikler Günlük Nemlendirici Kremler",
-      "shade": "ikler Günlük Nemlendirici Kremler"
+      "variant": "Confidence"
     },
-    "source": "customer-specs-v1"
+    "source": "customer-specs-v2"
   },
   "altuda": {
     "http": 200,
@@ -51,10 +52,9 @@
     "name": "Kadın Şeritli Shopper Omuz Çantası Boris - Pembe",
     "brand": "ALTUDA",
     "keySpecs": {
-      "dimensions": "45 × 30 × 8 cm",
-      "material": ". Çift Saplı. Astarlı ve iç cep detaylı. Fermuar kapamalı. Dış cep detay. Gold a",
-      "closure": "lı. Dış cep detay. Gold aksesuar. Garne detay. İad"
+      "material": "Suni Deri",
+      "closure": "Fermuar"
     },
-    "source": "customer-specs-v1"
+    "source": "customer-specs-v2"
   }
 }
