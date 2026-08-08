@@ -1,0 +1,41 @@
+{
+  "page": "https://anasfityan.github.io/trendy-gallery/lab.html",
+  "version": "v6",
+  "cards": [
+    {
+      "sample": "Shulebags",
+      "preview": true,
+      "width": 1080,
+      "height": 1350
+    },
+    {
+      "sample": "Nişantaşı",
+      "preview": true,
+      "width": 1080,
+      "height": 1350
+    },
+    {
+      "sample": "Gratis مكياج",
+      "preview": true,
+      "width": 1080,
+      "height": 1350
+    },
+    {
+      "sample": "Hepsiburada",
+      "preview": true,
+      "width": 1080,
+      "height": 1350
+    },
+    {
+      "sample": "Bershka",
+      "preview": true,
+      "width": 1080,
+      "height": 1350
+    }
+  ],
+  "download": {
+    "filename": "trendy-product-card.png",
+    "bytes": 565982
+  },
+  "ok": true
+}
