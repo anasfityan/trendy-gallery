@@ -1,0 +1,24 @@
+{
+  "shulebags": {
+    "http": 404,
+    "name": null,
+    "price": null,
+    "images": 0,
+    "colors": [],
+    "sizes": [],
+    "category": null,
+    "source": null,
+    "error": "invalid_json: Expecting value: line 1 column 1 (char 0)"
+  },
+  "nisantasishoes": {
+    "http": 404,
+    "name": null,
+    "price": null,
+    "images": 0,
+    "colors": [],
+    "sizes": [],
+    "category": null,
+    "source": null,
+    "error": "invalid_json: Expecting value: line 1 column 1 (char 0)"
+  }
+}
