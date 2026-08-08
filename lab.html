@@ -27,7 +27,7 @@
 </style></head>
 <body>
 <div class="wrap">
-  <div class="head"><div><div class="title">مختبر استيراد المنتجات</div><div class="sub">يستخرج المعلومات التي يحتاجها الزبون فعليًا بحسب نوع المنتج.</div></div><div class="tag">General Import · v9</div></div>
+  <div class="head"><div><div class="title">مختبر استيراد المنتجات</div><div class="sub">يستخرج المعلومات التي يحتاجها الزبون فعليًا بحسب نوع المنتج.</div></div><div class="tag">General Import · v10</div></div>
   <div class="box">
     <div class="form"><input id="url" class="input" placeholder="ألصق رابط المنتج"><button id="go" class="btn">استيراد</button></div>
     <div class="samples">
@@ -70,7 +70,7 @@
     <details class="panel raw"><summary>JSON الخام</summary><pre id="raw"></pre></details>
   </div>
 </div>
-<script src="./lab-card.js?v=5"></script>
+<script src="./lab-card.js?v=6"></script>
 <script>
 const API='https://uoydoungeplepusrsill.supabase.co/functions/v1/product-unified-api';
 const IMAGE_PROXY='https://uoydoungeplepusrsill.supabase.co/functions/v1/product-image-proxy';
@@ -87,44 +87,14 @@ function renderSpecs(obj,base){const box=$('specs');box.innerHTML='';const merge
 async function fetchJson(endpoint,url){const r=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url})});const d=await r.json();if(!r.ok)throw new Error(d.error||('HTTP '+r.status));return d}
 function hideCardPreview(){$('cardPreview').style.display='none';$('cardPreview').removeAttribute('src')}
 function renderCardPicker(){
-  const main=$('selectedMain');main.innerHTML='';
-  if(cardMain){const im=document.createElement('img');setImage(im,cardMain);main.appendChild(im)}
+  const main=$('selectedMain');main.innerHTML='';if(cardMain){const im=document.createElement('img');setImage(im,cardMain);main.appendChild(im)}
   const gs=$('gallerySelected');gs.innerHTML='';$('galleryCount').textContent='('+cardGallery.length+'/6)';
   cardGallery.forEach((src,i)=>{const d=document.createElement('div');d.className='galleryItem';const im=document.createElement('img');setImage(im,src);d.appendChild(im);const rm=document.createElement('button');rm.className='galleryRemove';rm.textContent='×';rm.title='إزالة';rm.onclick=()=>{cardGallery.splice(i,1);renderCardPicker();hideCardPreview()};d.appendChild(rm);gs.appendChild(d)});
   const choices=$('cardChoices');choices.innerHTML='';
-  (lastProduct?.images||[]).forEach(src=>{
-    const d=document.createElement('div');d.className='choice'+(src===cardMain?' mainSelected':'')+(cardGallery.includes(src)?' galleryUsed':'');
-    const im=document.createElement('img');setImage(im,src);d.appendChild(im);
-    if(src===cardMain){const b=document.createElement('span');b.className='choiceMainBadge';b.textContent='رئيسية';d.appendChild(b)}
-    const toggle=document.createElement('button');toggle.className='galleryToggle'+(cardGallery.includes(src)?' on':'');toggle.textContent=cardGallery.includes(src)?'✓ أسفل':'+ أسفل';
-    toggle.onclick=e=>{e.stopPropagation();if(src===cardMain)return;if(cardGallery.includes(src)){cardGallery=cardGallery.filter(x=>x!==src)}else{if(cardGallery.length>=6){$('err').textContent='يمكن اختيار 6 صور إضافية كحد أقصى.';$('err').classList.add('on');return}cardGallery.push(src)}renderCardPicker();hideCardPreview()};
-    d.appendChild(toggle);
-    d.onclick=()=>{if(src===cardMain)return;cardGallery=cardGallery.filter(x=>x!==src);cardMain=src;renderCardPicker();hideCardPreview()};
-    choices.appendChild(d)
-  })
+  (lastProduct?.images||[]).forEach(src=>{const d=document.createElement('div');d.className='choice'+(src===cardMain?' mainSelected':'')+(cardGallery.includes(src)?' galleryUsed':'');const im=document.createElement('img');setImage(im,src);d.appendChild(im);if(src===cardMain){const b=document.createElement('span');b.className='choiceMainBadge';b.textContent='رئيسية';d.appendChild(b)}const toggle=document.createElement('button');toggle.className='galleryToggle'+(cardGallery.includes(src)?' on':'');toggle.textContent=cardGallery.includes(src)?'✓ أسفل':'+ أسفل';toggle.onclick=e=>{e.stopPropagation();if(src===cardMain)return;if(cardGallery.includes(src)){cardGallery=cardGallery.filter(x=>x!==src)}else{if(cardGallery.length>=6){$('err').textContent='يمكن اختيار 6 صور إضافية كحد أقصى.';$('err').classList.add('on');return}cardGallery.push(src)}renderCardPicker();hideCardPreview()};d.appendChild(toggle);d.onclick=()=>{if(src===cardMain)return;cardGallery=cardGallery.filter(x=>x!==src);cardMain=src;renderCardPicker();hideCardPreview()};choices.appendChild(d)})
 }
 function cardProduct(){return {...lastProduct,cardMainImage:cardMain,cardGalleryImages:[...cardGallery]}}
-async function run(){
-  const url=$('url').value.trim();if(!url)return;
-  $('go').disabled=true;$('status').classList.add('on');$('err').classList.remove('on');$('result').classList.remove('on');showRow('cardRow',false);hideCardPreview();lastProduct=null;
-  try{
-    const d=await fetchJson(API,url);lastProduct=d;const imgs=d.images||[];
-    cardMain=imgs[0]||null;cardGallery=imgs.slice(1,4);showRow('cardRow',true);renderCardPicker();
-    $('name').textContent=d.name||'—';$('price').textContent=d.price?d.price+' '+(d.currency||'TRY'):'السعر غير موجود';$('discount').textContent=d.discountPrice?'سعر الخصم: '+d.discountPrice+' '+(d.currency||'TRY'):'';
-    const colors=d.colors||[];showRow('colorRow',colors.length>0);fillChips('colors',colors);
-    const measures=d.sizes?.length?d.sizes:(d.dimensions?[d.dimensions]:[]);showRow('measureRow',measures.length>0);$('measureLabel').textContent=d.sizes?.length?'المقاسات':'الأبعاد';fillChips('sizes',measures,d.dimensions&&!d.sizes?.length?'dimension':'');
-    renderSpecs(d.keySpecs||{},d);
-    const extra=[];if(d.brand)extra.push('العلامة: '+d.brand);showRow('extraRow',extra.length>0);fillChips('extra',extra);
-    details(d.details);$('cat').textContent=catName[d.category]||d.category||'—';$('source').textContent=(d.source||'—')+(d.unifiedSource?' + unified':'');$('count').textContent=imgs.length+' صورة فريدة';$('raw').textContent=JSON.stringify({product:d},null,2);
-    $('thumbs').innerHTML='';if(imgs[0])setImage($('main'),imgs[0]);else $('main').removeAttribute('src');
-    imgs.forEach(src=>{const im=document.createElement('img');im.className='thumb';im.loading='lazy';im.alt='صورة مصغرة';setImage(im,src);im.onclick=()=>setImage($('main'),src);$('thumbs').appendChild(im)});
-    $('result').classList.add('on')
-  }catch(e){$('err').textContent='فشل الاستيراد: '+e.message;$('err').classList.add('on')}
-  finally{$('go').disabled=false;$('status').classList.remove('on')}
-}
+async function run(){const url=$('url').value.trim();if(!url)return;$('go').disabled=true;$('status').classList.add('on');$('err').classList.remove('on');$('result').classList.remove('on');showRow('cardRow',false);hideCardPreview();lastProduct=null;try{const d=await fetchJson(API,url);lastProduct=d;const imgs=d.images||[];cardMain=imgs[0]||null;cardGallery=imgs.slice(1,4);showRow('cardRow',true);renderCardPicker();$('name').textContent=d.name||'—';$('price').textContent=d.price?d.price+' '+(d.currency||'TRY'):'السعر غير موجود';$('discount').textContent=d.discountPrice?'سعر الخصم: '+d.discountPrice+' '+(d.currency||'TRY'):'';const colors=d.colors||[];showRow('colorRow',colors.length>0);fillChips('colors',colors);const measures=d.sizes?.length?d.sizes:(d.dimensions?[d.dimensions]:[]);showRow('measureRow',measures.length>0);$('measureLabel').textContent=d.sizes?.length?'المقاسات':'الأبعاد';fillChips('sizes',measures,d.dimensions&&!d.sizes?.length?'dimension':'');renderSpecs(d.keySpecs||{},d);const extra=[];if(d.brand)extra.push('العلامة: '+d.brand);showRow('extraRow',extra.length>0);fillChips('extra',extra);details(d.details);$('cat').textContent=catName[d.category]||d.category||'—';$('source').textContent=(d.source||'—')+(d.unifiedSource?' + unified':'');$('count').textContent=imgs.length+' صورة فريدة';$('raw').textContent=JSON.stringify({product:d},null,2);$('thumbs').innerHTML='';if(imgs[0])setImage($('main'),imgs[0]);else $('main').removeAttribute('src');imgs.forEach(src=>{const im=document.createElement('img');im.className='thumb';im.loading='lazy';im.alt='صورة مصغرة';setImage(im,src);im.onclick=()=>setImage($('main'),src);$('thumbs').appendChild(im)});$('result').classList.add('on')}catch(e){$('err').textContent='فشل الاستيراد: '+e.message;$('err').classList.add('on')}finally{$('go').disabled=false;$('status').classList.remove('on')}}
 async function cardAction(btn,fn){if(!lastProduct)return;btn.disabled=true;$('err').classList.remove('on');try{await fn()}catch(e){$('err').textContent='فشل إنشاء البطاقة: '+e.message;$('err').classList.add('on')}finally{btn.disabled=false}}
-$('previewCard').onclick=()=>cardAction($('previewCard'),()=>TrendyCard.preview(cardProduct(),proxy,$('cardPreview')));
-$('downloadCard').onclick=()=>cardAction($('downloadCard'),()=>TrendyCard.download(cardProduct(),proxy));
-$('shareCard').onclick=()=>cardAction($('shareCard'),()=>TrendyCard.share(cardProduct(),proxy));
-$('go').onclick=run;document.querySelectorAll('.sample').forEach(b=>b.onclick=()=>{$('url').value=b.dataset.url;run()});$('url').onkeydown=e=>{if(e.key==='Enter')run()};
+$('previewCard').onclick=()=>cardAction($('previewCard'),()=>TrendyCard.preview(cardProduct(),proxy,$('cardPreview')));$('downloadCard').onclick=()=>cardAction($('downloadCard'),()=>TrendyCard.download(cardProduct(),proxy));$('shareCard').onclick=()=>cardAction($('shareCard'),()=>TrendyCard.share(cardProduct(),proxy));$('go').onclick=run;document.querySelectorAll('.sample').forEach(b=>b.onclick=()=>{$('url').value=b.dataset.url;run()});$('url').onkeydown=e=>{if(e.key==='Enter')run()};
 </script></body></html>
