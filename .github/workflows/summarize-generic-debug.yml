@@ -1,0 +1,40 @@
+name: Summarize generic import diagnostics
+on:
+  push:
+    paths:
+      - 'generic-import-debug-results.json'
+permissions:
+  contents: write
+jobs:
+  summarize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build compact summary
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('generic-import-debug-results.json'))
+          out={}
+          for k,v in d.items():
+              ld=v.get('jsonld') or []
+              product=next((x for x in ld if '"@type":"Product"' in x or '"@type": "Product"' in x),None)
+              out[k]={
+                'http':v.get('http'),'upstream_status':v.get('status'),'bytes':v.get('bytes'),'title':v.get('title'),
+                'jsonld_count':v.get('jsonld_count'),'has_product_jsonld':bool(product),
+                'product_jsonld_preview':product[:1200] if product else None,
+                'price_signals':(v.get('patterns') or {}).get('price',[])[:2],
+                'size_signals':(v.get('patterns') or {}).get('size',[])[:3],
+                'color_signals':(v.get('patterns') or {}).get('color',[])[:3],
+                'error':v.get('error')
+              }
+          open('generic-import-summary.json','w').write(json.dumps(out,ensure_ascii=False,indent=2))
+          print(json.dumps(out,ensure_ascii=False,indent=2))
+          PY
+      - name: Commit summary
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add generic-import-summary.json
+          git diff --cached --quiet || git commit -m 'Record generic import summary'
+          git push
