@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Test specs matrix v2
+      - name: Test specs matrix v3
         shell: bash
         run: |
           set -e
