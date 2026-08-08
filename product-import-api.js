@@ -1,10 +1,10 @@
-// Gacela Gallery - browser importer bridge
+// Gacela Gallery - validated product importer bridge
 (() => {
   'use strict';
 
-  const BROWSER_ENDPOINT = 'https://trendy-gallery.vercel.app/api/import-product';
   const SUPABASE_URL = 'https://uoydoungeplepusrsill.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_4N5mjsKVHFfKZglcUO-yBw_iCC9owhz';
+  const READER_ENDPOINT = `${SUPABASE_URL}/functions/v1/import-reader`;
   const LEGACY_ENDPOINT = `${SUPABASE_URL}/functions/v1/import-product`;
   const originalDoFetch = window.doFetch;
   const originalSaveBag = window.saveBag;
@@ -12,10 +12,14 @@
   const clean = v => String(v ?? '').replace(/\s+/g, ' ').trim();
   const uniq = arr => [...new Set((arr || []).filter(Boolean))];
 
-  async function callJson(endpoint, url, headers = {}) {
+  async function callJson(endpoint, url) {
     const r = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', ...headers },
+      headers: {
+        'content-type': 'application/json',
+        apikey: SUPABASE_KEY,
+        authorization: `Bearer ${SUPABASE_KEY}`
+      },
       body: JSON.stringify({ url })
     });
     const data = await r.json().catch(() => ({}));
@@ -25,15 +29,11 @@
 
   async function backendImport(url) {
     try {
-      const data = await callJson(BROWSER_ENDPOINT, url);
-      if (Array.isArray(data?.images) && data.images.length) return data;
-      throw new Error('browser_import_incomplete');
-    } catch (browserError) {
-      // Temporary fallback while browser importer coverage is expanded.
-      return callJson(LEGACY_ENDPOINT, url, {
-        apikey: SUPABASE_KEY,
-        authorization: `Bearer ${SUPABASE_KEY}`
-      });
+      const data = await callJson(READER_ENDPOINT, url);
+      if (Array.isArray(data?.images) && data.images.length && data.name) return data;
+      throw new Error('reader_import_incomplete');
+    } catch (readerError) {
+      return callJson(LEGACY_ENDPOINT, url);
     }
   }
 
@@ -57,7 +57,7 @@
       showThumbs(imgs);
 
       const nameInput = document.getElementById('nameInp');
-      if (nameInput && data.name) nameInput.value = clean(data.name).slice(0, 100);
+      if (nameInput && data.name) nameInput.value = clean(data.name).slice(0, 120);
 
       const priceInput = document.getElementById('priceInp');
       if (priceInput) priceInput.value = clean(data.price || '');
@@ -103,7 +103,7 @@
         ? imported.sizes.join(', ')
         : bag.sizes || '';
       bag.cat = imported.category || bag.cat;
-      bag.importSource = imported.source || 'browser';
+      bag.importSource = imported.source || 'reader';
 
       saveL();
       pushSheets();
