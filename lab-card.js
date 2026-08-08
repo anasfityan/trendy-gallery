@@ -50,17 +50,12 @@
   function drawBrand(ctx,right,y){
     ctx.save();
     ctx.direction='ltr';ctx.textAlign='left';ctx.textBaseline='alphabetic';
-    const parts=[
-      {t:'G',font:'600 35px Georgia',c:'#d6a84b'},
-      {t:'acela',font:'500 25px Georgia',c:'#d6a84b'},
-      {t:'  ',font:'500 22px Georgia',c:'#ffffff'},
-      {t:'G',font:'600 35px Georgia',c:'#f7f4ed'},
-      {t:'allery',font:'500 25px Georgia',c:'#f7f4ed'}
-    ];
-    let total=0;
-    for(const p of parts){ctx.font=p.font;total+=ctx.measureText(p.t).width}
-    let x=right-total;
-    for(const p of parts){ctx.font=p.font;ctx.fillStyle=p.c;ctx.fillText(p.t,x,y);x+=ctx.measureText(p.t).width}
+    ctx.font='700 27px Arial';
+    const gallery='Gallery',gacela='Gacela',gap=7;
+    const galleryW=ctx.measureText(gallery).width,gacelaW=ctx.measureText(gacela).width;
+    let x=right-galleryW-gap-gacelaW;
+    ctx.fillStyle='#d6a84b';ctx.fillText(gallery,x,y);x+=galleryW+gap;
+    ctx.fillStyle='#f5f1e8';ctx.fillText(gacela,x,y);
     ctx.restore();
   }
 
@@ -78,26 +73,18 @@
     ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);
   }
 
-  function drawPhotoCard(ctx,img,x,y,w,h,r=18){
-    ctx.save();
-    ctx.shadowColor='rgba(0,0,0,.26)';ctx.shadowBlur=16;ctx.shadowOffsetY=5;
-    rr(ctx,x,y,w,h,r,'#121820','#303943',1.25);
-    ctx.restore();
-    ctx.save();ctx.beginPath();ctx.roundRect(x+2,y+2,w-4,h-4,r-2);ctx.clip();
-    drawCover(ctx,img,x+2,y+2,w-4,h-4);
-    ctx.restore();
-  }
-
-  function drawGalleryCards(ctx,imgs,x,y,w,h){
+  function drawGalleryCollage(ctx,imgs,x,y,w,h){
     if(!imgs.length)return;
-    rr(ctx,x,y,w,h,24,'#0e1319','#242d36',1.4);
-    const pad=14,gap=12,innerX=x+pad,innerY=y+pad,innerW=w-pad*2,innerH=h-pad*2;
-    const n=Math.min(imgs.length,6),rows=n<=3?1:2,cols=rows===1?n:Math.ceil(n/2);
-    const cellW=(innerW-gap*(cols-1))/cols,cellH=(innerH-gap*(rows-1))/rows;
+    const n=Math.min(imgs.length,6),rows=n<=3?1:2,cols=rows===1?n:Math.ceil(n/2),sep=2;
+    rr(ctx,x,y,w,h,22,'#151a20','#242c34',1.5);
+    ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,22);ctx.clip();
+    const cellW=(w-sep*(cols-1))/cols,cellH=(h-sep*(rows-1))/rows;
     imgs.slice(0,n).forEach((img,i)=>{
       const row=rows===1?0:Math.floor(i/cols),col=rows===1?i:i%cols;
-      drawPhotoCard(ctx,img,innerX+col*(cellW+gap),innerY+row*(cellH+gap),cellW,cellH,18);
+      const cx=x+col*(cellW+sep),cy=y+row*(cellH+sep);
+      drawCover(ctx,img,cx,cy,cellW,cellH);
     });
+    ctx.restore();
   }
 
   async function build(product,proxy){
@@ -117,10 +104,10 @@
     drawMain(ctx,mainImg,mainX,innerY,mainW,innerH);
 
     const right=topX+topW-pad;
-    drawBrand(ctx,right,innerY+30);
-    ctx.fillStyle='#717a84';ctx.font='500 15px Arial';ctx.textAlign='right';ctx.direction='rtl';ctx.fillText('معلومات المنتج',right,innerY+57);
+    drawBrand(ctx,right,innerY+27);
+    ctx.fillStyle='#717a84';ctx.font='500 15px Arial';ctx.textAlign='right';ctx.direction='rtl';ctx.fillText('معلومات المنتج',right,innerY+54);
 
-    let cy=innerY+118;
+    let cy=innerY+112;
     ctx.fillStyle='#f5f1e8';ctx.font='700 36px Arial';
     const title=fitText(ctx,cleanProductTitle(product),infoW,3);title.forEach((l,i)=>ctx.fillText(l,right,cy+i*46));
     cy+=title.length*46+10;
@@ -141,11 +128,11 @@
     }
 
     const galleryY=topY+topH+24,galleryH=500;
-    drawGalleryCards(ctx,gallery,M,galleryY,W-M*2,galleryH);
+    drawGalleryCollage(ctx,gallery,M,galleryY,W-M*2,galleryH);
 
     const footerY=galleryY+galleryH+28;
     ctx.strokeStyle='#202832';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(M,footerY);ctx.lineTo(W-M,footerY);ctx.stroke();
-    drawBrand(ctx,W-M,footerY+40);
+    drawBrand(ctx,W-M,footerY+38);
     return canvas;
   }
 
