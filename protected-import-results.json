@@ -54,6 +54,6 @@
     "source": "protected-stradivarius-itxrest"
   },
   "bershka": {
-    "error": "{\"error\": \"category_url_not_product\"}\n"
+    "error": "category_url_not_product"
   }
 }
