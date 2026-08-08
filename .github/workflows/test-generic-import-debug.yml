@@ -1,0 +1,46 @@
+name: Diagnose generic import sources
+on:
+  push:
+    paths:
+      - '.github/workflows/test-generic-import-debug.yml'
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe sources
+        shell: bash
+        run: |
+          set -e
+          API='https://uoydoungeplepusrsill.supabase.co/functions/v1/import-generic-debug'
+          python - <<'PY'
+          import json, subprocess
+          urls={
+            'gratis':'https://www.gratis.com/el-vucut-kremleri/bee-beauty-dogal-kiraz-cicegi-ozu-el-kremi-75-ml-p-10194839',
+            'hepsiburada':'https://www.hepsiburada.com/pirok-store-samsung-galaxy-s26-ultra-magsafe-uyumlu-kablosuz-sarj-destekli-yumusak-soft-mukemmel-manyetik-esnek-lansman-silikon-kilif-p-HBCV0000D2MAO4',
+            'shulebags':'https://www.shulebags.com/giglio-spor-omuz-cantasi-vizon',
+            'nisantasi':'https://www.nisantasishoes.com/lorea-kahve-saten-puantiye-desenli-fiyonk-detayli-kadin-topuklu-ayakkabi-14833?numara=39',
+            'stradivarius':'https://www.stradivarius.com/tr/en/graphic-vneck-tshirt-l06703295?categoryId=1718528&colorId=100&pelement=520351835',
+            'bershka':'https://www.bershka.com/tr/erkek/giyim/pantolon-n3288.html?celement=1010193241'
+          }
+          api='https://uoydoungeplepusrsill.supabase.co/functions/v1/import-generic-debug'
+          out={}
+          for k,u in urls.items():
+              p=subprocess.run(['curl','-sS','-w','\nHTTP:%{http_code}','-H','content-type: application/json','-d',json.dumps({'url':u}),api],capture_output=True,text=True,timeout=60)
+              body,_,code=p.stdout.rpartition('\nHTTP:')
+              try: data=json.loads(body)
+              except: data={'raw':body[:1000]}
+              data['http']=int(code or 0)
+              out[k]=data
+          open('generic-import-debug-results.json','w').write(json.dumps(out,ensure_ascii=False,indent=2))
+          print(json.dumps({k:{'http':v.get('http'),'status':v.get('status'),'bytes':v.get('bytes'),'title':v.get('title'),'jsonld_count':v.get('jsonld_count'),'error':v.get('error')} for k,v in out.items()},ensure_ascii=False,indent=2))
+          PY
+      - name: Commit results
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add generic-import-debug-results.json
+          git diff --cached --quiet || git commit -m 'Record generic import diagnostics'
+          git push
