@@ -1,65 +1,59 @@
-name: Test reader importer
-
+name: Test browser product importer
 on:
   push:
     paths:
       - '.github/workflows/test-browser-importer.yml'
-
 permissions:
   contents: write
-
 jobs:
-  smoke:
+  test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Test active reader importer and save results
-        shell: bash
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
         run: |
-          set +e
-          ENDPOINT='https://uoydoungeplepusrsill.supabase.co/functions/v1/import-reader'
-          KEY='sb_publishable_4N5mjsKVHFfKZglcUO-yBw_iCC9owhz'
-          SHULE_CODE=$(curl -sS -o shule.json -w '%{http_code}' -X POST "$ENDPOINT" \
-            -H 'content-type: application/json' -H "apikey: $KEY" -H "authorization: Bearer $KEY" \
-            --data '{"url":"https://www.shulebags.com/giglio-spor-omuz-cantasi-vizon"}')
-          NIS_CODE=$(curl -sS -o nisantasi.json -w '%{http_code}' -X POST "$ENDPOINT" \
-            -H 'content-type: application/json' -H "apikey: $KEY" -H "authorization: Bearer $KEY" \
-            --data '{"url":"https://www.nisantasishoes.com/lorea-kahve-saten-puantiye-desenli-fiyonk-detayli-kadin-topuklu-ayakkabi-14833?numara=39"}')
-          export SHULE_CODE NIS_CODE
-          python - <<'PY'
-          import json, os
-          def read(path):
-              try:
-                  with open(path, encoding='utf-8') as f: return json.load(f)
-              except Exception as e:
-                  return {'error': f'invalid_json: {e}'}
-          def compact(d, code):
-              return {
-                  'http': int(code or 0),
-                  'name': d.get('name'),
-                  'price': d.get('price'),
-                  'images': len(d.get('images') or []),
-                  'image_urls': (d.get('images') or [])[:5],
-                  'colors': d.get('colors') or [],
-                  'sizes': d.get('sizes') or [],
-                  'category': d.get('category'),
-                  'source': d.get('source'),
-                  'error': d.get('error')
-              }
-          out={
-              'shulebags': compact(read('shule.json'), os.environ.get('SHULE_CODE','0')),
-              'nisantasishoes': compact(read('nisantasi.json'), os.environ.get('NIS_CODE','0'))
+          npm init -y >/dev/null 2>&1
+          npm install playwright@1.55.0 >/dev/null 2>&1
+          npx playwright install --with-deps chromium
+      - name: Run browser importer diagnostics
+        run: |
+          cat > /tmp/browser-test.mjs <<'JS'
+          import { chromium } from 'playwright';
+          import fs from 'fs';
+          const urls={
+            hepsiburada:'https://www.hepsiburada.com/pirok-store-samsung-galaxy-s26-ultra-magsafe-uyumlu-kablosuz-sarj-destekli-yumusak-soft-mukemmel-manyetik-esnek-lansman-silikon-kilif-p-HBCV0000D2MAO4',
+            stradivarius:'https://www.stradivarius.com/tr/en/graphic-vneck-tshirt-l06703295?categoryId=1718528&colorId=100&pelement=520351835',
+            bershka:'https://www.bershka.com/tr/erkek/giyim/pantolon-n3288.html?celement=1010193241'
+          };
+          const browser=await chromium.launch({headless:true,args:['--disable-blink-features=AutomationControlled','--no-sandbox']});
+          const out={};
+          for(const [name,url] of Object.entries(urls)){
+            const ctx=await browser.newContext({userAgent:'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36',locale:'tr-TR',timezoneId:'Europe/Istanbul',viewport:{width:1440,height:900},extraHTTPHeaders:{'Accept-Language':'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7'}});
+            await ctx.addInitScript(()=>Object.defineProperty(navigator,'webdriver',{get:()=>undefined}));
+            const page=await ctx.newPage(); const jsonResponses=[];
+            page.on('response',async r=>{try{const ct=r.headers()['content-type']||'';if(ct.includes('json')&&(r.url().includes('itxrest')||r.url().includes('product')||r.url().includes('api'))){const txt=await r.text();if(txt.length<2000000)jsonResponses.push({url:r.url(),status:r.status(),body:txt.slice(0,3000)});}}catch{}});
+            try{
+              const resp=await page.goto(url,{waitUntil:'domcontentloaded',timeout:90000}); await page.waitForTimeout(8000);
+              const title=await page.title(); const bodyText=(await page.locator('body').innerText().catch(()=>'' )).slice(0,15000);
+              const jsonld=await page.locator('script[type="application/ld+json"]').allTextContents().catch(()=>[]);
+              const sizes=await page.locator('button[data-testid="size-item"]').evaluateAll(els=>els.map(e=>({text:(e.textContent||'').trim(),sku:e.getAttribute('data-sku'),disabled:e.hasAttribute('disabled')}))).catch(()=>[]);
+              const imgs=await page.locator('img').evaluateAll(els=>els.map(e=>e.currentSrc||e.src).filter(Boolean).slice(0,60)).catch(()=>[]);
+              out[name]={http:resp?.status()||null,finalUrl:page.url(),title,blocked:/Service Unavailable|Güvenlik|Access Denied|Reference #/i.test(title+' '+bodyText.slice(0,1000)),jsonldCount:jsonld.length,jsonld:jsonld.slice(0,3).map(x=>x.slice(0,6000)),sizes,images:imgs,jsonResponses:jsonResponses.slice(0,20),bodyPreview:bodyText.slice(0,4000)};
+            }catch(e){out[name]={error:String(e),url:page.url(),title:await page.title().catch(()=>''),bodyPreview:(await page.locator('body').innerText().catch(()=>'' )).slice(0,2000),jsonResponses:jsonResponses.slice(0,10)};}
+            await ctx.close();
           }
-          with open('importer-smoke-results.json','w',encoding='utf-8') as f:
-              json.dump(out,f,ensure_ascii=False,indent=2)
-          print(json.dumps(out,ensure_ascii=False,indent=2))
-          PY
-      - name: Commit smoke results
+          await browser.close(); fs.writeFileSync('browser-import-results.json',JSON.stringify(out,null,2));
+          console.log(JSON.stringify(Object.fromEntries(Object.entries(out).map(([k,v])=>[k,{http:v.http,title:v.title,blocked:v.blocked,jsonldCount:v.jsonldCount,sizes:v.sizes?.length,jsonResponses:v.jsonResponses?.length,error:v.error}])),null,2));
+          JS
+          node /tmp/browser-test.mjs
+      - name: Commit browser results
         run: |
           git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add importer-smoke-results.json
-          git diff --cached --quiet || git commit -m 'Record reader importer smoke results'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add browser-import-results.json
+          git diff --cached --quiet || git commit -m 'Record browser importer diagnostics'
           git push
-
-# validation-run: 2
