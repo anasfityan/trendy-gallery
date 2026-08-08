@@ -4,15 +4,24 @@
 
   const SUPABASE_URL = 'https://uoydoungeplepusrsill.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_4N5mjsKVHFfKZglcUO-yBw_iCC9owhz';
-  const ENDPOINT = `${SUPABASE_URL}/functions/v1/import-product`;
+  const DEFAULT_ENDPOINT = `${SUPABASE_URL}/functions/v1/import-product`;
+  const NISANTASI_ENDPOINT = `${SUPABASE_URL}/functions/v1/import-nisantasishoes`;
   const originalDoFetch = window.doFetch;
   const originalSaveBag = window.saveBag;
 
   const clean = v => String(v ?? '').replace(/\s+/g, ' ').trim();
   const uniq = arr => [...new Set((arr || []).filter(Boolean))];
 
+  function endpointFor(url) {
+    try {
+      const host = new URL(url).hostname.replace(/^www\./, '');
+      if (host === 'nisantasishoes.com') return NISANTASI_ENDPOINT;
+    } catch {}
+    return DEFAULT_ENDPOINT;
+  }
+
   async function backendImport(url) {
-    const r = await fetch(ENDPOINT, {
+    const r = await fetch(endpointFor(url), {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -57,7 +66,7 @@
       document.getElementById('amManual').style.display = 'none';
       showSpin(false);
       toast(lang === 'ar'
-        ? `✅ تم جلب المنتج: ${imgs.length} صورة${data.price ? ' + السعر' : ''}`
+        ? `✅ تم جلب المنتج: ${imgs.length} صورة${data.price ? ' + السعر' : ''}${data.colors?.length ? ' + اللون' : ''}${data.sizes?.length ? ' + المقاسات' : ''}`
         : '✅ Product imported');
     } catch (e) {
       window.__gacelaBackendImport = null;
