@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - 'protected_importer.py'
+      - 'protected_importer_entry.py'
       - '.github/workflows/test-protected-importer.yml'
 permissions:
   contents: write
@@ -15,7 +16,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install -q curl-cffi
-      - name: Test protected importer matrix v3
+      - name: Test protected importer matrix v4
         run: |
           python - <<'PY'
           import json,subprocess
@@ -26,7 +27,7 @@ jobs:
           }
           out={}
           for k,u in urls.items():
-            p=subprocess.run(['python','protected_importer.py',u],capture_output=True,text=True,timeout=90)
+            p=subprocess.run(['python','-c','import json,sys; from protected_importer_entry import import_product; print(json.dumps(import_product(sys.argv[1]),ensure_ascii=False))',u],capture_output=True,text=True,timeout=90)
             if p.returncode:
               try: d=json.loads(p.stdout.strip() or '{}')
               except: d={}
