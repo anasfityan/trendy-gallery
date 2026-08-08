@@ -1,0 +1,46 @@
+name: Validate live protected backend
+on:
+  push:
+    paths:
+      - '.github/workflows/test-protected-live.yml'
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe live protected endpoint
+        run: |
+          python - <<'PY'
+          import json, urllib.request, urllib.error
+          endpoint='https://trendy-gallery.vercel.app/api/protected'
+          urls={
+            'hepsiburada':'https://www.hepsiburada.com/pirok-store-samsung-galaxy-s26-ultra-magsafe-uyumlu-kablosuz-sarj-destekli-yumusak-soft-mukemmel-manyetik-esnek-lansman-silikon-kilif-p-HBCV0000D2MAO4',
+            'stradivarius':'https://www.stradivarius.com/tr/en/graphic-vneck-tshirt-l06703295?categoryId=1718528&colorId=100&pelement=520351835',
+            'bershka':'https://www.bershka.com/tr/kargo-parasut-pantolon-l03046335-c0p227042041.html'
+          }
+          out={'endpoint':endpoint}
+          for k,u in urls.items():
+            req=urllib.request.Request(endpoint,data=json.dumps({'url':u}).encode(),headers={'content-type':'application/json'},method='POST')
+            try:
+              with urllib.request.urlopen(req,timeout=120) as r:
+                d=json.loads(r.read().decode())
+                out[k]={'http':r.status,'name':d.get('name'),'price':d.get('price'),'category':d.get('category'),'images':len(d.get('images') or []),'colors':d.get('colors'),'sizes':d.get('sizes'),'keySpecs':d.get('keySpecs'),'source':d.get('source'),'error':d.get('error')}
+            except urllib.error.HTTPError as e:
+              body=e.read().decode(errors='replace')
+              try:d=json.loads(body)
+              except:d={'raw':body[:1000]}
+              out[k]={'http':e.code,'error':d.get('error'),'detail':d.get('detail'),'raw':d.get('raw')}
+            except Exception as e:
+              out[k]={'error':repr(e)}
+          open('protected-live-results.json','w').write(json.dumps(out,ensure_ascii=False,indent=2))
+          print(json.dumps(out,ensure_ascii=False,indent=2))
+          PY
+      - name: Commit result
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add protected-live-results.json
+          git diff --cached --quiet || git commit -m 'Record live protected backend validation'
+          git push
