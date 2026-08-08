@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - 'generic-import-debug-results.json'
+      - '.github/workflows/summarize-generic-debug.yml'
 permissions:
   contents: write
 jobs:
