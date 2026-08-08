@@ -15,7 +15,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install -q curl-cffi
-      - name: Test protected importer matrix v2
+      - name: Test protected importer matrix v3
         run: |
           python - <<'PY'
           import json,subprocess
