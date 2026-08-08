@@ -1,0 +1,60 @@
+{
+  "id": 227042041,
+  "name": "Kargo paraşüt pantolon",
+  "nameEn": "Parachute cargo trousers",
+  "productUrl": "kargo-parasut-pantolon-l03046335",
+  "productUrlParam": "227042041",
+  "alternativeProductId": 226928541,
+  "field5": "830#1785932107428",
+  "mainColorid": "600",
+  "familyCode": "1",
+  "subFamilyCode": "301",
+  "section": "1",
+  "family": "161",
+  "subFamily": "301",
+  "keywords": "",
+  "relatedCategories": [],
+  "attributes": [
+    {
+      "id": "178615689662976147",
+      "name": "BASESTYLE",
+      "value": "BASESTYLE",
+      "type": "BASESTYLE"
+    },
+    {
+      "id": "7010000000001807299",
+      "name": "imgtype: influencer",
+      "value": "Image Type",
+      "type": "PRODUCT_SETTING"
+    },
+    {
+      "id": "7010000000000476503",
+      "name": "Jogger",
+      "value": "jogging fit",
+      "type": "PRODUCT_TAG"
+    },
+    {
+      "id": "7010000000001567599",
+      "name": "BASESTYLE",
+      "type": "STYLING_INFO"
+    },
+    {
+      "id": "7000000000000027517",
+      "name": "G-ROJO",
+      "value": "Kırmızı",
+      "type": "XCOLFILTER"
+    },
+    {
+      "id": "178615689662944950",
+      "name": "#E51D54",
+      "value": "#E51D54",
+      "type": "XDISTINCTIVECOLOR"
+    },
+    {
+      "id": "7010000000000817014",
+      "name": "ProductType: Clothing",
+      "value": "Gi̇yi̇m",
+      "type": "XTYPEFILTER"
+    }
+  ]
+}
