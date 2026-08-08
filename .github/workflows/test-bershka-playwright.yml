@@ -1,0 +1,54 @@
+name: Test Bershka Playwright fallback
+on:
+  push:
+    paths:
+      - '.github/workflows/test-bershka-playwright.yml'
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          pip install -q playwright
+          python -m playwright install chromium
+      - name: Fetch real Bershka PDP
+        run: |
+          python - <<'PY'
+          import asyncio,json,re
+          from playwright.async_api import async_playwright
+          URL='https://www.bershka.com/tr/p-pens-detayl%C4%B1-barrel-fit-pantolon-c0p203743229.html'
+          async def main():
+            async with async_playwright() as p:
+              browser=await p.chromium.launch(headless=True,args=['--disable-blink-features=AutomationControlled','--no-sandbox'])
+              ctx=await browser.new_context(locale='tr-TR',user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36',viewport={'width':1365,'height':900})
+              page=await ctx.new_page()
+              await page.goto(URL,wait_until='domcontentloaded',timeout=60000)
+              await page.wait_for_timeout(7000)
+              title=await page.title()
+              text=re.sub(r'\s+',' ',await page.locator('body').inner_text()).strip()
+              data=await page.evaluate('''() => {
+                const clean=v=>String(v||'').replace(/\\s+/g,' ').trim();
+                const imgs=[...document.images].map(i=>i.currentSrc||i.src).filter(Boolean).filter(u=>/static|bershka|media/i.test(u));
+                const sizes=[...document.querySelectorAll('button,[data-testid="size-item"],[data-sku]')].map(e=>clean(e.innerText||e.textContent)).filter(v=>/^(XXS|XS|S|M|L|XL|XXL|2XL|3XL|2[6-9]|3[0-9]|4[0-9]|5[0-2])$/.test(v));
+                const h1=clean(document.querySelector('h1')?.textContent);
+                const scripts=[...document.scripts].map(s=>s.textContent||'').filter(t=>t.length>1000);
+                return {h1,images:[...new Set(imgs)].slice(0,20),sizes:[...new Set(sizes)],scriptCount:scripts.length,htmlBytes:document.documentElement.outerHTML.length};
+              }''')
+              out={'title':title,'body_preview':text[:2500],**data}
+              open('bershka-playwright-result.json','w').write(json.dumps(out,ensure_ascii=False,indent=2))
+              print(json.dumps(out,ensure_ascii=False,indent=2))
+              await browser.close()
+          asyncio.run(main())
+          PY
+      - name: Commit result
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add bershka-playwright-result.json
+          git diff --cached --quiet || git commit -m 'Record Bershka Playwright result'
+          git push
