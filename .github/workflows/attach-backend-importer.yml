@@ -19,9 +19,14 @@ jobs:
           from pathlib import Path
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-          tags = '<script src="./enhancements.js?v=15"></script>\n<script src="./product-import-api.js?v=15"></script>\n'
+
+          tags = '<script src="./enhancements.js?v=16"></script>\n<script src="./product-import-api.js?v=16"></script>\n'
           if 'product-import-api.js' not in s:
               s = s.replace('</body>', tags + '</body>')
+
+          old = """  syncSheets();\n  // Auto-refresh every 30 seconds\n  setInterval(()=>syncSheets(),7200000); // 2 hours\n  // Refresh when app becomes visible again (phone switch)\n  document.addEventListener('visibilitychange',()=>{\n    if(!document.hidden) syncSheets();\n  });\n"""
+          s = s.replace(old, "  // Sync is manual only. Use the sidebar sync button when needed.\n")
+
           p.write_text(s, encoding='utf-8')
           PY
       - name: Commit patch
@@ -29,5 +34,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git diff --cached --quiet || git commit -m 'Attach backend product importer [importer-patch]'
+          git diff --cached --quiet || git commit -m 'Attach backend importer and disable automatic sync'
           git push
