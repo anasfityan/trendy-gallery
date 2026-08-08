@@ -1,6 +1,6 @@
 import json
 from http.server import BaseHTTPRequestHandler
-from protected_importer import import_product
+from protected_importer_entry import import_product
 
 class handler(BaseHTTPRequestHandler):
     def _headers(self,status=200):
