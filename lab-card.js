@@ -23,6 +23,18 @@
   const localizeOne=v=>{let s=String(v??'').trim();if(AR[s])return AR[s];s=s.replace(/(\d+)\s*%\s*(pamuk|Pamuk|Cotton)/g,'$1% قطن').replace(/(\d+)\s*%\s*(elastan|Elastan)/g,'$1% إيلاستان').replace(/(\d+)\s*%\s*(polyester|Polyester)/g,'$1% بوليستر').replace(/\bcm\b/gi,'سم');return AR[s]||s};
   const valueText=v=>Array.isArray(v)?v.map(localizeOne).join(' · '):(v===true?'نعم':localizeOne(v));
   const colorsText=a=>(a||[]).map(localizeOne).join(' · ');
+  const esc=s=>String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+
+  function cleanProductTitle(product){
+    let title=String(product.name||'').replace(/\s*\|\s*[^|]+$/,'').trim();
+    const colors=[...(product.colors||[])].filter(Boolean).sort((a,b)=>String(b).length-String(a).length);
+    for(const color of colors){
+      const rx=new RegExp(`(?:\\s*[-–—|/]?\\s*)${esc(color)}\\s*$`,'i');
+      title=title.replace(rx,'').trim();
+    }
+    return title;
+  }
+
   function collectRows(product){
     const rows=[];
     if((product.colors||[]).length)rows.push(['اللون',colorsText(product.colors)]);
@@ -30,10 +42,28 @@
     else if(product.dimensions)rows.push(['الأبعاد',localizeOne(product.dimensions)]);
     for(const [k,v] of Object.entries(product.keySpecs||{}).filter(([,v])=>v!=null&&v!==''&&v!==false)){
       const label=SPEC_LABELS[k]||k,val=valueText(v);
-      if(!rows.some(r=>r[0]===label&&r[1]===val))rows.push([label,val])
+      if(!rows.some(r=>r[0]===label&&r[1]===val))rows.push([label,val]);
     }
     return rows.slice(0,6);
   }
+
+  function drawBrand(ctx,right,y){
+    ctx.save();
+    ctx.direction='ltr';ctx.textAlign='left';ctx.textBaseline='alphabetic';
+    const parts=[
+      {t:'G',font:'600 35px Georgia',c:'#d6a84b'},
+      {t:'acela',font:'500 25px Georgia',c:'#d6a84b'},
+      {t:'  ',font:'500 22px Georgia',c:'#ffffff'},
+      {t:'G',font:'600 35px Georgia',c:'#f7f4ed'},
+      {t:'allery',font:'500 25px Georgia',c:'#f7f4ed'}
+    ];
+    let total=0;
+    for(const p of parts){ctx.font=p.font;total+=ctx.measureText(p.t).width}
+    let x=right-total;
+    for(const p of parts){ctx.font=p.font;ctx.fillStyle=p.c;ctx.fillText(p.t,x,y);x+=ctx.measureText(p.t).width}
+    ctx.restore();
+  }
+
   function drawMain(ctx,img,x,y,w,h){
     rr(ctx,x,y,w,h,22,'#f1f0ed',null);
     if(!img)return;
@@ -41,23 +71,33 @@
     const dx=x+(w-dw)/2,dy=y+(h-dh)/2;
     ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,22);ctx.clip();ctx.drawImage(img,dx,dy,dw,dh);ctx.restore();
   }
+
   function drawCover(ctx,img,x,y,w,h){
     const ir=img.width/img.height,br=w/h;let sx=0,sy=0,sw=img.width,sh=img.height;
     if(ir>br){sw=img.height*br;sx=(img.width-sw)/2}else{sh=img.width/br;sy=(img.height-sh)/2}
     ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);
   }
-  function drawGalleryCollage(ctx,imgs,x,y,w,h){
+
+  function drawPhotoCard(ctx,img,x,y,w,h,r=18){
+    ctx.save();
+    ctx.shadowColor='rgba(0,0,0,.26)';ctx.shadowBlur=16;ctx.shadowOffsetY=5;
+    rr(ctx,x,y,w,h,r,'#121820','#303943',1.25);
+    ctx.restore();
+    ctx.save();ctx.beginPath();ctx.roundRect(x+2,y+2,w-4,h-4,r-2);ctx.clip();
+    drawCover(ctx,img,x+2,y+2,w-4,h-4);
+    ctx.restore();
+  }
+
+  function drawGalleryCards(ctx,imgs,x,y,w,h){
     if(!imgs.length)return;
-    const n=Math.min(imgs.length,6),rows=n<=3?1:2,cols=rows===1?n:Math.ceil(n/2),sep=2;
-    rr(ctx,x,y,w,h,22,'#151a20','#242c34',1.5);
-    ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,22);ctx.clip();
-    const cellW=(w-sep*(cols-1))/cols,cellH=(h-sep*(rows-1))/rows;
+    rr(ctx,x,y,w,h,24,'#0e1319','#242d36',1.4);
+    const pad=14,gap=12,innerX=x+pad,innerY=y+pad,innerW=w-pad*2,innerH=h-pad*2;
+    const n=Math.min(imgs.length,6),rows=n<=3?1:2,cols=rows===1?n:Math.ceil(n/2);
+    const cellW=(innerW-gap*(cols-1))/cols,cellH=(innerH-gap*(rows-1))/rows;
     imgs.slice(0,n).forEach((img,i)=>{
       const row=rows===1?0:Math.floor(i/cols),col=rows===1?i:i%cols;
-      const cx=x+col*(cellW+sep),cy=y+row*(cellH+sep);
-      drawCover(ctx,img,cx,cy,cellW,cellH);
+      drawPhotoCard(ctx,img,innerX+col*(cellW+gap),innerY+row*(cellH+gap),cellW,cellH,18);
     });
-    ctx.restore();
   }
 
   async function build(product,proxy){
@@ -77,15 +117,15 @@
     drawMain(ctx,mainImg,mainX,innerY,mainW,innerH);
 
     const right=topX+topW-pad;
-    ctx.fillStyle='#d6a84b';ctx.font='700 24px Arial';ctx.fillText('GACELA GALLERY',right,innerY+5);
-    ctx.fillStyle='#6f7882';ctx.font='500 15px Arial';ctx.fillText('معلومات المنتج',right,innerY+32);
+    drawBrand(ctx,right,innerY+30);
+    ctx.fillStyle='#717a84';ctx.font='500 15px Arial';ctx.textAlign='right';ctx.direction='rtl';ctx.fillText('معلومات المنتج',right,innerY+57);
 
-    let cy=innerY+92;
+    let cy=innerY+118;
     ctx.fillStyle='#f5f1e8';ctx.font='700 36px Arial';
-    const title=fitText(ctx,product.name||'',infoW,3);title.forEach((l,i)=>ctx.fillText(l,right,cy+i*46));
-    cy+=title.length*46+8;
+    const title=fitText(ctx,cleanProductTitle(product),infoW,3);title.forEach((l,i)=>ctx.fillText(l,right,cy+i*46));
+    cy+=title.length*46+10;
     ctx.fillStyle='#4fce91';ctx.font='800 42px Arial';ctx.fillText(product.price?`${product.price} ${product.currency||'TRY'}`:'',right,cy);
-    cy+=62;
+    cy+=64;
 
     const rows=collectRows(product),rowGap=12;
     const bottom=innerY+innerH;
@@ -101,11 +141,11 @@
     }
 
     const galleryY=topY+topH+24,galleryH=500;
-    drawGalleryCollage(ctx,gallery,M,galleryY,W-M*2,galleryH);
+    drawGalleryCards(ctx,gallery,M,galleryY,W-M*2,galleryH);
 
     const footerY=galleryY+galleryH+28;
     ctx.strokeStyle='#202832';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(M,footerY);ctx.lineTo(W-M,footerY);ctx.stroke();
-    ctx.fillStyle='#606a75';ctx.font='500 16px Arial';ctx.textAlign='right';ctx.direction='rtl';ctx.fillText('GACELA GALLERY',W-M,footerY+34);
+    drawBrand(ctx,W-M,footerY+40);
     return canvas;
   }
 
