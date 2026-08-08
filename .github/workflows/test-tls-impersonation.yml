@@ -1,0 +1,53 @@
+name: Test TLS impersonation importer
+on:
+  push:
+    paths:
+      - '.github/workflows/test-tls-impersonation.yml'
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install curl-cffi
+        run: pip install -q curl-cffi
+      - name: Run protected-store fetch tests
+        run: |
+          cat > /tmp/test.py <<'PY'
+          import json
+          from curl_cffi import requests
+          s=requests.Session(impersonate='chrome')
+          s.headers.update({'Accept-Language':'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7','User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/150 Safari/537.36'})
+          targets={
+            'hepsiburada':'https://www.hepsiburada.com/pirok-store-samsung-galaxy-s26-ultra-magsafe-uyumlu-kablosuz-sarj-destekli-yumusak-soft-mukemmel-manyetik-esnek-lansman-silikon-kilif-p-HBCV0000D2MAO4',
+            'stradivarius_page':'https://www.stradivarius.com/tr/en/graphic-vneck-tshirt-l06703295?categoryId=1718528&colorId=100&pelement=520351835',
+            'stradivarius_api':'https://www.stradivarius.com/itxrest/3/catalog/store/54009571/50331081/productsArray?languageId=-43&productIds=520351835&appId=1&locale=tr_TR',
+            'bershka_page':'https://www.bershka.com/tr/erkek/giyim/pantolon-n3288.html?celement=1010193241'
+          }
+          out={}
+          for k,u in targets.items():
+            try:
+              if 'stradivarius' in k:
+                s.get('https://www.stradivarius.com/tr/',timeout=30)
+              elif 'bershka' in k:
+                s.get('https://www.bershka.com/tr/',timeout=30)
+              r=s.get(u,timeout=45,allow_redirects=True)
+              text=r.text
+              out[k]={'status':r.status_code,'final_url':r.url,'content_type':r.headers.get('content-type'),'bytes':len(text),'title':(text.split('<title>')[1].split('</title>')[0] if '<title>' in text.lower() else '')[:300],'blocked':any(x.lower() in text[:3000].lower() for x in ['service unavailable','güvenlik','access denied','reference #']),'preview':text[:5000]}
+            except Exception as e:
+              out[k]={'error':repr(e)}
+          open('tls-impersonation-results.json','w').write(json.dumps(out,ensure_ascii=False,indent=2))
+          print(json.dumps({k:{x:v.get(x) for x in ['status','content_type','bytes','blocked','error']} for k,v in out.items()},ensure_ascii=False,indent=2))
+          PY
+          python /tmp/test.py
+      - name: Commit result
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add tls-impersonation-results.json
+          git diff --cached --quiet || git commit -m 'Record TLS impersonation diagnostics'
+          git push
