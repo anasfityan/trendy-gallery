@@ -1,0 +1,69 @@
+name: Build Bershka product index
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 2 * * *'
+  push:
+    paths:
+      - '.github/workflows/build-bershka-index.yml'
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -q curl-cffi
+      - name: Build live Turkey productId to categoryId index
+        run: |
+          python - <<'PY'
+          import json,time
+          from curl_cffi import requests
+          base='https://www.bershka.com'; v2=f'{base}/itxrest/2/catalog/store/44109521/40259537'; v3=f'{base}/itxrest/3/catalog/store/44109521/40259537'
+          s=requests.Session(impersonate='chrome'); s.headers.update({'Accept':'application/json,*/*','Accept-Language':'tr-TR,tr;q=0.9,en;q=0.8','Referer':base+'/tr/','Sec-Fetch-Dest':'empty','Sec-Fetch-Mode':'cors','Sec-Fetch-Site':'same-origin'})
+          try:s.get(base+'/tr/',timeout=25)
+          except:pass
+          tree=s.get(f'{v2}/category?languageId=-43&typeCatalog=1&appId=1',timeout=40); tree.raise_for_status(); data=tree.json()
+          leaves=[]
+          def walk(items,parent=''):
+            if isinstance(items,dict): items=[items]
+            for x in items or []:
+              subs=x.get('subcategories') or x.get('subCategories') or []
+              if subs: walk(subs,x.get('name') or parent)
+              else:
+                cid=x.get('id') or x.get('categoryId')
+                if cid:
+                  pcid=x.get('viewCategoryId') or cid
+                  leaves.append({'id':str(cid),'categoryId':str(pcid),'name':x.get('name') or '','parent':parent})
+          if isinstance(data,list): walk(data)
+          else: walk(data.get('categories') or data.get('items') or [data])
+          idx={}; ok=0; failed=[]
+          seen=set()
+          for c in leaves:
+            cid=c['categoryId']
+            if cid in seen: continue
+            seen.add(cid)
+            try:
+              r=s.get(f'{v3}/category/{cid}/product?languageId=-43&showProducts=false&showNoStock=false&appId=1&locale=tr_TR',timeout=30)
+              if not r.ok:
+                failed.append([cid,r.status_code]); continue
+              ids=r.json().get('productIds') or []
+              for pid in ids:
+                idx[str(pid)]={'categoryId':cid,'categoryName':c['name'],'parentName':c['parent']}
+              ok+=1
+            except Exception as e: failed.append([cid,str(e)[:80]])
+            time.sleep(.08)
+          out={'generatedAt':__import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat(),'storeId':'44109521','catalogId':'40259537','categories':ok,'products':len(idx),'index':idx,'failedCategories':failed[:30]}
+          open('bershka-index.json','w').write(json.dumps(out,ensure_ascii=False,separators=(',',':')))
+          print(json.dumps({'categories':ok,'products':len(idx),'failed':len(failed)},ensure_ascii=False))
+          PY
+      - name: Commit index
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add bershka-index.json
+          git diff --cached --quiet || git commit -m 'Refresh Bershka product index'
+          git push
