@@ -1,0 +1,56 @@
+name: Debug Bershka product lookup
+on:
+  push:
+    paths:
+      - '.github/workflows/debug-bershka-product.yml'
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -q curl-cffi
+      - name: Probe Bershka product endpoints
+        run: |
+          python - <<'PY'
+          import json
+          from curl_cffi import requests
+          base='https://www.bershka.com'
+          root=f'{base}/itxrest/3/catalog/store/44109521/40259537'
+          pid='203743229'
+          s=requests.Session(impersonate='chrome')
+          s.headers.update({'Accept':'application/json,*/*','Accept-Language':'tr-TR,tr;q=0.9,en;q=0.8','Referer':base+'/tr/','Sec-Fetch-Dest':'empty','Sec-Fetch-Mode':'cors','Sec-Fetch-Site':'same-origin'})
+          try:s.get(base+'/tr/',timeout=25)
+          except:pass
+          urls={
+            'array_no_cat':f'{root}/productsArray?languageId=-43&productIds={pid}&appId=1&locale=tr_TR',
+            'array_cat_0':f'{root}/productsArray?languageId=-43&productIds={pid}&categoryId=0&appId=1&locale=tr_TR',
+            'product_singular':f'{root}/product/{pid}?languageId=-43&appId=1&locale=tr_TR',
+            'products_singular':f'{root}/products/{pid}?languageId=-43&appId=1&locale=tr_TR',
+            'product_query':f'{root}/product?productId={pid}&languageId=-43&appId=1&locale=tr_TR',
+          }
+          out={}
+          for k,u in urls.items():
+            try:
+              r=s.get(u,timeout=30)
+              item={'status':r.status_code,'content_type':r.headers.get('content-type',''),'bytes':len(r.content),'preview':r.text[:800]}
+              try:
+                d=r.json(); item['keys']=list(d.keys()) if isinstance(d,dict) else type(d).__name__
+                if isinstance(d,dict): item['products_len']=len(d.get('products') or [])
+              except: pass
+              out[k]=item
+            except Exception as e: out[k]={'error':str(e)}
+          open('bershka-product-debug.json','w').write(json.dumps(out,ensure_ascii=False,indent=2))
+          print(json.dumps(out,ensure_ascii=False,indent=2))
+          PY
+      - name: Commit result
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add bershka-product-debug.json
+          git diff --cached --quiet || git commit -m 'Record Bershka product endpoint debug'
+          git push
