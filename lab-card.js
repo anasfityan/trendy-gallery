@@ -16,20 +16,35 @@
     Fermuar:'سحاب','MagSafe uyumlu':'متوافق مع MagSafe','Kablosuz şarj destekli':'يدعم الشحن اللاسلكي',Manyetik:'مغناطيسي',
     Likit:'سائل',Mat:'مطفي',Yüksek:'عالية','Tüm Cilt Tipleri':'جميع أنواع البشرة'
   };
-  const roundRect=(ctx,x,y,w,h,r,fill,stroke)=>{ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke()}};
-  const loadImage=src=>new Promise((resolve,reject)=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>resolve(im);im.onerror=reject;im.src=src});
-  const contain=(ctx,img,x,y,w,h,r=24)=>{
-    ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.clip();ctx.fillStyle='#f1efe9';ctx.fillRect(x,y,w,h);
-    const pad=Math.max(16,Math.min(w,h)*0.035);
-    const scale=Math.min((w-pad*2)/img.width,(h-pad*2)/img.height);
+  const roundRect=(ctx,x,y,w,h,r,fill,stroke)=>{
+    ctx.beginPath();ctx.roundRect(x,y,w,h,r);
+    if(fill){ctx.fillStyle=fill;ctx.fill()}
+    if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke()}
+  };
+  const loadImage=src=>new Promise((resolve,reject)=>{
+    const im=new Image();im.crossOrigin='anonymous';im.onload=()=>resolve(im);im.onerror=reject;im.src=src
+  });
+  const drawContainDark=(ctx,img,x,y,w,h,r=18)=>{
+    ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.clip();
+    ctx.fillStyle='#0d1116';ctx.fillRect(x,y,w,h);
+    const pad=8,scale=Math.min((w-pad*2)/img.width,(h-pad*2)/img.height);
     const dw=img.width*scale,dh=img.height*scale;
     ctx.drawImage(img,x+(w-dw)/2,y+(h-dh)/2,dw,dh);ctx.restore();
   };
   const fitText=(ctx,text,maxWidth,maxLines)=>{
     const words=String(text||'').split(/\s+/);const lines=[];let line='';
-    for(const word of words){const test=line?line+' '+word:word;if(ctx.measureText(test).width<=maxWidth)line=test;else{if(line)lines.push(line);line=word;if(lines.length===maxLines-1)break}}
+    for(const word of words){
+      const test=line?line+' '+word:word;
+      if(ctx.measureText(test).width<=maxWidth)line=test;
+      else{if(line)lines.push(line);line=word;if(lines.length===maxLines-1)break}
+    }
     if(line&&lines.length<maxLines)lines.push(line);
-    const used=lines.join(' ').split(/\s+/).length;if(lines.length===maxLines&&used<words.length){let last=lines[maxLines-1];while(last&&ctx.measureText(last+'…').width>maxWidth)last=last.slice(0,-1);lines[maxLines-1]=last+'…'}
+    const used=lines.join(' ').split(/\s+/).length;
+    if(lines.length===maxLines&&used<words.length){
+      let last=lines[maxLines-1];
+      while(last&&ctx.measureText(last+'…').width>maxWidth)last=last.slice(0,-1);
+      lines[maxLines-1]=last+'…'
+    }
     return lines;
   };
   const localizeOne=v=>{
@@ -43,65 +58,117 @@
   const valueText=v=>Array.isArray(v)?v.map(localizeOne).join(' · '):(v===true?'نعم':localizeOne(v));
   const colorsText=a=>(a||[]).map(localizeOne).join(' · ');
 
-  async function build(product,proxy){
-    const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
-    ctx.fillStyle='#090c10';ctx.fillRect(0,0,W,H);ctx.textAlign='right';ctx.direction='rtl';
-
-    // Quiet brand header.
-    ctx.fillStyle='#d6a84b';ctx.font='700 25px Arial';ctx.fillText('GACELA GALLERY',1375,50);
-    ctx.fillStyle='#747c85';ctx.font='500 17px Arial';ctx.fillText('معلومات المنتج',1375,79);
-
-    // The selected images are supplied by the lab. Fallback is first four product images.
-    const urls=(product.cardImages?.length?product.cardImages:product.images||[]).filter(Boolean).slice(0,4),imgs=[];
-    for(const u of urls){try{imgs.push(await loadImage(proxy(u)))}catch{}}
-
-    const x=50,y=105,totalW=1340,totalH=1010,g=18;
-    if(imgs.length===1){
-      roundRect(ctx,x,y,totalW,totalH,34,'#f1efe9','#282e35');contain(ctx,imgs[0],x,y,totalW,totalH,34);
-    }else if(imgs.length===2){
-      const mainW=900,sideW=totalW-mainW-g;
-      roundRect(ctx,x,y,mainW,totalH,34,'#f1efe9','#282e35');contain(ctx,imgs[0],x,y,mainW,totalH,34);
-      roundRect(ctx,x+mainW+g,y,sideW,totalH,30,'#f1efe9','#282e35');contain(ctx,imgs[1],x+mainW+g,y,sideW,totalH,30);
-    }else if(imgs.length===3){
-      const mainW=900,sideW=totalW-mainW-g,smallH=(totalH-g)/2;
-      roundRect(ctx,x,y,mainW,totalH,34,'#f1efe9','#282e35');contain(ctx,imgs[0],x,y,mainW,totalH,34);
-      for(let i=1;i<3;i++){const sy=y+(i-1)*(smallH+g);roundRect(ctx,x+mainW+g,sy,sideW,smallH,28,'#f1efe9','#282e35');contain(ctx,imgs[i],x+mainW+g,sy,sideW,smallH,28)}
-    }else if(imgs.length>=4){
-      const mainW=890,sideW=totalW-mainW-g,smallH=(totalH-g*2)/3;
-      roundRect(ctx,x,y,mainW,totalH,34,'#f1efe9','#282e35');contain(ctx,imgs[0],x,y,mainW,totalH,34);
-      for(let i=1;i<4;i++){const sy=y+(i-1)*(smallH+g);roundRect(ctx,x+mainW+g,sy,sideW,smallH,26,'#f1efe9','#282e35');contain(ctx,imgs[i],x+mainW+g,sy,sideW,smallH,26)}
-    }
-
-    // Title and price stay close to images.
-    let cy=1174;
-    ctx.fillStyle='#f5f1e8';ctx.font='700 41px Arial';
-    const titleLines=fitText(ctx,product.name||'',1340,2);titleLines.forEach((l,i)=>ctx.fillText(l,1375,cy+i*52));
-    cy+=titleLines.length*52+8;
-    ctx.fillStyle='#4fce91';ctx.font='800 44px Arial';ctx.fillText(product.price?`${product.price} ${product.currency||'TRY'}`:'',1375,cy);cy+=58;
-
-    // Customer-facing facts only.
+  function collectRows(product){
     const rows=[];
     if((product.colors||[]).length)rows.push(['اللون',colorsText(product.colors)]);
     if((product.sizes||[]).length)rows.push(['المقاسات',(product.sizes||[]).join(' · ')]);
     else if(product.dimensions)rows.push(['الأبعاد',localizeOne(product.dimensions)]);
     const specs=Object.entries(product.keySpecs||{}).filter(([,v])=>v!=null&&v!==''&&v!==false);
-    for(const [k,v] of specs){const label=SPEC_LABELS[k]||k,val=valueText(v);if(!rows.some(r=>r[0]===label&&r[1]===val))rows.push([label,val])}
+    for(const [k,v] of specs){
+      const label=SPEC_LABELS[k]||k,val=valueText(v);
+      if(!rows.some(r=>r[0]===label&&r[1]===val))rows.push([label,val])
+    }
+    return rows.slice(0,8);
+  }
 
-    const rowH=70;for(const [label,val] of rows.slice(0,6)){
-      roundRect(ctx,50,cy-36,1340,rowH,17,'#11161c','#29313a');
-      ctx.fillStyle='#d6a84b';ctx.font='700 23px Arial';ctx.textAlign='right';ctx.direction='rtl';ctx.fillText(label,1358,cy+6);
-      ctx.fillStyle='#f5f1e8';ctx.font='600 23px Arial';ctx.textAlign='left';ctx.direction='rtl';
-      let t=String(val);while(t.length>5&&ctx.measureText(t).width>1030)t=t.slice(0,-2);if(t!==String(val))t+='…';ctx.fillText(t,76,cy+6);
-      cy+=rowH+9;if(cy>1732)break;
+  async function build(product,proxy){
+    const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='#090c10';ctx.fillRect(0,0,W,H);
+    ctx.textAlign='right';ctx.direction='rtl';
+
+    const mainUrl=product.cardMainImage||(product.cardImages||[])[0]||(product.images||[])[0];
+    const galleryUrls=(product.cardGalleryImages?.length?product.cardGalleryImages:
+      (product.cardImages?.length?product.cardImages.slice(1):(product.images||[]).slice(1,7)))
+      .filter(Boolean).filter(u=>u!==mainUrl).slice(0,6);
+
+    let mainImg=null;
+    try{if(mainUrl)mainImg=await loadImage(proxy(mainUrl))}catch{}
+    const gallery=[];
+    for(const u of galleryUrls){try{gallery.push(await loadImage(proxy(u)))}catch{}}
+
+    const topY=105,topH=975,mainMaxW=720,gap=38,leftX=50;
+    let mainW=620,mainH=topH,mainY=topY;
+    if(mainImg){
+      const scale=Math.min(mainMaxW/mainImg.width,topH/mainImg.height);
+      mainW=mainImg.width*scale;mainH=mainImg.height*scale;
+      mainY=topY+(topH-mainH)/2;
+      ctx.save();ctx.beginPath();ctx.roundRect(leftX,mainY,mainW,mainH,28);ctx.clip();
+      ctx.drawImage(mainImg,leftX,mainY,mainW,mainH);ctx.restore();
+    }else{
+      roundRect(ctx,leftX,topY,620,topH,28,'#10151b','#29313a');
+    }
+
+    const infoX=leftX+mainW+gap,infoRight=1390,infoW=Math.max(430,infoRight-infoX);
+    ctx.fillStyle='#d6a84b';ctx.font='700 24px Arial';ctx.fillText('GACELA GALLERY',infoRight,topY+8);
+    ctx.fillStyle='#707984';ctx.font='500 16px Arial';ctx.fillText('معلومات المنتج',infoRight,topY+36);
+
+    let cy=topY+105;
+    ctx.fillStyle='#f5f1e8';ctx.font='700 39px Arial';
+    const titleLines=fitText(ctx,product.name||'',infoW,3);
+    titleLines.forEach((l,i)=>ctx.fillText(l,infoRight,cy+i*49));
+    cy+=titleLines.length*49+14;
+
+    ctx.fillStyle='#4fce91';ctx.font='800 43px Arial';
+    ctx.fillText(product.price?`${product.price} ${product.currency||'TRY'}`:'',infoRight,cy);
+    cy+=62;
+
+    const rows=collectRows(product),rowGap=12;
+    const available=Math.max(330,topY+topH-cy-10);
+    const rowH=Math.min(82,Math.max(60,(available-rowGap*Math.max(0,rows.length-1))/Math.max(1,rows.length)));
+    for(const [label,val] of rows){
+      roundRect(ctx,infoX,cy-31,infoW,rowH,16,'#11161c','#29313a');
+      ctx.fillStyle='#d6a84b';ctx.font='700 21px Arial';ctx.textAlign='right';ctx.direction='rtl';
+      ctx.fillText(label,infoRight-18,cy+6);
+      ctx.fillStyle='#f5f1e8';ctx.font='600 21px Arial';ctx.textAlign='left';ctx.direction='rtl';
+      let t=String(val);
+      while(t.length>5&&ctx.measureText(t).width>infoW-155)t=t.slice(0,-2);
+      if(t!==String(val))t+='…';
+      ctx.fillText(t,infoX+18,cy+6);
+      cy+=rowH+rowGap;
+      if(cy>topY+topH-15)break;
+    }
+
+    const galleryY=1130,galleryBottom=1718,galleryH=galleryBottom-galleryY;
+    if(gallery.length){
+      const n=gallery.length;
+      const rowsCount=n<=4?1:2;
+      const cols=rowsCount===1?n:Math.ceil(n/2);
+      const gx=50,gw=1340,cellGap=16;
+      const rowH2=(galleryH-cellGap*(rowsCount-1))/rowsCount;
+      const cellW=(gw-cellGap*(cols-1))/cols;
+      gallery.forEach((img,i)=>{
+        const row=rowsCount===1?0:Math.floor(i/cols);
+        const col=rowsCount===1?i:i%cols;
+        const x=gx+col*(cellW+cellGap),y=galleryY+row*(rowH2+cellGap);
+        drawContainDark(ctx,img,x,y,cellW,rowH2,20);
+      });
+    }else{
+      ctx.strokeStyle='#252c33';ctx.beginPath();ctx.moveTo(50,galleryY);ctx.lineTo(1390,galleryY);ctx.stroke();
     }
 
     ctx.strokeStyle='#252c33';ctx.beginPath();ctx.moveTo(50,1750);ctx.lineTo(1390,1750);ctx.stroke();
-    ctx.fillStyle='#626b74';ctx.font='500 17px Arial';ctx.textAlign='right';ctx.direction='rtl';ctx.fillText('GACELA GALLERY',1375,1781);
+    ctx.fillStyle='#626b74';ctx.font='500 17px Arial';ctx.textAlign='right';ctx.direction='rtl';
+    ctx.fillText('GACELA GALLERY',1375,1781);
     return canvas;
   }
+
   const blobFrom=canvas=>new Promise(resolve=>canvas.toBlob(resolve,'image/png',0.96));
-  async function preview(product,proxy,imgEl){const canvas=await build(product,proxy);imgEl.src=canvas.toDataURL('image/png');imgEl.style.display='block';return canvas}
-  async function download(product,proxy){const canvas=await build(product,proxy),blob=await blobFrom(canvas);const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='gacela-product-card.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1500)}
-  async function share(product,proxy){const canvas=await build(product,proxy),blob=await blobFrom(canvas),file=new File([blob],'gacela-product-card.png',{type:'image/png'});if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:product.name||'Gacela Gallery'});return true}await download(product,proxy);return false}
+  async function preview(product,proxy,imgEl){
+    const canvas=await build(product,proxy);imgEl.src=canvas.toDataURL('image/png');imgEl.style.display='block';return canvas
+  }
+  async function download(product,proxy){
+    const canvas=await build(product,proxy),blob=await blobFrom(canvas);
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='gacela-product-card.png';
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1500)
+  }
+  async function share(product,proxy){
+    const canvas=await build(product,proxy),blob=await blobFrom(canvas),
+      file=new File([blob],'gacela-product-card.png',{type:'image/png'});
+    if(navigator.canShare?.({files:[file]})&&navigator.share){
+      await navigator.share({files:[file],title:product.name||'Gacela Gallery'});return true
+    }
+    await download(product,proxy);return false
+  }
   window.TrendyCard={build,preview,download,share};
 })();
