@@ -1,0 +1,86 @@
+{
+  "shulebags": {
+    "http": 200,
+    "name": "Giglio Spor Omuz Çantası Vizon",
+    "price": "929.90",
+    "category": "bags",
+    "images": 10,
+    "colors": [
+      "Vizon"
+    ],
+    "sizes": [],
+    "keySpecs": {
+      "dimensions": "45 × 15 × 30 cm",
+      "strapLength": "55 cm",
+      "material": "Bondit Kumaş",
+      "closure": "Fermuar",
+      "compartments": "6"
+    },
+    "unifiedSource": "product-unified-api-v1",
+    "error": null
+  },
+  "nisantasi": {
+    "http": 200,
+    "name": "Lorea Kahve Saten Puantiye Desenli Fiyonk Detaylı Kadın Topuklu Ayakkabı",
+    "price": "1689.90",
+    "category": "shoes",
+    "images": 10,
+    "colors": [
+      "KAHVE PUANTİYELİ SATEN"
+    ],
+    "sizes": [
+      "35",
+      "36",
+      "37",
+      "38",
+      "39",
+      "40"
+    ],
+    "keySpecs": {
+      "material": "Saten"
+    },
+    "unifiedSource": "product-unified-api-v1",
+    "error": null
+  },
+  "gratis_foundation": {
+    "http": 200,
+    "name": "Note Matte Lock Foundation Fondöten 100 Sarı Alt Ton",
+    "price": "549.00",
+    "category": "cosmetics",
+    "images": 1,
+    "colors": [],
+    "sizes": [],
+    "keySpecs": {
+      "amount": "30 ml",
+      "shade": "100 Sarı Alt Ton",
+      "form": "Likit",
+      "finish": "Mat",
+      "skinType": "Tüm Cilt Tipleri",
+      "coverage": "Yüksek",
+      "spf": "50 SPF"
+    },
+    "unifiedSource": "product-unified-api-v1",
+    "error": null
+  },
+  "altuda": {
+    "http": 200,
+    "name": "Kadın Şeritli Shopper Omuz Çantası Boris - Pembe",
+    "price": "379.99",
+    "category": "bags",
+    "images": 3,
+    "colors": [
+      "Pembe"
+    ],
+    "sizes": [],
+    "keySpecs": {
+      "dimensions": "45 × 30 × 8 cm"
+    },
+    "unifiedSource": "product-unified-api-v1",
+    "error": null
+  },
+  "protected_check": {
+    "http": 503,
+    "error": "protected_backend_pending",
+    "message": "Protected-store parser is validated but its public backend is not connected yet."
+  }
+}
