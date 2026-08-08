@@ -1,0 +1,60 @@
+{
+  "shulebags": {
+    "http": 200,
+    "category": "shoes",
+    "name": "Giglio Spor Omuz Çantası Vizon",
+    "brand": "Shule Bags",
+    "keySpecs": {
+      "material": "Bondit Kumaş 6 Bölmeden Oluşmaktadır. Ayakkabı saklama bölmesi bulunmaktadır. Da"
+    },
+    "source": "customer-specs-v1"
+  },
+  "nisantasi": {
+    "http": 200,
+    "category": "shoes",
+    "name": "Lorea Kahve Saten Puantiye Desenli Fiyonk Detaylı Kadın Topuklu Ayakkabı",
+    "brand": "",
+    "keySpecs": {
+      "material": "Deri",
+      "sole": "KADIN LOAFER TERLİK ₺ 1,899.90 Sepete Ekle Yorumla"
+    },
+    "source": "customer-specs-v1"
+  },
+  "gratis_cream": {
+    "http": 200,
+    "category": "cosmetics",
+    "name": "Bee Beauty Doğal Kiraz Çiçeği Özü El Kremi 75 ml",
+    "brand": "Bee Beauty",
+    "keySpecs": {
+      "amount": "75 ml",
+      "variant": "ikler Günlük Nemlendirici Kremler",
+      "shade": "ikler Günlük Nemlendirici Kremler",
+      "skinType": "Tüm Cilt Tipleri Çeşit Tekli Tip Tüp Kullanım Amacı Nemlendi"
+    },
+    "source": "customer-specs-v1"
+  },
+  "gratis_deodorant": {
+    "http": 200,
+    "category": "cosmetics",
+    "name": "Rexona Clinical Protection Kadın Sprey Deodorant Confidence 150 ml",
+    "brand": "Rexona",
+    "keySpecs": {
+      "amount": "150 ml",
+      "variant": "ikler Günlük Nemlendirici Kremler",
+      "shade": "ikler Günlük Nemlendirici Kremler"
+    },
+    "source": "customer-specs-v1"
+  },
+  "altuda": {
+    "http": 200,
+    "category": "bags",
+    "name": "Kadın Şeritli Shopper Omuz Çantası Boris - Pembe",
+    "brand": "ALTUDA",
+    "keySpecs": {
+      "dimensions": "45 × 30 × 8 cm",
+      "material": ". Çift Saplı. Astarlı ve iç cep detaylı. Fermuar kapamalı. Dış cep detay. Gold a",
+      "closure": "lı. Dış cep detay. Gold aksesuar. Garne detay. İad"
+    },
+    "source": "customer-specs-v1"
+  }
+}
