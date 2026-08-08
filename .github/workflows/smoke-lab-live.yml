@@ -1,0 +1,66 @@
+name: Smoke test live importer lab
+on:
+  push:
+    paths:
+      - '.github/workflows/smoke-lab-live.yml'
+permissions:
+  contents: write
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -q playwright==1.54.0
+      - run: playwright install --with-deps chromium >/dev/null 2>&1
+      - name: Click every live sample
+        run: |
+          python - <<'PY'
+          import json,time,urllib.request
+          from playwright.sync_api import sync_playwright
+          url='https://anasfityan.github.io/trendy-gallery/lab.html'
+          # Wait for GitHub Pages to expose v5 rather than testing a stale deployment.
+          live=''
+          for _ in range(18):
+            try:
+              live=urllib.request.urlopen(url+'?smoke=5',timeout=20).read().decode('utf-8','replace')
+              if 'General Import · v5' in live and '>Hepsiburada<' in live and '>Bershka<' in live: break
+            except Exception: pass
+            time.sleep(5)
+          if 'General Import · v5' not in live:
+            raise SystemExit('github_pages_v5_not_visible')
+
+          results=[]
+          with sync_playwright() as p:
+            browser=p.chromium.launch(headless=True)
+            page=browser.new_page(viewport={'width':1280,'height':900})
+            page.goto(url+'?smoke=5',wait_until='domcontentloaded',timeout=60000)
+            page.wait_for_selector('.sample')
+            buttons=page.locator('.sample')
+            count=buttons.count()
+            for i in range(count):
+              label=buttons.nth(i).inner_text().strip()
+              buttons.nth(i).click()
+              page.wait_for_function("!document.querySelector('#status').classList.contains('on')",timeout=150000)
+              err=page.locator('#err').inner_text().strip() if page.locator('#err').get_attribute('class') and 'on' in page.locator('#err').get_attribute('class').split() else ''
+              visible='on' in (page.locator('#result').get_attribute('class') or '').split()
+              name=page.locator('#name').inner_text().strip() if visible else ''
+              price=page.locator('#price').inner_text().strip() if visible else ''
+              results.append({'sample':label,'ok':bool(visible and name and name!='—' and not err),'name':name,'price':price,'error':err})
+            browser.close()
+          out={'page':url,'version':'v5','sampleCount':len(results),'ok':sum(1 for r in results if r['ok']),'results':results}
+          open('lab-smoke-results.json','w').write(json.dumps(out,ensure_ascii=False,indent=2))
+          print(json.dumps(out,ensure_ascii=False,indent=2))
+          if out['ok'] != out['sampleCount']:
+            raise SystemExit('live_lab_smoke_failed')
+          PY
+      - name: Commit smoke result
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add lab-smoke-results.json
+          git diff --cached --quiet || git commit -m 'Record live importer lab smoke test'
+          git push
