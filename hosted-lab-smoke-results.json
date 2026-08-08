@@ -1,14 +1,17 @@
 {
   "get_http": 200,
-  "post_http": 400,
+  "post_http": 200,
   "get_has_lab_title": true,
-  "get_bytes": 7869,
+  "get_bytes": 4073,
   "post_result": {
-    "name": null,
-    "price": null,
-    "images": 0,
-    "colors": [],
+    "name": "Giglio Spor Omuz Çantası Vizon",
+    "price": "929,90",
+    "images": 11,
+    "colors": [
+      "Vizon"
+    ],
     "sizes": [],
-    "error": "reader_429"
+    "source": "direct-ticimax",
+    "error": null
   }
 }
