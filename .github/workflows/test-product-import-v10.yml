@@ -1,0 +1,46 @@
+name: Validate product importer v10
+on:
+  push:
+    paths:
+      - '.github/workflows/test-product-import-v10.yml'
+permissions:
+  contents: write
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test importer matrix
+        shell: bash
+        run: |
+          set -e
+          python - <<'PY'
+          import json, subprocess
+          api='https://uoydoungeplepusrsill.supabase.co/functions/v1/product-import-api'
+          urls={
+            'gratis':'https://www.gratis.com/el-vucut-kremleri/bee-beauty-dogal-kiraz-cicegi-ozu-el-kremi-75-ml-p-10194839',
+            'altuda':'https://altuda.com.tr/products/kadin-seritli-shopper-omuz-cantasi-boris-pembe',
+            'shulebags':'https://www.shulebags.com/giglio-spor-omuz-cantasi-vizon',
+            'nisantasi':'https://www.nisantasishoes.com/lorea-kahve-saten-puantiye-desenli-fiyonk-detayli-kadin-topuklu-ayakkabi-14833?numara=39'
+          }
+          out={}
+          for k,u in urls.items():
+            p=subprocess.run(['curl','-sS','-w','\nHTTP:%{http_code}','-H','content-type: application/json','-d',json.dumps({'url':u}),api],capture_output=True,text=True,timeout=120)
+            body,_,code=p.stdout.rpartition('\nHTTP:')
+            try:d=json.loads(body)
+            except:d={'error':'invalid_json','raw':body[:500]}
+            out[k]={
+              'http':int(code or 0),'name':d.get('name'),'price':d.get('price'),'currency':d.get('currency'),'category':d.get('category'),
+              'images':len(d.get('images') or []),'colors':d.get('colors'),'sizes':d.get('sizes'),'dimensions':d.get('dimensions'),
+              'volume':d.get('volume'),'variant':d.get('variant'),'brand':d.get('brand'),'details':len(d.get('details') or []),'source':d.get('source'),'error':d.get('error')
+            }
+          open('product-import-v10-results.json','w').write(json.dumps(out,ensure_ascii=False,indent=2))
+          print(json.dumps(out,ensure_ascii=False,indent=2))
+          PY
+      - name: Commit results
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add product-import-v10-results.json
+          git diff --cached --quiet || git commit -m 'Record product importer v10 results'
+          git push
