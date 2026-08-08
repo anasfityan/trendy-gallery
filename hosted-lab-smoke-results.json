@@ -1,17 +1,37 @@
 {
   "get_http": 200,
-  "post_http": 200,
   "get_has_lab_title": true,
-  "get_bytes": 4073,
-  "post_result": {
+  "shulebags": {
+    "http": 200,
     "name": "Giglio Spor Omuz Çantası Vizon",
     "price": "929,90",
+    "discountPrice": null,
     "images": 11,
     "colors": [
       "Vizon"
     ],
     "sizes": [],
     "source": "direct-ticimax",
+    "error": null
+  },
+  "nisantasishoes": {
+    "http": 200,
+    "name": "Lorea Kahve Saten Puantiye Desenli Fiyonk Detaylı Kadın Topuklu Ayakkabı",
+    "price": "1689.90",
+    "discountPrice": "1,520.91",
+    "images": 10,
+    "colors": [
+      "KAHVE PUANTİYELİ SATEN"
+    ],
+    "sizes": [
+      "35",
+      "36",
+      "37",
+      "38",
+      "39",
+      "40"
+    ],
+    "source": "direct-ikas",
     "error": null
   }
 }
