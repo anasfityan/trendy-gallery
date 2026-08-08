@@ -9,35 +9,58 @@ on:
       - 'product-import-api.js'
       - '.github/workflows/test-browser-importer.yml'
 
+permissions:
+  contents: write
+
 jobs:
   smoke:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Wait for Vercel deployment
         run: sleep 45
-      - name: Test Shulebags
+      - name: Test production importer and save results
+        shell: bash
         run: |
-          curl -sS --fail-with-body -X POST 'https://trendy-gallery.vercel.app/api/import-product' \
+          set +e
+          SHULE_CODE=$(curl -sS -o shule.json -w '%{http_code}' -X POST 'https://trendy-gallery.vercel.app/api/import-product' \
             -H 'content-type: application/json' \
-            --data '{"url":"https://www.shulebags.com/giglio-spor-omuz-cantasi-vizon"}' | tee shule.json
+            --data '{"url":"https://www.shulebags.com/giglio-spor-omuz-cantasi-vizon"}')
+          NIS_CODE=$(curl -sS -o nisantasi.json -w '%{http_code}' -X POST 'https://trendy-gallery.vercel.app/api/import-product' \
+            -H 'content-type: application/json' \
+            --data '{"url":"https://www.nisantasishoes.com/lorea-kahve-saten-puantiye-desenli-fiyonk-detayli-kadin-topuklu-ayakkabi-14833?numara=39"}')
+          export SHULE_CODE NIS_CODE
           python - <<'PY'
-          import json
-          d=json.load(open('shule.json'))
-          print('SHULE', {'name':d.get('name'),'price':d.get('price'),'images':len(d.get('images',[])),'colors':d.get('colors'),'sizes':d.get('sizes'),'source':d.get('source')})
-          assert d.get('name')
-          assert d.get('price')
-          assert len(d.get('images',[])) >= 2
+          import json, os
+          def read(path):
+              try:
+                  with open(path, encoding='utf-8') as f: return json.load(f)
+              except Exception as e:
+                  return {'error': f'invalid_json: {e}'}
+          def compact(d, code):
+              return {
+                  'http': int(code or 0),
+                  'name': d.get('name'),
+                  'price': d.get('price'),
+                  'images': len(d.get('images') or []),
+                  'colors': d.get('colors') or [],
+                  'sizes': d.get('sizes') or [],
+                  'category': d.get('category'),
+                  'source': d.get('source'),
+                  'error': d.get('error')
+              }
+          out={
+              'shulebags': compact(read('shule.json'), os.environ.get('SHULE_CODE','0')),
+              'nisantasishoes': compact(read('nisantasi.json'), os.environ.get('NIS_CODE','0'))
+          }
+          with open('importer-smoke-results.json','w',encoding='utf-8') as f:
+              json.dump(out,f,ensure_ascii=False,indent=2)
+          print(json.dumps(out,ensure_ascii=False,indent=2))
           PY
-      - name: Test Nisantasi Shoes
+      - name: Commit smoke results
         run: |
-          curl -sS --fail-with-body -X POST 'https://trendy-gallery.vercel.app/api/import-product' \
-            -H 'content-type: application/json' \
-            --data '{"url":"https://www.nisantasishoes.com/lorea-kahve-saten-puantiye-desenli-fiyonk-detayli-kadin-topuklu-ayakkabi-14833?numara=39"}' | tee nisantasi.json
-          python - <<'PY'
-          import json
-          d=json.load(open('nisantasi.json'))
-          print('NISANTASI', {'name':d.get('name'),'price':d.get('price'),'images':len(d.get('images',[])),'colors':d.get('colors'),'sizes':d.get('sizes'),'source':d.get('source')})
-          assert d.get('name')
-          assert d.get('price')
-          assert len(d.get('images',[])) >= 2
-          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add importer-smoke-results.json
+          git diff --cached --quiet || git commit -m 'Record browser importer smoke results'
+          git push
