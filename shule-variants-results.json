@@ -1,0 +1,51 @@
+{
+  "name": "Miura Charm Detaylı Örgü Omuz Kahve",
+  "current_color": [
+    "Kahve"
+  ],
+  "variants": [
+    {
+      "color": "Kahve",
+      "url": "https://www.shulebags.com/miura-charm-detayli-orgu-omuz-kahve-6528",
+      "name": "Miura Charm Detaylı Örgü Omuz Kahve",
+      "price": "759,90",
+      "image": "https://static.ticimax.cloud/55374/uploads/urunresimleri/buyuk/2ac104fd-8df2-4544-9454-de2b4a8c7270--6bc7-.jpg",
+      "current": true
+    },
+    {
+      "color": "Krem",
+      "url": "https://www.shulebags.com/miura-charm-detayli-orgu-omuz-krem-6525",
+      "name": "Miura Charm Detaylı Örgü Omuz Krem",
+      "price": "759,90",
+      "image": "https://static.ticimax.cloud/55374/uploads/urunresimleri/buyuk/d738b0b7-bf9c-4982-8a7f-01646290c471-cf-2cb.jpg",
+      "current": false
+    },
+    {
+      "color": "Vizon",
+      "url": "https://www.shulebags.com/miura-charm-detayli-orgu-omuz-vizon-6526",
+      "name": "Miura Charm Detaylı Örgü Omuz Vizon",
+      "price": "759,90",
+      "image": "https://static.ticimax.cloud/55374/uploads/urunresimleri/buyuk/25c84913-7da9-4603-9015-5e915a0d36ec-ee628d.jpg",
+      "current": false
+    },
+    {
+      "color": "Sarı",
+      "url": "https://www.shulebags.com/miura-charm-detayli-orgu-omuz-sari-6527",
+      "name": "Miura Charm Detaylı Örgü Omuz Sarı",
+      "price": "759,90",
+      "image": "https://static.ticimax.cloud/55374/uploads/urunresimleri/buyuk/00bf5e19-4f9f-4883-bc18-031206eeb62d-fb586c.jpg",
+      "current": false
+    },
+    {
+      "color": "Siyah",
+      "url": "https://www.shulebags.com/miura-charm-detayli-orgu-omuz-siyah-6529",
+      "name": "Miura Charm Detaylı Örgü Omuz Siyah",
+      "price": "759,90",
+      "image": "https://static.ticimax.cloud/55374/uploads/urunresimleri/buyuk/ac6c7dd3-58e0-42ec-9bb2-e268d40540e3-f280fa.jpg",
+      "current": false
+    }
+  ],
+  "variant_count": 5,
+  "source": "direct-ticimax-v7",
+  "error": null
+}
