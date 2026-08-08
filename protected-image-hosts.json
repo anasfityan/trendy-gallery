@@ -1,0 +1,32 @@
+{
+  "hepsiburada": {
+    "hosts": [
+      "productimages.hepsiburada.net"
+    ],
+    "firstImages": [
+      "https://productimages.hepsiburada.net/s/777/375/110001544169967.jpg/format:webp",
+      "https://productimages.hepsiburada.net/s/777/375/110001544169968.jpg/format:webp",
+      "https://productimages.hepsiburada.net/s/777/375/110001544169969.jpg/format:webp"
+    ]
+  },
+  "stradivarius": {
+    "hosts": [
+      "static.e-stradivarius.net"
+    ],
+    "firstImages": [
+      "https://static.e-stradivarius.net/assets/public/bb33/29bb/22934066a61f/889a61436b87/06703295100-b1/06703295100-b1.jpg?ts=1784632229349",
+      "https://static.e-stradivarius.net/assets/public/d05e/0a0c/ce674276a51a/4d702d65a6ce/06703295100-s3/06703295100-s3.jpg?ts=1784632228171",
+      "https://static.e-stradivarius.net/assets/public/dec9/7952/33694190b38e/ae383347feab/06703295100-s2/06703295100-s2.jpg?ts=1784632227883"
+    ]
+  },
+  "bershka": {
+    "hosts": [
+      "static.bershka.net"
+    ],
+    "firstImages": [
+      "https://static.bershka.net/assets/public/ab0b/323b/cbce48759140/2c88f61319ec/03046335830-r/03046335830-r.jpg?ts=1783957981089",
+      "https://static.bershka.net/assets/public/c139/2781/633c48799893/6f1195d6004a/03046335830-a4o/03046335830-a4o.jpg?ts=1783957989848",
+      "https://static.bershka.net/assets/public/d8db/82d1/afd14190887b/21a7bc5eb38d/03046335830-s/03046335830-s.jpg?ts=1783957991714"
+    ]
+  }
+}
