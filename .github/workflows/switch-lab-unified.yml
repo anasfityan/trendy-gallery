@@ -1,0 +1,37 @@
+name: Switch lab to unified API
+on:
+  push:
+    paths:
+      - '.github/workflows/switch-lab-unified.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch lab importer calls
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('lab.html')
+          s=p.read_text()
+          s=s.replace("const API='https://uoydoungeplepusrsill.supabase.co/functions/v1/product-import-api';\nconst SPECS='https://uoydoungeplepusrsill.supabase.co/functions/v1/product-specs-api';", "const IMPORT_API='https://uoydoungeplepusrsill.supabase.co/functions/v1/product-import-api';\nconst API='https://uoydoungeplepusrsill.supabase.co/functions/v1/product-unified-api';")
+          s=s.replace("const proxy=src=>API+'?image='+encodeURIComponent(src);", "const proxy=src=>IMPORT_API+'?image='+encodeURIComponent(src);")
+          old="const [d,specRes]=await Promise.all([fetchJson(API,url),fetchJson(SPECS,url).catch(()=>null)]);const imgs=d.images||[];"
+          new="const d=await fetchJson(API,url);const specRes={keySpecs:d.keySpecs||{},brand:d.brand||'',source:d.smartSpecsSource||null};const imgs=d.images||[];"
+          if old not in s:
+              raise SystemExit('target import block not found')
+          s=s.replace(old,new)
+          s=s.replace("$('source').textContent=(d.source||'—')+(specRes?.source?' + smart specs':'');", "$('source').textContent=(d.source||'—')+(d.unifiedSource?' + unified':'')+(specRes?.source?' + smart specs':'');")
+          s=s.replace("JSON.stringify({product:d,customerSpecs:specRes},null,2)", "JSON.stringify({product:d},null,2)")
+          s=s.replace('General Import · v3','General Import · v4')
+          p.write_text(s)
+          PY
+      - name: Commit lab update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add lab.html
+          git diff --cached --quiet || git commit -m 'Use unified product API in importer lab'
+          git push
