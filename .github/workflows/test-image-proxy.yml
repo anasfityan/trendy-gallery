@@ -20,11 +20,6 @@ jobs:
           API='https://uoydoungeplepusrsill.supabase.co/functions/v1/product-import-api?image='
           SHULE='https://static.ticimax.cloud/55374/uploads/urunresimleri/buyuk/94822e8d-dee3-4dfb-aa2f-6a2f602e2f52-3c8-81.jpeg'
           NIS='https://cdn.myikas.com/images/4986bc63-964e-482b-bc1c-6739ed185f15/efbf5d42-f500-4e23-a1cd-49b6d8d2adf9/image_1080.webp'
-          python - <<'PY'
-          import urllib.parse, os
-          for key in ('SHULE','NIS'):
-              print(key+'='+urllib.parse.quote(os.environ[key],safe=''))
-          PY
           SENC=$(python -c "import urllib.parse; print(urllib.parse.quote('$SHULE',safe=''))")
           NENC=$(python -c "import urllib.parse; print(urllib.parse.quote('$NIS',safe=''))")
           curl -sS -D shule.headers -o shule.img "${API}${SENC}"
@@ -33,9 +28,10 @@ jobs:
           import json,re,os
           def parse(h,p):
               txt=open(h,encoding='latin1').read()
-              status=int(re.search(r'HTTP/\S+\s+(\d+)',txt).group(1))
-              c=re.search(r'(?im)^content-type:\s*([^\r\n]+)',txt)
-              return {'http':status,'content_type':c.group(1).strip() if c else None,'bytes':os.path.getsize(p)}
+              codes=re.findall(r'HTTP/\S+\s+(\d+)',txt)
+              status=int(codes[-1]) if codes else 0
+              types=re.findall(r'(?im)^content-type:\s*([^\r\n]+)',txt)
+              return {'http':status,'content_type':types[-1].strip() if types else None,'bytes':os.path.getsize(p)}
           out={'shulebags':parse('shule.headers','shule.img'),'nisantasishoes':parse('nis.headers','nis.img')}
           open('image-proxy-results.json','w').write(json.dumps(out,indent=2))
           print(json.dumps(out,indent=2))
