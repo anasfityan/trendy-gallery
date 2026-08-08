@@ -16,14 +16,14 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install -q curl-cffi
-      - name: Test protected importer matrix v4
+      - name: Test protected importer matrix v5
         run: |
           python - <<'PY'
           import json,subprocess
           urls={
             'hepsiburada':'https://www.hepsiburada.com/pirok-store-samsung-galaxy-s26-ultra-magsafe-uyumlu-kablosuz-sarj-destekli-yumusak-soft-mukemmel-manyetik-esnek-lansman-silikon-kilif-p-HBCV0000D2MAO4',
             'stradivarius':'https://www.stradivarius.com/tr/en/graphic-vneck-tshirt-l06703295?categoryId=1718528&colorId=100&pelement=520351835',
-            'bershka':'https://www.bershka.com/tr/erkek/giyim/pantolon-n3288.html?celement=1010193241'
+            'bershka':'https://www.bershka.com/tr/p-pens-detayl%C4%B1-barrel-fit-pantolon-c0p203743229.html'
           }
           out={}
           for k,u in urls.items():
