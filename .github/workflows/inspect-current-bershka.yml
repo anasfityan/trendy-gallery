@@ -1,0 +1,45 @@
+name: Inspect current Bershka catalog product
+on:
+  push:
+    paths:
+      - '.github/workflows/inspect-current-bershka.yml'
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -q curl-cffi
+      - name: Inspect live Turkish product fields
+        run: |
+          python - <<'PY'
+          import json
+          from curl_cffi import requests
+          base='https://www.bershka.com'; root=f'{base}/itxrest/3/catalog/store/44109521/40259537'; cat='1010193216'
+          s=requests.Session(impersonate='chrome'); s.headers.update({'Accept':'application/json,*/*','Accept-Language':'tr-TR,tr;q=0.9','Referer':base+'/tr/'})
+          try:s.get(base+'/tr/',timeout=20)
+          except:pass
+          ids=s.get(f'{root}/category/{cat}/product?languageId=-43&showProducts=false&showNoStock=false&appId=1&locale=tr_TR',timeout=30).json().get('productIds',[])
+          batch=','.join(map(str,ids[:30]))
+          d=s.get(f'{root}/productsArray?languageId=-43&productIds={batch}&categoryId={cat}&appId=1&locale=tr_TR',timeout=40).json()
+          products=[]
+          for p in d.get('products',[]):
+            if not isinstance(p,dict) or not p.get('name'): continue
+            products.append({k:p.get(k) for k in ['id','name','seoKeyword','seoProductId','productUrl','reference','categoryId','familyName','sectionName'] if k in p})
+            products[-1]['keys']=list(p.keys())
+            if len(products)>=5: break
+          out={'categoryId':cat,'idsCount':len(ids),'products':products}
+          open('bershka-current-products.json','w').write(json.dumps(out,ensure_ascii=False,indent=2))
+          print(json.dumps(out,ensure_ascii=False,indent=2))
+          PY
+      - name: Commit result
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add bershka-current-products.json
+          git diff --cached --quiet || git commit -m 'Record current Bershka product fields'
+          git push
