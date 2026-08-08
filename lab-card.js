@@ -1,6 +1,7 @@
 (() => {
   const W=1440,H=1800;
   const M=44,R=28;
+  const GOLD='#c8962e', GOLD_LIGHT='#f0c96a';
   const SPEC_LABELS={
     dimensions:'الأبعاد',strapLength:'طول الحزام',material:'الخامة',closure:'الإغلاق',compartments:'عدد الأقسام',
     waterResistant:'مقاوم للماء',heelHeight:'ارتفاع الكعب',heelType:'نوع الكعب',fit:'القالب / القصّة',
@@ -47,15 +48,20 @@
     return rows.slice(0,6);
   }
 
-  function drawBrand(ctx,right,y){
+  async function ensureFont(){
+    try{if(document.fonts?.load)await document.fonts.load('900 30px Tajawal')}catch{}
+  }
+
+  // Exact system identity: Gacela white + Gallery gold, same Tajawal size/weight and 3px gap.
+  function drawBrand(ctx,right,y,size=30){
     ctx.save();
     ctx.direction='ltr';ctx.textAlign='left';ctx.textBaseline='alphabetic';
-    ctx.font='700 27px Arial';
-    const gallery='Gallery',gacela='Gacela',gap=7;
-    const galleryW=ctx.measureText(gallery).width,gacelaW=ctx.measureText(gacela).width;
-    let x=right-galleryW-gap-gacelaW;
-    ctx.fillStyle='#d6a84b';ctx.fillText(gallery,x,y);x+=galleryW+gap;
-    ctx.fillStyle='#f5f1e8';ctx.fillText(gacela,x,y);
+    ctx.font=`900 ${size}px Tajawal, Arial`;
+    const gacela='Gacela',gallery='Gallery',gap=6;
+    const gw=ctx.measureText(gacela).width,aw=ctx.measureText(gallery).width;
+    const x=right-gw-gap-aw;
+    ctx.fillStyle='#fff';ctx.fillText(gacela,x,y);
+    ctx.fillStyle=GOLD;ctx.fillText(gallery,x+gw+gap,y);
     ctx.restore();
   }
 
@@ -75,8 +81,9 @@
 
   function drawGalleryCollage(ctx,imgs,x,y,w,h){
     if(!imgs.length)return;
-    const n=Math.min(imgs.length,6),rows=n<=3?1:2,cols=rows===1?n:Math.ceil(n/2),sep=2;
-    rr(ctx,x,y,w,h,22,'#151a20','#242c34',1.5);
+    const n=Math.min(imgs.length,6),rows=n<=3?1:2,cols=rows===1?n:Math.ceil(n/2),sep=4;
+    // Dark-gold base means the separators are elegant gold lines rather than black gaps.
+    rr(ctx,x,y,w,h,22,'#5b451e','#7b5d25',1.4);
     ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,22);ctx.clip();
     const cellW=(w-sep*(cols-1))/cols,cellH=(h-sep*(rows-1))/rows;
     imgs.slice(0,n).forEach((img,i)=>{
@@ -88,6 +95,7 @@
   }
 
   async function build(product,proxy){
+    await ensureFont();
     const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
     ctx.fillStyle='#090c10';ctx.fillRect(0,0,W,H);ctx.textAlign='right';ctx.direction='rtl';
 
@@ -96,43 +104,57 @@
     let mainImg=null;try{if(mainUrl)mainImg=await loadImage(proxy(mainUrl))}catch{}
     const gallery=[];for(const u of galleryUrls){try{gallery.push(await loadImage(proxy(u)))}catch{}}
 
-    const topX=M,topY=62,topW=W-M*2,topH=1060;
-    rr(ctx,topX,topY,topW,topH,R,'#0d1116','#202832',1.5);
+    const topX=M,topY=58,topW=W-M*2,topH=1045;
+    rr(ctx,topX,topY,topW,topH,R,'#0d1116','#232c35',1.4);
 
     const pad=22,innerY=topY+pad,innerH=topH-pad*2;
     const mainW=620,gap=28,mainX=topX+pad,infoX=mainX+mainW+gap,infoW=topX+topW-pad-infoX;
     drawMain(ctx,mainImg,mainX,innerY,mainW,innerH);
 
     const right=topX+topW-pad;
-    drawBrand(ctx,right,innerY+27);
-    ctx.fillStyle='#717a84';ctx.font='500 15px Arial';ctx.textAlign='right';ctx.direction='rtl';ctx.fillText('معلومات المنتج',right,innerY+54);
+    drawBrand(ctx,right,innerY+30,30);
+    ctx.fillStyle='#717a84';ctx.font='500 15px Tajawal, Arial';ctx.textAlign='right';ctx.direction='rtl';ctx.fillText('معلومات المنتج',right,innerY+55);
 
-    let cy=innerY+112;
-    ctx.fillStyle='#f5f1e8';ctx.font='700 36px Arial';
-    const title=fitText(ctx,cleanProductTitle(product),infoW,3);title.forEach((l,i)=>ctx.fillText(l,right,cy+i*46));
-    cy+=title.length*46+10;
-    ctx.fillStyle='#4fce91';ctx.font='800 42px Arial';ctx.fillText(product.price?`${product.price} ${product.currency||'TRY'}`:'',right,cy);
-    cy+=64;
+    const titleY=innerY+125;
+    ctx.fillStyle='#f5f1e8';ctx.font='700 36px Tajawal, Arial';
+    const title=fitText(ctx,cleanProductTitle(product),infoW,3);
+    title.forEach((l,i)=>ctx.fillText(l,right,titleY+i*46));
 
-    const rows=collectRows(product),rowGap=12;
-    const bottom=innerY+innerH;
-    const remaining=Math.max(0,bottom-cy);
-    const rowH=rows.length?Math.min(82,Math.max(62,(remaining-rowGap*(rows.length-1))/rows.length)):0;
+    // Deliberate visual breathing room between title and price.
+    const priceY=titleY+title.length*46+34;
+    ctx.fillStyle='#4fce91';ctx.font='900 42px Tajawal, Arial';
+    ctx.fillText(product.price?`${product.price} ${product.currency||'TRY'}`:'',right,priceY);
+
+    const rows=collectRows(product),rowGap=14,rowH=74;
+    // Center the specification block vertically in the remaining information column.
+    const rowsAreaTop=priceY+72;
+    const rowsAreaBottom=innerY+innerH-48;
+    const totalRowsH=rows.length*rowH+Math.max(0,rows.length-1)*rowGap;
+    let cy=rowsAreaTop+Math.max(0,(rowsAreaBottom-rowsAreaTop-totalRowsH)/2);
+
     for(const [label,val] of rows){
-      rr(ctx,infoX,cy,infoW,rowH,15,'#121820','#2a333d',1.5);
-      ctx.fillStyle='#d6a84b';ctx.font='700 20px Arial';ctx.textAlign='right';ctx.direction='rtl';ctx.fillText(label,right-17,cy+rowH/2+7);
-      ctx.fillStyle='#f5f1e8';ctx.font='600 20px Arial';ctx.textAlign='left';ctx.direction='rtl';
-      let t=String(val);while(t.length>5&&ctx.measureText(t).width>infoW-165)t=t.slice(0,-2);if(t!==String(val))t+='…';
-      ctx.fillText(t,infoX+17,cy+rowH/2+7);
+      rr(ctx,infoX,cy,infoW,rowH,15,'#121820','#2c3540',1.4);
+      // small gold accent on each spec card
+      ctx.fillStyle=GOLD;ctx.fillRect(right-5,cy+17,3,rowH-34);
+      ctx.fillStyle=GOLD_LIGHT;ctx.font='700 20px Tajawal, Arial';ctx.textAlign='right';ctx.direction='rtl';ctx.fillText(label,right-18,cy+rowH/2+7);
+      ctx.fillStyle='#f5f1e8';ctx.font='600 20px Tajawal, Arial';ctx.textAlign='left';ctx.direction='rtl';
+      let t=String(val);while(t.length>5&&ctx.measureText(t).width>infoW-175)t=t.slice(0,-2);if(t!==String(val))t+='…';
+      ctx.fillText(t,infoX+18,cy+rowH/2+7);
       cy+=rowH+rowGap;
     }
 
-    const galleryY=topY+topH+24,galleryH=500;
+    // Tighten the transition and use a gold separator instead of a wide black gap.
+    const dividerY=topY+topH+11;
+    const grad=ctx.createLinearGradient(M,0,W-M,0);
+    grad.addColorStop(0,'rgba(200,150,46,0)');grad.addColorStop(.16,'rgba(200,150,46,.55)');grad.addColorStop(.5,'rgba(240,201,106,.95)');grad.addColorStop(.84,'rgba(200,150,46,.55)');grad.addColorStop(1,'rgba(200,150,46,0)');
+    ctx.strokeStyle=grad;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(M,dividerY);ctx.lineTo(W-M,dividerY);ctx.stroke();
+
+    const galleryY=dividerY+10,galleryH=500;
     drawGalleryCollage(ctx,gallery,M,galleryY,W-M*2,galleryH);
 
-    const footerY=galleryY+galleryH+28;
-    ctx.strokeStyle='#202832';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(M,footerY);ctx.lineTo(W-M,footerY);ctx.stroke();
-    drawBrand(ctx,W-M,footerY+38);
+    const footerY=galleryY+galleryH+18;
+    ctx.strokeStyle='#4b3a1b';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(M,footerY);ctx.lineTo(W-M,footerY);ctx.stroke();
+    drawBrand(ctx,W-M,footerY+38,25);
     return canvas;
   }
 
