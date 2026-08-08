@@ -1,24 +1,55 @@
 {
   "shulebags": {
-    "http": 404,
-    "name": null,
-    "price": null,
-    "images": 0,
-    "colors": [],
+    "http": 200,
+    "name": "Giglio Spor Omuz Çantası Vizon",
+    "price": "929,90",
+    "images": 12,
+    "image_urls": [
+      "https://static.ticimax.cloud/55374/Uploads/HeaderTasarim/Header2/c4a51ac0-3222-4ec5-8251-63a919c08a08.jpg",
+      "https://assets.ticimax.cloud/Scripts/speech/mic.gif",
+      "https://static.ticimax.cloud/cdn-cgi/image/width=585,quality=99,format=webp/55374/uploads/urunresimleri/buyuk/94822e8d-dee3-4dfb-aa2f-6a2f602e2f52-3c8-81.jpeg",
+      "https://static.ticimax.cloud/cdn-cgi/image/width=585,quality=99/55374/uploads/urunresimleri/buyuk/94822e8d-dee3-4dfb-aa2f-6a2f602e2f52-3c8-81.jpeg",
+      "https://static.ticimax.cloud/cdn-cgi/image/width=585,quality=99/55374/uploads/urunresimleri/buyuk/80ac043c-cc2f-4c1d-9fb1-483589b95410-d50558.jpg"
+    ],
+    "colors": [
+      "!",
+      "Vizon"
+    ],
     "sizes": [],
-    "category": null,
-    "source": null,
-    "error": "invalid_json: Expecting value: line 1 column 1 (char 0)"
+    "category": "bags",
+    "source": "reader",
+    "error": null
   },
   "nisantasishoes": {
-    "http": 404,
-    "name": null,
-    "price": null,
-    "images": 0,
-    "colors": [],
-    "sizes": [],
-    "category": null,
-    "source": null,
-    "error": "invalid_json: Expecting value: line 1 column 1 (char 0)"
+    "http": 200,
+    "name": "LOREA KAHVE SATEN PUANTİYE DESENLİ FİYONK DETAYLI KADIN TOPUKLU AYAKKABI",
+    "price": "1,689.90",
+    "images": 12,
+    "image_urls": [
+      "https://cdn.myikas.com/images/theme-images/8ce75eda-8e43-4d4d-9702-bf66970ce64c/image_3840.webp",
+      "https://cdn.myikas.com/images/4986bc63-964e-482b-bc1c-6739ed185f15/efbf5d42-f500-4e23-a1cd-49b6d8d2adf9/image_3840.webp",
+      "https://cdn.myikas.com/images/4986bc63-964e-482b-bc1c-6739ed185f15/1c300963-b41f-4919-b090-14e385b51d55/image_3840.webp",
+      "https://cdn.myikas.com/images/4986bc63-964e-482b-bc1c-6739ed185f15/aa8bbf5a-531d-45be-8c99-31163de523e8/image_3840.webp",
+      "https://cdn.myikas.com/images/4986bc63-964e-482b-bc1c-6739ed185f15/1061e9f2-642e-43cc-9716-fbdeff15a38c/image_3840.webp"
+    ],
+    "colors": [
+      "KAHVE SATEN"
+    ],
+    "sizes": [
+      "39",
+      "M",
+      "34",
+      "36",
+      "38",
+      "40",
+      "42",
+      "35",
+      "37",
+      "44",
+      "46"
+    ],
+    "category": "shoes",
+    "source": "reader",
+    "error": null
   }
 }
