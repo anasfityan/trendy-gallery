@@ -1,0 +1,83 @@
+{
+  "gratis": {
+    "http": 200,
+    "name": "Bee Beauty Doğal Kiraz Çiçeği Özü El Kremi 75 ml",
+    "price": "76.00",
+    "currency": "TRY",
+    "category": "cosmetics",
+    "images": 1,
+    "colors": [],
+    "sizes": [],
+    "dimensions": "",
+    "volume": "75 ml",
+    "variant": "Kiraz Çiçeği",
+    "brand": "Bee Beauty",
+    "details": 3,
+    "source": "generic-jsonld-v11",
+    "error": null
+  },
+  "altuda": {
+    "http": 200,
+    "name": "Kadın Şeritli Shopper Omuz Çantası Boris - Pembe",
+    "price": "379.99",
+    "currency": "TRY",
+    "category": "bags",
+    "images": 3,
+    "colors": [
+      "Pembe"
+    ],
+    "sizes": [],
+    "dimensions": "45 × 30 × 8 cm",
+    "volume": "",
+    "variant": "",
+    "brand": "Altuda",
+    "details": 5,
+    "source": "shopify-v11",
+    "error": null
+  },
+  "shulebags": {
+    "http": 200,
+    "name": "Giglio Spor Omuz Çantası Vizon",
+    "price": "929.90",
+    "currency": "TRY",
+    "category": "bags",
+    "images": 10,
+    "colors": [
+      "Vizon"
+    ],
+    "sizes": [],
+    "dimensions": "45 × 15 × 30 cm",
+    "volume": "",
+    "variant": "",
+    "brand": "Shule",
+    "details": 6,
+    "source": "direct-ticimax-v11",
+    "error": null
+  },
+  "nisantasi": {
+    "http": 200,
+    "name": "Lorea Kahve Saten Puantiye Desenli Fiyonk Detaylı Kadın Topuklu Ayakkabı",
+    "price": "1689.90",
+    "currency": "TRY",
+    "category": "shoes",
+    "images": 10,
+    "colors": [
+      "KAHVE PUANTİYELİ SATEN"
+    ],
+    "sizes": [
+      "35",
+      "36",
+      "37",
+      "38",
+      "39",
+      "40"
+    ],
+    "dimensions": "",
+    "volume": "",
+    "variant": "",
+    "brand": "Nişantaşı Shoes",
+    "details": 1,
+    "source": "direct-ikas-v11",
+    "error": null
+  }
+}
