@@ -1,0 +1,43 @@
+name: Test browser importer
+
+on:
+  push:
+    paths:
+      - 'api/import-product.js'
+      - 'package.json'
+      - 'vercel.json'
+      - 'product-import-api.js'
+      - '.github/workflows/test-browser-importer.yml'
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Vercel deployment
+        run: sleep 45
+      - name: Test Shulebags
+        run: |
+          curl -sS --fail-with-body -X POST 'https://trendy-gallery.vercel.app/api/import-product' \
+            -H 'content-type: application/json' \
+            --data '{"url":"https://www.shulebags.com/giglio-spor-omuz-cantasi-vizon"}' | tee shule.json
+          python - <<'PY'
+          import json
+          d=json.load(open('shule.json'))
+          print('SHULE', {'name':d.get('name'),'price':d.get('price'),'images':len(d.get('images',[])),'colors':d.get('colors'),'sizes':d.get('sizes'),'source':d.get('source')})
+          assert d.get('name')
+          assert d.get('price')
+          assert len(d.get('images',[])) >= 2
+          PY
+      - name: Test Nisantasi Shoes
+        run: |
+          curl -sS --fail-with-body -X POST 'https://trendy-gallery.vercel.app/api/import-product' \
+            -H 'content-type: application/json' \
+            --data '{"url":"https://www.nisantasishoes.com/lorea-kahve-saten-puantiye-desenli-fiyonk-detayli-kadin-topuklu-ayakkabi-14833?numara=39"}' | tee nisantasi.json
+          python - <<'PY'
+          import json
+          d=json.load(open('nisantasi.json'))
+          print('NISANTASI', {'name':d.get('name'),'price':d.get('price'),'images':len(d.get('images',[])),'colors':d.get('colors'),'sizes':d.get('sizes'),'source':d.get('source')})
+          assert d.get('name')
+          assert d.get('price')
+          assert len(d.get('images',[])) >= 2
+          PY
