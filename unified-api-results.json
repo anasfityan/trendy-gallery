@@ -16,7 +16,8 @@
       "closure": "Fermuar",
       "compartments": "6"
     },
-    "unifiedSource": "product-unified-api-v1",
+    "unifiedSource": "product-unified-api-v2",
+    "source": "direct-ticimax-v11",
     "error": null
   },
   "nisantasi": {
@@ -39,7 +40,8 @@
     "keySpecs": {
       "material": "Saten"
     },
-    "unifiedSource": "product-unified-api-v1",
+    "unifiedSource": "product-unified-api-v2",
+    "source": "direct-ikas-v11",
     "error": null
   },
   "gratis_foundation": {
@@ -59,7 +61,8 @@
       "coverage": "Yüksek",
       "spf": "50 SPF"
     },
-    "unifiedSource": "product-unified-api-v1",
+    "unifiedSource": "product-unified-api-v2",
+    "source": "generic-jsonld-v11",
     "error": null
   },
   "altuda": {
@@ -73,14 +76,99 @@
     ],
     "sizes": [],
     "keySpecs": {
+      "material": "Suni Deri",
+      "closure": "Fermuar",
       "dimensions": "45 × 30 × 8 cm"
     },
-    "unifiedSource": "product-unified-api-v1",
+    "unifiedSource": "product-unified-api-v2",
+    "source": "shopify-v11",
     "error": null
   },
-  "protected_check": {
-    "http": 503,
-    "error": "protected_backend_pending",
-    "message": "Protected-store parser is validated but its public backend is not connected yet."
+  "hepsiburada": {
+    "http": 200,
+    "name": "Pirok Store Samsung Galaxy S26 Ultra Magsafe Uyumlu Kablosuz Şarj Destekli Yumuşak Soft Mükemmel Manyetik Esnek Lansman Silikon Kılıf",
+    "price": "279.89",
+    "category": "acc",
+    "images": 3,
+    "colors": [
+      "Gri",
+      "Bordo",
+      "Siyah",
+      "Haki Yeşil",
+      "Navy Blue"
+    ],
+    "sizes": [],
+    "keySpecs": {
+      "compatibility": "Samsung Galaxy S26 Ultra",
+      "material": "Silikon",
+      "features": [
+        "MagSafe uyumlu",
+        "Kablosuz şarj destekli",
+        "Manyetik"
+      ]
+    },
+    "unifiedSource": "product-unified-api-v2",
+    "source": "protected-hepsiburada-curl",
+    "error": null
+  },
+  "stradivarius": {
+    "http": 200,
+    "name": "Grafik baskılı V yaka t-shirt",
+    "price": "850.00",
+    "category": "clothes",
+    "images": 12,
+    "colors": [
+      "Kırmızı"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "keySpecs": {
+      "composition": [
+        "97% pamuk",
+        "3% elastan"
+      ],
+      "modelSize": "S"
+    },
+    "unifiedSource": "product-unified-api-v2",
+    "source": "protected-stradivarius-itxrest",
+    "error": null
+  },
+  "bershka": {
+    "http": 200,
+    "name": "Kargo paraşüt pantolon",
+    "price": "1990.00",
+    "category": "clothes",
+    "images": 16,
+    "colors": [
+      "Kırmızı",
+      "Siyah",
+      "Kum rengi"
+    ],
+    "sizes": [
+      "XXS",
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "keySpecs": {
+      "composition": [
+        "100% pamuk"
+      ],
+      "modelSize": "S"
+    },
+    "unifiedSource": "product-unified-api-v2",
+    "source": "protected-bershka-itxrest",
+    "error": null
+  },
+  "_summary": {
+    "total": 7,
+    "ok": 7
   }
 }
