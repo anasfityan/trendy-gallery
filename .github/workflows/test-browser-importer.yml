@@ -1,12 +1,8 @@
-name: Test browser importer
+name: Test reader importer
 
 on:
   push:
     paths:
-      - 'api/import-product.js'
-      - 'package.json'
-      - 'vercel.json'
-      - 'product-import-api.js'
       - '.github/workflows/test-browser-importer.yml'
 
 permissions:
@@ -17,17 +13,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Wait for Vercel deployment
-        run: sleep 45
-      - name: Test production importer and save results
+      - name: Test active reader importer and save results
         shell: bash
         run: |
           set +e
-          SHULE_CODE=$(curl -sS -o shule.json -w '%{http_code}' -X POST 'https://trendy-gallery.vercel.app/api/import-product' \
-            -H 'content-type: application/json' \
+          ENDPOINT='https://uoydoungeplepusrsill.supabase.co/functions/v1/import-reader'
+          KEY='sb_publishable_4N5mjsKVHFfKZglcUO-yBw_iCC9owhz'
+          SHULE_CODE=$(curl -sS -o shule.json -w '%{http_code}' -X POST "$ENDPOINT" \
+            -H 'content-type: application/json' -H "apikey: $KEY" -H "authorization: Bearer $KEY" \
             --data '{"url":"https://www.shulebags.com/giglio-spor-omuz-cantasi-vizon"}')
-          NIS_CODE=$(curl -sS -o nisantasi.json -w '%{http_code}' -X POST 'https://trendy-gallery.vercel.app/api/import-product' \
-            -H 'content-type: application/json' \
+          NIS_CODE=$(curl -sS -o nisantasi.json -w '%{http_code}' -X POST "$ENDPOINT" \
+            -H 'content-type: application/json' -H "apikey: $KEY" -H "authorization: Bearer $KEY" \
             --data '{"url":"https://www.nisantasishoes.com/lorea-kahve-saten-puantiye-desenli-fiyonk-detayli-kadin-topuklu-ayakkabi-14833?numara=39"}')
           export SHULE_CODE NIS_CODE
           python - <<'PY'
@@ -43,6 +39,7 @@ jobs:
                   'name': d.get('name'),
                   'price': d.get('price'),
                   'images': len(d.get('images') or []),
+                  'image_urls': (d.get('images') or [])[:5],
                   'colors': d.get('colors') or [],
                   'sizes': d.get('sizes') or [],
                   'category': d.get('category'),
@@ -62,5 +59,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add importer-smoke-results.json
-          git diff --cached --quiet || git commit -m 'Record browser importer smoke results'
+          git diff --cached --quiet || git commit -m 'Record reader importer smoke results'
           git push
