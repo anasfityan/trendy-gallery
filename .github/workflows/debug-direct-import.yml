@@ -1,0 +1,28 @@
+name: Debug direct import
+
+on:
+  push:
+    paths:
+      - '.github/workflows/debug-direct-import.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch diagnostics
+        run: |
+          ENDPOINT='https://uoydoungeplepusrsill.supabase.co/functions/v1/import-direct-debug'
+          KEY='sb_publishable_4N5mjsKVHFfKZglcUO-yBw_iCC9owhz'
+          curl -sS -X POST "$ENDPOINT" -H 'content-type: application/json' -H "apikey: $KEY" -H "authorization: Bearer $KEY" --data '{"url":"https://www.shulebags.com/giglio-spor-omuz-cantasi-vizon"}' > debug-shule.json
+          curl -sS -X POST "$ENDPOINT" -H 'content-type: application/json' -H "apikey: $KEY" -H "authorization: Bearer $KEY" --data '{"url":"https://www.nisantasishoes.com/lorea-kahve-saten-puantiye-desenli-fiyonk-detayli-kadin-topuklu-ayakkabi-14833?numara=39"}' > debug-nisantasi.json
+      - name: Commit diagnostics
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add debug-shule.json debug-nisantasi.json
+          git diff --cached --quiet || git commit -m 'Record direct import diagnostics'
+          git push
