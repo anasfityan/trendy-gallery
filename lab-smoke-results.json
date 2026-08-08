@@ -1,0 +1,64 @@
+{
+  "page": "https://anasfityan.github.io/trendy-gallery/lab.html",
+  "version": "v5",
+  "sampleCount": 8,
+  "ok": 8,
+  "results": [
+    {
+      "sample": "Gratis كريم",
+      "ok": true,
+      "name": "Bee Beauty Doğal Kiraz Çiçeği Özü El Kremi 75 ml",
+      "price": "76.00 TRY",
+      "error": ""
+    },
+    {
+      "sample": "Gratis مكياج",
+      "ok": true,
+      "name": "Note Matte Lock Foundation Fondöten 100 Sarı Alt Ton",
+      "price": "549.00 TRY",
+      "error": ""
+    },
+    {
+      "sample": "Altuda",
+      "ok": true,
+      "name": "Kadın Şeritli Shopper Omuz Çantası Boris - Pembe",
+      "price": "379.99 TRY",
+      "error": ""
+    },
+    {
+      "sample": "Shulebags",
+      "ok": true,
+      "name": "Giglio Spor Omuz Çantası Vizon",
+      "price": "929.90 TRY",
+      "error": ""
+    },
+    {
+      "sample": "Nişantaşı",
+      "ok": true,
+      "name": "Lorea Kahve Saten Puantiye Desenli Fiyonk Detaylı Kadın Topuklu Ayakkabı",
+      "price": "1689.90 TRY",
+      "error": ""
+    },
+    {
+      "sample": "Hepsiburada",
+      "ok": true,
+      "name": "Pirok Store Samsung Galaxy S26 Ultra Magsafe Uyumlu Kablosuz Şarj Destekli Yumuşak Soft Mükemmel Manyetik Esnek Lansman Silikon Kılıf",
+      "price": "279.89 TRY",
+      "error": ""
+    },
+    {
+      "sample": "Stradivarius",
+      "ok": true,
+      "name": "Grafik baskılı V yaka t-shirt",
+      "price": "850.00 TRY",
+      "error": ""
+    },
+    {
+      "sample": "Bershka",
+      "ok": true,
+      "name": "Kargo paraşüt pantolon",
+      "price": "1990.00 TRY",
+      "error": ""
+    }
+  ]
+}
