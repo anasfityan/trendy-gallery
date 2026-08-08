@@ -1,0 +1,33 @@
+name: Enable protected lab samples
+on:
+  push:
+    paths:
+      - '.github/workflows/enable-protected-lab-samples.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add protected samples and smart image routing
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('lab.html')
+          s=p.read_text()
+          old='<button class="sample" data-url="https://www.nisantasishoes.com/lorea-kahve-saten-puantiye-desenli-fiyonk-detayli-kadin-topuklu-ayakkabi-14833?numara=39">Nişantaşı</button>'
+          new=old+'<button class="sample" data-url="https://www.hepsiburada.com/pirok-store-samsung-galaxy-s26-ultra-magsafe-uyumlu-kablosuz-sarj-destekli-yumusak-soft-mukemmel-manyetik-esnek-lansman-silikon-kilif-p-HBCV0000D2MAO4">Hepsiburada</button><button class="sample" data-url="https://www.stradivarius.com/tr/en/graphic-vneck-tshirt-l06703295?categoryId=1718528&colorId=100&pelement=520351835">Stradivarius</button><button class="sample" data-url="https://www.bershka.com/tr/kargo-parasut-pantolon-l03046335-c0p227042041.html">Bershka</button>'
+          if old not in s: raise SystemExit('sample anchor not found')
+          s=s.replace(old,new,1)
+          s=s.replace("const proxy=src=>IMPORT_API+'?image='+encodeURIComponent(src);", "const PROXY_HOSTS=new Set(['static.ticimax.cloud','cdn.myikas.com','api.gratis.retter.io','cdn.shopify.com']);\nconst proxy=src=>{try{return PROXY_HOSTS.has(new URL(src).hostname)?IMPORT_API+'?image='+encodeURIComponent(src):src}catch{return src}};")
+          s=s.replace('General Import · v4','General Import · v5')
+          p.write_text(s)
+          PY
+      - name: Commit lab update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add lab.html
+          git diff --cached --quiet || git commit -m 'Enable protected stores in importer lab'
+          git push
