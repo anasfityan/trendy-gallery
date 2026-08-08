@@ -1,0 +1,49 @@
+name: Validate redesigned customer card
+on:
+  push:
+    paths:
+      - 'lab-card.js'
+      - '.github/workflows/test-card-v2.yml'
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.54.2 && npx playwright install chromium
+      - name: Test live card
+        run: |
+          node <<'JS'
+          const { chromium } = require('playwright');
+          const fs = require('fs');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:1280,height:900}});
+            await page.goto('https://anasfityan.github.io/trendy-gallery/lab.html?cardv2=1',{waitUntil:'networkidle',timeout:90000});
+            await page.getByRole('button',{name:'Shulebags'}).click();
+            await page.locator('#result.on').waitFor({timeout:90000});
+            await page.getByRole('button',{name:'معاينة البطاقة'}).click();
+            await page.locator('#cardPreview').waitFor({state:'visible',timeout:90000});
+            const size=await page.locator('#cardPreview').evaluate(async img=>{
+              if(!img.complete) await new Promise(r=>img.addEventListener('load',r,{once:true}));
+              return {width:img.naturalWidth,height:img.naturalHeight,src:img.src.slice(0,30)};
+            });
+            const out={page:'https://anasfityan.github.io/trendy-gallery/lab.html',sample:'Shulebags',...size,ok:size.width===1440&&size.height===1800};
+            fs.writeFileSync('card-v2-results.json',JSON.stringify(out,null,2));
+            console.log(out);
+            await browser.close();
+            if(!out.ok) process.exit(1);
+          })();
+          JS
+      - name: Commit result
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add card-v2-results.json || true
+          git diff --cached --quiet || git commit -m 'Record redesigned card validation'
+          git push
