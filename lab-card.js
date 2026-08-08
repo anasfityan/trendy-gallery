@@ -60,7 +60,6 @@
     }catch{}
   }
 
-  // Matches the original system header: Gallery gold on the left, Gacela white on the right.
   function drawBrand(ctx,right,y,size=30){
     ctx.save();
     ctx.direction='ltr';ctx.textAlign='left';ctx.textBaseline='alphabetic';
@@ -87,32 +86,35 @@
     ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);
   }
 
-  function drawGalleryCollage(ctx,imgs,x,y,w,h){
+  function drawGalleryCards(ctx,imgs,x,y,w,h){
     if(!imgs.length)return;
-    const n=Math.min(imgs.length,6),rows=n<=3?1:2,cols=rows===1?n:Math.ceil(n/2),sep=4;
-    rr(ctx,x,y,w,h,22,'#5b451e','#7b5d25',1.4);
-    ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,22);ctx.clip();
-    const cellW=(w-sep*(cols-1))/cols,cellH=(h-sep*(rows-1))/rows;
+    const n=Math.min(imgs.length,6),rows=n<=3?1:2,cols=rows===1?n:Math.ceil(n/2);
+    const outerPad=12,gap=8;
+    rr(ctx,x,y,w,h,26,'#17191b','#4d3d1f',1.2);
+    const innerX=x+outerPad,innerY=y+outerPad,innerW=w-outerPad*2,innerH=h-outerPad*2;
+    const cellW=(innerW-gap*(cols-1))/cols,cellH=(innerH-gap*(rows-1))/rows;
     imgs.slice(0,n).forEach((img,i)=>{
       const row=rows===1?0:Math.floor(i/cols),col=rows===1?i:i%cols;
-      const cx=x+col*(cellW+sep),cy=y+row*(cellH+sep);
-      drawCover(ctx,img,cx,cy,cellW,cellH);
+      const cx=innerX+col*(cellW+gap),cy=innerY+row*(cellH+gap);
+      rr(ctx,cx,cy,cellW,cellH,20,'#242629','#6b5326',1.1);
+      ctx.save();ctx.beginPath();ctx.roundRect(cx+2,cy+2,cellW-4,cellH-4,18);ctx.clip();
+      drawCover(ctx,img,cx+2,cy+2,cellW-4,cellH-4);
+      ctx.restore();
     });
-    ctx.restore();
   }
 
   async function build(product,proxy){
     await ensureFont();
     const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');
-    ctx.fillStyle='#090c10';ctx.fillRect(0,0,W,H);ctx.textAlign='right';ctx.direction='rtl';
+    ctx.fillStyle='#0d1013';ctx.fillRect(0,0,W,H);ctx.textAlign='right';ctx.direction='rtl';
 
     const mainUrl=product.cardMainImage||(product.cardImages||[])[0]||(product.images||[])[0];
     const galleryUrls=(product.cardGalleryImages?.length?product.cardGalleryImages:(product.cardImages?.length?product.cardImages.slice(1):(product.images||[]).slice(1,7))).filter(Boolean).filter(u=>u!==mainUrl).slice(0,6);
     let mainImg=null;try{if(mainUrl)mainImg=await loadImage(proxy(mainUrl))}catch{}
     const gallery=[];for(const u of galleryUrls){try{gallery.push(await loadImage(proxy(u)))}catch{}}
 
-    const topX=M,topY=58,topW=W-M*2,topH=1045;
-    rr(ctx,topX,topY,topW,topH,R,'#0d1116','#232c35',1.4);
+    const topX=M,topY=58,topW=W-M*2,topH=1040;
+    rr(ctx,topX,topY,topW,topH,R,'#11151a','#28313a',1.3);
 
     const pad=22,innerY=topY+pad,innerH=topH-pad*2;
     const mainW=620,gap=28,mainX=topX+pad,infoX=mainX+mainW+gap,infoW=topX+topW-pad-infoX;
@@ -120,7 +122,7 @@
 
     const right=topX+topW-pad;
     drawBrand(ctx,right,innerY+30,30);
-    ctx.fillStyle='#717a84';ctx.font='500 15px Tajawal, Arial';ctx.textAlign='right';ctx.direction='rtl';ctx.fillText('معلومات المنتج',right,innerY+55);
+    ctx.fillStyle='#7f8790';ctx.font='500 15px Tajawal, Arial';ctx.textAlign='right';ctx.direction='rtl';ctx.fillText('معلومات المنتج',right,innerY+55);
 
     const titleY=innerY+125;
     ctx.fillStyle='#f5f1e8';ctx.font='700 36px Tajawal, Arial';
@@ -138,7 +140,7 @@
     let cy=rowsAreaTop+Math.max(0,(rowsAreaBottom-rowsAreaTop-totalRowsH)/2);
 
     for(const [label,val] of rows){
-      rr(ctx,infoX,cy,infoW,rowH,15,'#121820','#2c3540',1.4);
+      rr(ctx,infoX,cy,infoW,rowH,15,'#151b22','#313b45',1.3);
       ctx.fillStyle=GOLD;ctx.fillRect(right-5,cy+17,3,rowH-34);
       ctx.fillStyle=GOLD_LIGHT;ctx.font='700 20px Tajawal, Arial';ctx.textAlign='right';ctx.direction='rtl';ctx.fillText(label,right-18,cy+rowH/2+7);
       ctx.fillStyle='#f5f1e8';ctx.font='600 20px Tajawal, Arial';ctx.textAlign='left';ctx.direction='rtl';
@@ -147,17 +149,13 @@
       cy+=rowH+rowGap;
     }
 
-    const dividerY=topY+topH+11;
+    const dividerY=topY+topH+10;
     const grad=ctx.createLinearGradient(M,0,W-M,0);
-    grad.addColorStop(0,'rgba(200,150,46,0)');grad.addColorStop(.16,'rgba(200,150,46,.55)');grad.addColorStop(.5,'rgba(240,201,106,.95)');grad.addColorStop(.84,'rgba(200,150,46,.55)');grad.addColorStop(1,'rgba(200,150,46,0)');
-    ctx.strokeStyle=grad;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(M,dividerY);ctx.lineTo(W-M,dividerY);ctx.stroke();
+    grad.addColorStop(0,'rgba(200,150,46,0)');grad.addColorStop(.16,'rgba(200,150,46,.45)');grad.addColorStop(.5,'rgba(240,201,106,.85)');grad.addColorStop(.84,'rgba(200,150,46,.45)');grad.addColorStop(1,'rgba(200,150,46,0)');
+    ctx.strokeStyle=grad;ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(M,dividerY);ctx.lineTo(W-M,dividerY);ctx.stroke();
 
-    const galleryY=dividerY+9,galleryH=555;
-    drawGalleryCollage(ctx,gallery,M,galleryY,W-M*2,galleryH);
-
-    const footerY=galleryY+galleryH+14;
-    ctx.strokeStyle='#4b3a1b';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(M,footerY);ctx.lineTo(W-M,footerY);ctx.stroke();
-    drawBrand(ctx,W-M,footerY+36,25);
+    const galleryY=dividerY+8,galleryH=H-galleryY-M;
+    drawGalleryCards(ctx,gallery,M,galleryY,W-M*2,galleryH);
     return canvas;
   }
 
