@@ -1,0 +1,65 @@
+name: Smoke test live PNG cards
+on:
+  push:
+    paths:
+      - '.github/workflows/smoke-card-live.yml'
+permissions:
+  contents: write
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -q playwright==1.54.0
+      - run: playwright install --with-deps chromium >/dev/null 2>&1
+      - name: Generate live cards and download PNG
+        run: |
+          python - <<'PY'
+          import json,time,urllib.request,os
+          from playwright.sync_api import sync_playwright
+          url='https://anasfityan.github.io/trendy-gallery/lab.html'
+          live=''
+          for _ in range(20):
+            try:
+              live=urllib.request.urlopen(url+'?card=6',timeout=20).read().decode('utf-8','replace')
+              if 'General Import · v6' in live and 'lab-card.js?v=1' in live: break
+            except Exception: pass
+            time.sleep(5)
+          if 'General Import · v6' not in live: raise SystemExit('github_pages_v6_not_visible')
+          targets=['Shulebags','Nişantaşı','Gratis مكياج','Hepsiburada','Bershka']
+          out={'page':url,'version':'v6','cards':[]}
+          with sync_playwright() as p:
+            browser=p.chromium.launch(headless=True)
+            page=browser.new_page(viewport={'width':1280,'height':1000},accept_downloads=True)
+            page.goto(url+'?card=6',wait_until='domcontentloaded',timeout=60000)
+            for label in targets:
+              page.locator('.sample',has_text=label).click()
+              page.wait_for_function("!document.querySelector('#status').classList.contains('on')",timeout=150000)
+              if 'on' in (page.locator('#err').get_attribute('class') or '').split():
+                raise RuntimeError(label+': '+page.locator('#err').inner_text())
+              page.locator('#previewCard').click()
+              page.wait_for_function("document.querySelector('#cardPreview').naturalWidth===1080 && document.querySelector('#cardPreview').naturalHeight===1350",timeout=150000)
+              src=page.locator('#cardPreview').get_attribute('src') or ''
+              out['cards'].append({'sample':label,'preview':src.startswith('data:image/png;base64,'),'width':page.locator('#cardPreview').evaluate('e=>e.naturalWidth'),'height':page.locator('#cardPreview').evaluate('e=>e.naturalHeight')})
+            with page.expect_download(timeout=150000) as di:
+              page.locator('#downloadCard').click()
+            download=di.value
+            path=download.path()
+            out['download']={'filename':download.suggested_filename,'bytes':os.path.getsize(path) if path else 0}
+            browser.close()
+          out['ok']=all(x['preview'] and x['width']==1080 and x['height']==1350 for x in out['cards']) and out['download']['filename'].endswith('.png') and out['download']['bytes']>10000
+          open('card-smoke-results.json','w').write(json.dumps(out,ensure_ascii=False,indent=2))
+          print(json.dumps(out,ensure_ascii=False,indent=2))
+          if not out['ok']: raise SystemExit('card_smoke_failed')
+          PY
+      - name: Commit smoke result
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add card-smoke-results.json
+          git diff --cached --quiet || git commit -m 'Record live PNG card smoke test'
+          git push
