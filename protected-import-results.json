@@ -1,9 +1,9 @@
 {
   "hepsiburada": {
-    "name": "Pirok Store Samsung Galaxy S26 Ultra Magsafe Uyumlu Kablosuz Şarj Destekli Yumuşak Soft Mükemmel",
+    "name": "Pirok Store Samsung Galaxy S26 Ultra Magsafe Uyumlu Kablosuz Şarj Destekli Yumuşak Soft Mükemmel Manyetik Esnek Lansman Silikon Kılıf",
     "price": "279.89",
     "currency": "TRY",
-    "category": "other",
+    "category": "acc",
     "images": 3,
     "colors": [
       "Gri",
@@ -14,7 +14,15 @@
     ],
     "sizes": [],
     "brand": "Pirok Store",
-    "keySpecs": {},
+    "keySpecs": {
+      "compatibility": "Samsung Galaxy S26 Ultra Magsafe Uyumlu Kablo",
+      "material": "Silikon",
+      "features": [
+        "MagSafe uyumlu",
+        "Kablosuz şarj destekli",
+        "Manyetik"
+      ]
+    },
     "description": null,
     "source": "protected-hepsiburada-curl"
   },
@@ -46,16 +54,6 @@
     "source": "protected-stradivarius-itxrest"
   },
   "bershka": {
-    "name": "",
-    "price": "",
-    "currency": "TRY",
-    "category": "clothes",
-    "images": 0,
-    "colors": [],
-    "sizes": [],
-    "brand": "Bershka",
-    "keySpecs": {},
-    "description": "",
-    "source": "protected-bershka-itxrest"
+    "error": "{\"error\": \"category_url_not_product\"}\n"
   }
 }
