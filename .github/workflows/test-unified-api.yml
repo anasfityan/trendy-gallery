@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Test unified public importer
+      - name: Test unified importer matrix v2
         run: |
           python - <<'PY'
           import json, urllib.request, urllib.error
@@ -20,24 +20,32 @@ jobs:
             'nisantasi':'https://www.nisantasishoes.com/lorea-kahve-saten-puantiye-desenli-fiyonk-detayli-kadin-topuklu-ayakkabi-14833?numara=39',
             'gratis_foundation':'https://www.gratis.com/fondoten/note-matte-lock-foundation-fondoten-100-sari-alt-ton-p-10218914',
             'altuda':'https://altuda.com.tr/products/kadin-seritli-shopper-omuz-cantasi-boris-pembe',
-            'protected_check':'https://www.hepsiburada.com/pirok-store-samsung-galaxy-s26-ultra-magsafe-uyumlu-kablosuz-sarj-destekli-yumusak-soft-mukemmel-manyetik-esnek-lansman-silikon-kilif-p-HBCV0000D2MAO4'
+            'hepsiburada':'https://www.hepsiburada.com/pirok-store-samsung-galaxy-s26-ultra-magsafe-uyumlu-kablosuz-sarj-destekli-yumusak-soft-mukemmel-manyetik-esnek-lansman-silikon-kilif-p-HBCV0000D2MAO4',
+            'stradivarius':'https://www.stradivarius.com/tr/en/graphic-vneck-tshirt-l06703295?categoryId=1718528&colorId=100&pelement=520351835',
+            'bershka':'https://www.bershka.com/tr/kargo-parasut-pantolon-l03046335-c0p227042041.html'
           }
           out={}
           for key,url in urls.items():
             req=urllib.request.Request(api,data=json.dumps({'url':url}).encode(),headers={'content-type':'application/json'},method='POST')
             try:
-              with urllib.request.urlopen(req,timeout=90) as r:
+              with urllib.request.urlopen(req,timeout=120) as r:
                 d=json.loads(r.read().decode())
-                out[key]={'http':r.status,'name':d.get('name'),'price':d.get('price'),'category':d.get('category'),'images':len(d.get('images') or []),'colors':d.get('colors'),'sizes':d.get('sizes'),'keySpecs':d.get('keySpecs'),'unifiedSource':d.get('unifiedSource'),'error':d.get('error')}
+                out[key]={'http':r.status,'name':d.get('name'),'price':d.get('price'),'category':d.get('category'),'images':len(d.get('images') or []),'colors':d.get('colors'),'sizes':d.get('sizes'),'keySpecs':d.get('keySpecs'),'unifiedSource':d.get('unifiedSource'),'source':d.get('source'),'error':d.get('error')}
             except urllib.error.HTTPError as e:
-              body=e.read().decode()
+              body=e.read().decode(errors='replace')
               try:d=json.loads(body)
               except:d={'raw':body}
-              out[key]={'http':e.code,'error':d.get('error'),'message':d.get('message')}
+              out[key]={'http':e.code,'error':d.get('error'),'message':d.get('message'),'raw':d.get('raw')}
+            except Exception as e:
+              out[key]={'error':repr(e)}
+          out['_summary']={'total':len(urls),'ok':sum(1 for v in out.values() if isinstance(v,dict) and v.get('http')==200)}
           open('unified-api-results.json','w').write(json.dumps(out,ensure_ascii=False,indent=2))
           print(json.dumps(out,ensure_ascii=False,indent=2))
+          if out['_summary']['ok'] != len(urls):
+              raise SystemExit('matrix_not_fully_green')
           PY
       - name: Commit result
+        if: always()
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
