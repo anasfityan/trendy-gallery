@@ -11,10 +11,9 @@
     ],
     "sizes": [],
     "details": [
-      "Giglio Spor Omuz Çantası Vizon",
-      "{{translate 'UrunListesi_UrunuIncele'}} {{/each }} {{#if settings.is3dImageActive}}"
+      "İletişim Ölçüleri:"
     ],
-    "source": "direct-ticimax-v2",
+    "source": "direct-ticimax-v3",
     "error": null
   },
   "nisantasishoes": {
@@ -38,7 +37,7 @@
     "details": [
       "Yeni sezonun en sevilen Lorea Kahve Saten Puantiye Desenli Fiyonk Detaylı Kadın Topuklu Ayakkabı modelini en iyi fiyat avantajıyla satın alın."
     ],
-    "source": "direct-ikas-v2",
+    "source": "direct-ikas-v3",
     "error": null
   }
 }
