@@ -54,6 +54,16 @@
     "source": "protected-stradivarius-itxrest"
   },
   "bershka": {
-    "error": "category_url_not_product"
+    "name": "",
+    "price": "",
+    "currency": "TRY",
+    "category": "clothes",
+    "images": 0,
+    "colors": [],
+    "sizes": [],
+    "brand": "Bershka",
+    "keySpecs": {},
+    "description": "",
+    "source": "protected-bershka-itxrest"
   }
 }
