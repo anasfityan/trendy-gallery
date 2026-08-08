@@ -1,4 +1,4 @@
-name: Test product importer v2
+name: Test product importer v3
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate Shulebags and Nisantasi
+      - name: Validate Shulebags and Nisantasi v3
         shell: bash
         run: |
           set +e
@@ -23,18 +23,11 @@ jobs:
           python - <<'PY'
           import json
           def load(p):
-              try:
-                  return json.load(open(p,encoding='utf-8'))
-              except Exception as e:
-                  return {'error':str(e)}
+              try: return json.load(open(p,encoding='utf-8'))
+              except Exception as e: return {'error':str(e)}
           def summarize(d):
               imgs=d.get('images') or []
-              return {
-                  'name':d.get('name'), 'price':d.get('price'), 'discountPrice':d.get('discountPrice'),
-                  'images':len(imgs), 'unique_images':len(set(imgs)), 'duplicate_images':len(imgs)-len(set(imgs)),
-                  'colors':d.get('colors') or [], 'sizes':d.get('sizes') or [],
-                  'details':d.get('details') or [], 'source':d.get('source'), 'error':d.get('error')
-              }
+              return {'name':d.get('name'),'price':d.get('price'),'discountPrice':d.get('discountPrice'),'images':len(imgs),'unique_images':len(set(imgs)),'duplicate_images':len(imgs)-len(set(imgs)),'colors':d.get('colors') or [],'sizes':d.get('sizes') or [],'details':d.get('details') or [],'source':d.get('source'),'error':d.get('error')}
           out={'shulebags':summarize(load('shule.json')),'nisantasishoes':summarize(load('nis.json'))}
           open('product-api-v2-results.json','w',encoding='utf-8').write(json.dumps(out,ensure_ascii=False,indent=2))
           print(json.dumps(out,ensure_ascii=False,indent=2))
@@ -44,5 +37,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add product-api-v2-results.json
-          git diff --cached --quiet || git commit -m 'Record product importer v2 results'
+          git diff --cached --quiet || git commit -m 'Record product importer v3 results'
           git push
