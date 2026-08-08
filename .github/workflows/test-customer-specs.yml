@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Test specs matrix v4
+      - name: Test specs matrix v5
         shell: bash
         run: |
           set -e
@@ -22,6 +22,7 @@ jobs:
             'nisantasi':'https://www.nisantasishoes.com/lorea-kahve-saten-puantiye-desenli-fiyonk-detayli-kadin-topuklu-ayakkabi-14833?numara=39',
             'gratis_cream':'https://www.gratis.com/el-vucut-kremleri/bee-beauty-dogal-kiraz-cicegi-ozu-el-kremi-75-ml-p-10194839',
             'gratis_deodorant':'https://www.gratis.com/kadin-deodorant-sprey/rexona-clinical-protection-kadin-sprey-deodorant-confidence-150-ml-p-10315380',
+            'gratis_foundation':'https://www.gratis.com/fondoten/note-matte-lock-foundation-fondoten-100-sari-alt-ton-p-10218914',
             'altuda':'https://altuda.com.tr/products/kadin-seritli-shopper-omuz-cantasi-boris-pembe'
           }
           out={}
