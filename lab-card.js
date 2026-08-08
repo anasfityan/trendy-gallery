@@ -49,19 +49,27 @@
   }
 
   async function ensureFont(){
-    try{if(document.fonts?.load)await document.fonts.load('900 30px Tajawal')}catch{}
+    try{
+      if(!document.querySelector('link[data-gacela-tajawal]')){
+        const l=document.createElement('link');
+        l.rel='stylesheet';l.dataset.gacelaTajawal='1';
+        l.href='https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;900&display=swap';
+        document.head.appendChild(l);
+      }
+      if(document.fonts?.load){await document.fonts.load('900 30px Tajawal');await document.fonts.ready}
+    }catch{}
   }
 
-  // Exact system identity: Gacela white + Gallery gold, same Tajawal size/weight and 3px gap.
+  // Matches the original system header: Gallery gold on the left, Gacela white on the right.
   function drawBrand(ctx,right,y,size=30){
     ctx.save();
     ctx.direction='ltr';ctx.textAlign='left';ctx.textBaseline='alphabetic';
     ctx.font=`900 ${size}px Tajawal, Arial`;
-    const gacela='Gacela',gallery='Gallery',gap=6;
-    const gw=ctx.measureText(gacela).width,aw=ctx.measureText(gallery).width;
-    const x=right-gw-gap-aw;
+    const gallery='Gallery',gacela='Gacela',gap=6;
+    const aw=ctx.measureText(gallery).width,gw=ctx.measureText(gacela).width;
+    let x=right-aw-gap-gw;
+    ctx.fillStyle=GOLD;ctx.fillText(gallery,x,y);x+=aw+gap;
     ctx.fillStyle='#fff';ctx.fillText(gacela,x,y);
-    ctx.fillStyle=GOLD;ctx.fillText(gallery,x+gw+gap,y);
     ctx.restore();
   }
 
@@ -82,7 +90,6 @@
   function drawGalleryCollage(ctx,imgs,x,y,w,h){
     if(!imgs.length)return;
     const n=Math.min(imgs.length,6),rows=n<=3?1:2,cols=rows===1?n:Math.ceil(n/2),sep=4;
-    // Dark-gold base means the separators are elegant gold lines rather than black gaps.
     rr(ctx,x,y,w,h,22,'#5b451e','#7b5d25',1.4);
     ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,22);ctx.clip();
     const cellW=(w-sep*(cols-1))/cols,cellH=(h-sep*(rows-1))/rows;
@@ -120,13 +127,11 @@
     const title=fitText(ctx,cleanProductTitle(product),infoW,3);
     title.forEach((l,i)=>ctx.fillText(l,right,titleY+i*46));
 
-    // Deliberate visual breathing room between title and price.
     const priceY=titleY+title.length*46+34;
     ctx.fillStyle='#4fce91';ctx.font='900 42px Tajawal, Arial';
     ctx.fillText(product.price?`${product.price} ${product.currency||'TRY'}`:'',right,priceY);
 
     const rows=collectRows(product),rowGap=14,rowH=74;
-    // Center the specification block vertically in the remaining information column.
     const rowsAreaTop=priceY+72;
     const rowsAreaBottom=innerY+innerH-48;
     const totalRowsH=rows.length*rowH+Math.max(0,rows.length-1)*rowGap;
@@ -134,7 +139,6 @@
 
     for(const [label,val] of rows){
       rr(ctx,infoX,cy,infoW,rowH,15,'#121820','#2c3540',1.4);
-      // small gold accent on each spec card
       ctx.fillStyle=GOLD;ctx.fillRect(right-5,cy+17,3,rowH-34);
       ctx.fillStyle=GOLD_LIGHT;ctx.font='700 20px Tajawal, Arial';ctx.textAlign='right';ctx.direction='rtl';ctx.fillText(label,right-18,cy+rowH/2+7);
       ctx.fillStyle='#f5f1e8';ctx.font='600 20px Tajawal, Arial';ctx.textAlign='left';ctx.direction='rtl';
@@ -143,18 +147,17 @@
       cy+=rowH+rowGap;
     }
 
-    // Tighten the transition and use a gold separator instead of a wide black gap.
     const dividerY=topY+topH+11;
     const grad=ctx.createLinearGradient(M,0,W-M,0);
     grad.addColorStop(0,'rgba(200,150,46,0)');grad.addColorStop(.16,'rgba(200,150,46,.55)');grad.addColorStop(.5,'rgba(240,201,106,.95)');grad.addColorStop(.84,'rgba(200,150,46,.55)');grad.addColorStop(1,'rgba(200,150,46,0)');
     ctx.strokeStyle=grad;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(M,dividerY);ctx.lineTo(W-M,dividerY);ctx.stroke();
 
-    const galleryY=dividerY+10,galleryH=500;
+    const galleryY=dividerY+9,galleryH=555;
     drawGalleryCollage(ctx,gallery,M,galleryY,W-M*2,galleryH);
 
-    const footerY=galleryY+galleryH+18;
+    const footerY=galleryY+galleryH+14;
     ctx.strokeStyle='#4b3a1b';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(M,footerY);ctx.lineTo(W-M,footerY);ctx.stroke();
-    drawBrand(ctx,W-M,footerY+38,25);
+    drawBrand(ctx,W-M,footerY+36,25);
     return canvas;
   }
 
