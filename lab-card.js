@@ -1,5 +1,6 @@
 (() => {
   const W=1440,H=1800;
+  const M=48,G=28,R=24;
   const SPEC_LABELS={
     dimensions:'الأبعاد',strapLength:'طول الحزام',material:'الخامة',closure:'الإغلاق',compartments:'عدد الأقسام',
     waterResistant:'مقاوم للماء',heelHeight:'ارتفاع الكعب',heelType:'نوع الكعب',fit:'القالب / القصّة',
@@ -16,20 +17,35 @@
     Fermuar:'سحاب','MagSafe uyumlu':'متوافق مع MagSafe','Kablosuz şarj destekli':'يدعم الشحن اللاسلكي',Manyetik:'مغناطيسي',
     Likit:'سائل',Mat:'مطفي',Yüksek:'عالية','Tüm Cilt Tipleri':'جميع أنواع البشرة'
   };
-  const roundRect=(ctx,x,y,w,h,r,fill,stroke)=>{
+  const roundRect=(ctx,x,y,w,h,r,fill,stroke,lineWidth=2)=>{
     ctx.beginPath();ctx.roundRect(x,y,w,h,r);
     if(fill){ctx.fillStyle=fill;ctx.fill()}
-    if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke()}
+    if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lineWidth;ctx.stroke()}
   };
   const loadImage=src=>new Promise((resolve,reject)=>{
     const im=new Image();im.crossOrigin='anonymous';im.onload=()=>resolve(im);im.onerror=reject;im.src=src
   });
-  const drawContainDark=(ctx,img,x,y,w,h,r=18)=>{
-    ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.clip();
-    ctx.fillStyle='#0d1116';ctx.fillRect(x,y,w,h);
-    const pad=8,scale=Math.min((w-pad*2)/img.width,(h-pad*2)/img.height);
+  const drawContainCard=(ctx,img,x,y,w,h,r=R)=>{
+    roundRect(ctx,x,y,w,h,r,'#10151b','#242c34',2);
+    const inset=10;
+    ctx.save();ctx.beginPath();ctx.roundRect(x+inset,y+inset,w-inset*2,h-inset*2,Math.max(10,r-8));ctx.clip();
+    ctx.fillStyle='#0d1116';ctx.fillRect(x+inset,y+inset,w-inset*2,h-inset*2);
+    const pad=8;
+    const innerW=w-inset*2-pad*2,innerH=h-inset*2-pad*2;
+    const scale=Math.min(innerW/img.width,innerH/img.height);
     const dw=img.width*scale,dh=img.height*scale;
-    ctx.drawImage(img,x+(w-dw)/2,y+(h-dh)/2,dw,dh);ctx.restore();
+    ctx.drawImage(img,x+(w-dw)/2,y+(h-dh)/2,dw,dh);
+    ctx.restore();
+  };
+  const drawMainImage=(ctx,img,x,y,w,h)=>{
+    if(!img){roundRect(ctx,x,y,w,h,R,'#10151b','#242c34');return}
+    const ratio=img.width/img.height;
+    const targetW=Math.min(w,Math.max(w*0.72,h*ratio));
+    const targetH=Math.min(h,targetW/ratio);
+    const finalW=Math.min(w,targetH*ratio),finalH=Math.min(h,targetW/ratio);
+    const dw=finalW,dh=finalH;
+    const dx=x+(w-dw)/2,dy=y+(h-dh)/2;
+    ctx.save();ctx.beginPath();ctx.roundRect(dx,dy,dw,dh,R);ctx.clip();ctx.drawImage(img,dx,dy,dw,dh);ctx.restore();
   };
   const fitText=(ctx,text,maxWidth,maxLines)=>{
     const words=String(text||'').split(/\s+/);const lines=[];let line='';
@@ -68,7 +84,7 @@
       const label=SPEC_LABELS[k]||k,val=valueText(v);
       if(!rows.some(r=>r[0]===label&&r[1]===val))rows.push([label,val])
     }
-    return rows.slice(0,8);
+    return rows.slice(0,7);
   }
 
   async function build(product,proxy){
@@ -87,69 +103,61 @@
     const gallery=[];
     for(const u of galleryUrls){try{gallery.push(await loadImage(proxy(u)))}catch{}}
 
-    const topY=105,topH=975,mainMaxW=720,gap=38,leftX=50;
-    let mainW=620,mainH=topH,mainY=topY;
-    if(mainImg){
-      const scale=Math.min(mainMaxW/mainImg.width,topH/mainImg.height);
-      mainW=mainImg.width*scale;mainH=mainImg.height*scale;
-      mainY=topY+(topH-mainH)/2;
-      ctx.save();ctx.beginPath();ctx.roundRect(leftX,mainY,mainW,mainH,28);ctx.clip();
-      ctx.drawImage(mainImg,leftX,mainY,mainW,mainH);ctx.restore();
-    }else{
-      roundRect(ctx,leftX,topY,620,topH,28,'#10151b','#29313a');
-    }
+    const topY=100,topH=930;
+    const mainColW=640,infoX=M+mainColW+G,infoW=W-M-infoX;
+    drawMainImage(ctx,mainImg,M,topY,mainColW,topH);
 
-    const infoX=leftX+mainW+gap,infoRight=1390,infoW=Math.max(430,infoRight-infoX);
-    ctx.fillStyle='#d6a84b';ctx.font='700 24px Arial';ctx.fillText('GACELA GALLERY',infoRight,topY+8);
-    ctx.fillStyle='#707984';ctx.font='500 16px Arial';ctx.fillText('معلومات المنتج',infoRight,topY+36);
+    // Information column aligns to the same top and bottom grid as the main image.
+    ctx.fillStyle='#d6a84b';ctx.font='700 25px Arial';ctx.fillText('GACELA GALLERY',W-M,topY+4);
+    ctx.fillStyle='#6f7882';ctx.font='500 16px Arial';ctx.fillText('معلومات المنتج',W-M,topY+33);
 
-    let cy=topY+105;
-    ctx.fillStyle='#f5f1e8';ctx.font='700 39px Arial';
+    let cy=topY+92;
+    ctx.fillStyle='#f5f1e8';ctx.font='700 38px Arial';
     const titleLines=fitText(ctx,product.name||'',infoW,3);
-    titleLines.forEach((l,i)=>ctx.fillText(l,infoRight,cy+i*49));
-    cy+=titleLines.length*49+14;
+    titleLines.forEach((l,i)=>ctx.fillText(l,W-M,cy+i*48));
+    cy+=titleLines.length*48+16;
 
     ctx.fillStyle='#4fce91';ctx.font='800 43px Arial';
-    ctx.fillText(product.price?`${product.price} ${product.currency||'TRY'}`:'',infoRight,cy);
-    cy+=62;
+    ctx.fillText(product.price?`${product.price} ${product.currency||'TRY'}`:'',W-M,cy);
+    cy+=68;
 
-    const rows=collectRows(product),rowGap=12;
-    const available=Math.max(330,topY+topH-cy-10);
-    const rowH=Math.min(82,Math.max(60,(available-rowGap*Math.max(0,rows.length-1))/Math.max(1,rows.length)));
+    const rows=collectRows(product);
+    const rowGap=12,rowH=64;
     for(const [label,val] of rows){
-      roundRect(ctx,infoX,cy-31,infoW,rowH,16,'#11161c','#29313a');
+      if(cy+rowH>topY+topH)break;
+      roundRect(ctx,infoX,cy,infoW,rowH,16,'#11161c','#29313a',2);
       ctx.fillStyle='#d6a84b';ctx.font='700 21px Arial';ctx.textAlign='right';ctx.direction='rtl';
-      ctx.fillText(label,infoRight-18,cy+6);
+      ctx.fillText(label,W-M-18,cy+39);
       ctx.fillStyle='#f5f1e8';ctx.font='600 21px Arial';ctx.textAlign='left';ctx.direction='rtl';
       let t=String(val);
-      while(t.length>5&&ctx.measureText(t).width>infoW-155)t=t.slice(0,-2);
+      while(t.length>5&&ctx.measureText(t).width>infoW-170)t=t.slice(0,-2);
       if(t!==String(val))t+='…';
-      ctx.fillText(t,infoX+18,cy+6);
+      ctx.fillText(t,infoX+18,cy+39);
       cy+=rowH+rowGap;
-      if(cy>topY+topH-15)break;
     }
 
-    const galleryY=1130,galleryBottom=1718,galleryH=galleryBottom-galleryY;
+    // One visual rhythm for the whole card: same 28px gap used above and below.
+    const galleryY=topY+topH+G;
+    const footerY=1750;
+    const galleryBottom=footerY-G;
+    const galleryH=galleryBottom-galleryY;
     if(gallery.length){
       const n=gallery.length;
-      const rowsCount=n<=4?1:2;
+      const rowsCount=n<=3?1:2;
       const cols=rowsCount===1?n:Math.ceil(n/2);
-      const gx=50,gw=1340,cellGap=16;
-      const rowH2=(galleryH-cellGap*(rowsCount-1))/rowsCount;
-      const cellW=(gw-cellGap*(cols-1))/cols;
+      const rowH2=(galleryH-G*(rowsCount-1))/rowsCount;
+      const cellW=(W-M*2-G*(cols-1))/cols;
       gallery.forEach((img,i)=>{
         const row=rowsCount===1?0:Math.floor(i/cols);
         const col=rowsCount===1?i:i%cols;
-        const x=gx+col*(cellW+cellGap),y=galleryY+row*(rowH2+cellGap);
-        drawContainDark(ctx,img,x,y,cellW,rowH2,20);
+        const x=M+col*(cellW+G),y=galleryY+row*(rowH2+G);
+        drawContainCard(ctx,img,x,y,cellW,rowH2,R);
       });
-    }else{
-      ctx.strokeStyle='#252c33';ctx.beginPath();ctx.moveTo(50,galleryY);ctx.lineTo(1390,galleryY);ctx.stroke();
     }
 
-    ctx.strokeStyle='#252c33';ctx.beginPath();ctx.moveTo(50,1750);ctx.lineTo(1390,1750);ctx.stroke();
+    ctx.strokeStyle='#252c33';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(M,footerY);ctx.lineTo(W-M,footerY);ctx.stroke();
     ctx.fillStyle='#626b74';ctx.font='500 17px Arial';ctx.textAlign='right';ctx.direction='rtl';
-    ctx.fillText('GACELA GALLERY',1375,1781);
+    ctx.fillText('GACELA GALLERY',W-M,1781);
     return canvas;
   }
 
