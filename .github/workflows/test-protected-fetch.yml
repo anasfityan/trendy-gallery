@@ -1,0 +1,55 @@
+name: Test protected site fetch
+on:
+  push:
+    paths:
+      - '.github/workflows/test-protected-fetch.yml'
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install curl_cffi
+        run: pip install curl_cffi
+      - name: Fetch protected sites with Chrome impersonation
+        run: |
+          python - <<'PY'
+          import json,re
+          from curl_cffi import requests
+          urls={
+            'hepsiburada':'https://www.hepsiburada.com/pirok-store-samsung-galaxy-s26-ultra-magsafe-uyumlu-kablosuz-sarj-destekli-yumusak-soft-mukemmel-manyetik-esnek-lansman-silikon-kilif-p-HBCV0000D2MAO4',
+            'stradivarius':'https://www.stradivarius.com/tr/en/graphic-vneck-tshirt-l06703295?categoryId=1718528&colorId=100&pelement=520351835',
+            'bershka':'https://www.bershka.com/tr/erkek/giyim/pantolon-n3288.html?celement=1010193241'
+          }
+          out={}
+          for k,u in urls.items():
+            try:
+              r=requests.get(u,impersonate='chrome',headers={'Accept-Language':'tr-TR,tr;q=0.9,en;q=0.8'},timeout=30,allow_redirects=True)
+              text=r.text
+              out[k]={
+                'status':r.status_code,
+                'final_url':str(r.url),
+                'bytes':len(text),
+                'title':(re.search(r'<title[^>]*>(.*?)</title>',text,re.I|re.S).group(1).strip() if re.search(r'<title[^>]*>(.*?)</title>',text,re.I|re.S) else ''),
+                'has_product_jsonld':bool(re.search(r'application/ld\+json',text,re.I) and re.search(r'"@type"\s*:\s*"Product"',text,re.I)),
+                'has_sizes':bool(re.search(r'Numara|Beden|size-item|data-sku|sizes',text,re.I)),
+                'has_price':bool(re.search(r'price|fiyat|TL|TRY|₺',text,re.I)),
+                'store_ids':list(dict.fromkeys(re.findall(r'\b[245][0-9]{7}\b',text)))[:20],
+                'catalog_ids':list(dict.fromkeys(re.findall(r'\b[245][0-9]{7}\b',text)))[:20],
+              }
+            except Exception as e:
+              out[k]={'error':str(e)}
+          open('protected-fetch-results.json','w').write(json.dumps(out,ensure_ascii=False,indent=2))
+          print(json.dumps(out,ensure_ascii=False,indent=2))
+          PY
+      - name: Commit results
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add protected-fetch-results.json
+          git diff --cached --quiet || git commit -m 'Record protected fetch results'
+          git push
