@@ -1,0 +1,45 @@
+name: Validate generic importer images
+on:
+  push:
+    paths:
+      - '.github/workflows/test-general-import-images.yml'
+permissions:
+  contents: write
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Gratis and Altuda image proxy
+        shell: bash
+        run: |
+          set -e
+          python - <<'PY'
+          import json, subprocess, urllib.parse
+          api='https://uoydoungeplepusrsill.supabase.co/functions/v1/product-import-api'
+          urls={
+            'gratis':'https://www.gratis.com/el-vucut-kremleri/bee-beauty-dogal-kiraz-cicegi-ozu-el-kremi-75-ml-p-10194839',
+            'altuda':'https://altuda.com.tr/products/kadin-seritli-shopper-omuz-cantasi-boris-pembe'
+          }
+          out={}
+          for k,u in urls.items():
+            p=subprocess.run(['curl','-sS','-H','content-type: application/json','-d',json.dumps({'url':u}),api],capture_output=True,text=True,timeout=120)
+            d=json.loads(p.stdout); img=(d.get('images') or [None])[0]
+            if not img:
+              out[k]={'image':None,'http':0,'content_type':None,'bytes':0}; continue
+            proxy=api+'?image='+urllib.parse.quote(img,safe='')
+            h=subprocess.run(['curl','-sS','-D','-','-o','/tmp/x.img',proxy],capture_output=True,text=True,timeout=120)
+            import re, os
+            status=int(re.search(r'HTTP/\S+\s+(\d+)',h.stdout).group(1))
+            ct=re.search(r'(?im)^content-type:\s*([^\r\n]+)',h.stdout)
+            out[k]={'image':img,'http':status,'content_type':ct.group(1).strip() if ct else None,'bytes':os.path.getsize('/tmp/x.img')}
+          open('general-import-image-results.json','w').write(json.dumps(out,ensure_ascii=False,indent=2))
+          print(json.dumps(out,ensure_ascii=False,indent=2))
+          PY
+      - name: Commit results
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add general-import-image-results.json
+          git diff --cached --quiet || git commit -m 'Record generic importer image results'
+          git push
