@@ -1,4 +1,4 @@
-name: Validate product importer v10
+name: Validate product importer v11
 on:
   push:
     paths:
@@ -34,13 +34,13 @@ jobs:
               'images':len(d.get('images') or []),'colors':d.get('colors'),'sizes':d.get('sizes'),'dimensions':d.get('dimensions'),
               'volume':d.get('volume'),'variant':d.get('variant'),'brand':d.get('brand'),'details':len(d.get('details') or []),'source':d.get('source'),'error':d.get('error')
             }
-          open('product-import-v10-results.json','w').write(json.dumps(out,ensure_ascii=False,indent=2))
+          open('product-import-v11-results.json','w').write(json.dumps(out,ensure_ascii=False,indent=2))
           print(json.dumps(out,ensure_ascii=False,indent=2))
           PY
       - name: Commit results
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
-          git add product-import-v10-results.json
-          git diff --cached --quiet || git commit -m 'Record product importer v10 results'
+          git add product-import-v11-results.json
+          git diff --cached --quiet || git commit -m 'Record product importer v11 results'
           git push
