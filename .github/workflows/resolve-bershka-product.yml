@@ -1,0 +1,56 @@
+name: Resolve Bershka SEO product to internal ID
+on:
+  push:
+    paths:
+      - '.github/workflows/resolve-bershka-product.yml'
+permissions:
+  contents: write
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -q curl-cffi
+      - name: Resolve product in Turkish trousers category
+        run: |
+          python - <<'PY'
+          import json,re
+          from curl_cffi import requests
+          base='https://www.bershka.com'
+          root=f'{base}/itxrest/3/catalog/store/44109521/40259537'
+          cat='1010193216'
+          target_name='P pens detaylı barrel fit pantolon'.casefold()
+          target_ref='5431/710/401'
+          s=requests.Session(impersonate='chrome')
+          s.headers.update({'Accept':'application/json,*/*','Accept-Language':'tr-TR,tr;q=0.9,en;q=0.8','Referer':base+'/tr/','Sec-Fetch-Dest':'empty','Sec-Fetch-Mode':'cors','Sec-Fetch-Site':'same-origin'})
+          try:s.get(base+'/tr/',timeout=25)
+          except:pass
+          ids_url=f'{root}/category/{cat}/product?languageId=-43&showProducts=false&showNoStock=false&appId=1&locale=tr_TR'
+          r=s.get(ids_url,timeout=40); r.raise_for_status(); pids=[str(x) for x in r.json().get('productIds',[])]
+          matches=[]
+          for i in range(0,len(pids),80):
+            batch=pids[i:i+80]
+            u=f'{root}/productsArray?languageId=-43&productIds={",".join(batch)}&categoryId={cat}&appId=1&locale=tr_TR'
+            rr=s.get(u,timeout=45); rr.raise_for_status(); prods=rr.json().get('products',[])
+            for p in prods:
+              blob=json.dumps(p,ensure_ascii=False)
+              name=str(p.get('name') or '')
+              if target_name in name.casefold() or target_ref in blob or '5431710401' in re.sub(r'\D','',blob):
+                matches.append({
+                  'id':p.get('id'),'name':name,'seoKeyword':p.get('seoKeyword'),'bundleProductSummaries':p.get('bundleProductSummaries'),
+                  'raw_keys':list(p.keys())
+                })
+          out={'categoryId':cat,'productIdsCount':len(pids),'matches':matches}
+          open('bershka-resolve-result.json','w').write(json.dumps(out,ensure_ascii=False,indent=2))
+          print(json.dumps({'categoryId':cat,'productIdsCount':len(pids),'matches':[{'id':m.get('id'),'name':m.get('name'),'seoKeyword':m.get('seoKeyword')} for m in matches]},ensure_ascii=False,indent=2))
+          PY
+      - name: Commit result
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add bershka-resolve-result.json
+          git diff --cached --quiet || git commit -m 'Record Bershka SEO product resolution'
+          git push
