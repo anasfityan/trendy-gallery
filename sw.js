@@ -1,6 +1,6 @@
-const CACHE = 'tg-v13';
+const CACHE = 'tg-v17';
 const CORE = ['./index.html','./manifest.json','./logo.png','./icon-192.png','./enhancements.js'];
-const ENHANCEMENT_TAG = '<script src="./enhancements.js?v=13"></script>';
+const ENHANCEMENT_TAG = '<script src="./enhancements.js?v=17"></script>';
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)));
@@ -93,7 +93,7 @@ self.addEventListener('fetch', event => {
     event.respondWith(networkFirstDocument(request));
     return;
   }
-  if (path.endsWith('/enhancements.js')) {
+  if (path.endsWith('/enhancements.js') || path.endsWith('/product-import-api.js')) {
     event.respondWith(networkFirst(request));
     return;
   }
