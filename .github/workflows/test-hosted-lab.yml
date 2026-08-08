@@ -1,0 +1,51 @@
+name: Test hosted importer lab
+
+on:
+  push:
+    paths:
+      - '.github/workflows/test-hosted-lab.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test GET and POST
+        shell: bash
+        run: |
+          set +e
+          URL='https://uoydoungeplepusrsill.supabase.co/functions/v1/product-importer-lab'
+          GET_CODE=$(curl -sS -o lab.html -w '%{http_code}' "$URL")
+          POST_CODE=$(curl -sS -o lab-post.json -w '%{http_code}' -X POST "$URL" \
+            -H 'content-type: application/json' \
+            -H 'x-lab-key: lab_7f2e8a6c9d1145caa54f' \
+            --data '{"url":"https://www.shulebags.com/giglio-spor-omuz-cantasi-vizon"}')
+          export GET_CODE POST_CODE
+          python - <<'PY'
+          import json, os
+          out={'get_http':int(os.environ.get('GET_CODE','0')),'post_http':int(os.environ.get('POST_CODE','0'))}
+          try:
+              html=open('lab.html',encoding='utf-8').read()
+              out['get_has_lab_title']='مختبر استيراد المنتجات' in html
+              out['get_bytes']=len(html.encode())
+          except Exception as e: out['get_error']=str(e)
+          try:
+              d=json.load(open('lab-post.json',encoding='utf-8'))
+              out['post_result']={'name':d.get('name'),'price':d.get('price'),'images':len(d.get('images') or []),'colors':d.get('colors') or [],'sizes':d.get('sizes') or [],'error':d.get('error')}
+          except Exception as e:
+              out['post_error']=str(e)
+              try: out['post_raw']=open('lab-post.json',encoding='utf-8').read()[:500]
+              except: pass
+          open('hosted-lab-smoke-results.json','w',encoding='utf-8').write(json.dumps(out,ensure_ascii=False,indent=2))
+          print(json.dumps(out,ensure_ascii=False,indent=2))
+          PY
+      - name: Commit results
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add hosted-lab-smoke-results.json
+          git diff --cached --quiet || git commit -m 'Record hosted lab smoke results'
+          git push
