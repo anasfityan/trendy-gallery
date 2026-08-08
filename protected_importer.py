@@ -5,6 +5,7 @@ from curl_cffi import requests
 UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36'
 
 def clean(v): return re.sub(r'\s+',' ',str(v or '')).strip()
+def strip_tags(v): return clean(re.sub(r'<[^>]+>',' ',str(v or '')))
 def uniq(xs):
     out=[]; seen=set()
     for x in xs:
@@ -21,8 +22,7 @@ def jsonld_products(html):
     out=[]
     for m in re.finditer(r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>([\s\S]*?)</script>',html,re.I):
         try:
-            x=json.loads(m.group(1))
-            stack=x if isinstance(x,list) else [x]
+            x=json.loads(m.group(1)); stack=x if isinstance(x,list) else [x]
             for n in stack:
                 if isinstance(n,dict) and (n.get('@type')=='Product' or 'Product' in (n.get('@type') or [])): out.append(n)
                 if isinstance(n,dict) and isinstance(n.get('@graph'),list):
@@ -34,36 +34,49 @@ def hepsiburada(url):
     s=session(); r=s.get(url,timeout=45,allow_redirects=True); r.raise_for_status(); html=r.text
     p=(jsonld_products(html) or [None])[0]
     title=clean((p or {}).get('name'))
+    h1=re.search(r'<h1[^>]*>([\s\S]{1,600}?)</h1>',html,re.I)
+    h1_title=strip_tags(h1.group(1)) if h1 else ''
+    if len(h1_title)>len(title): title=h1_title
     if not title:
         m=re.search(r'<title[^>]*>([\s\S]*?)</title>',html,re.I); title=clean(m.group(1) if m else '')
     offers=(p or {}).get('offers') or {}
     if isinstance(offers,list): offers=offers[0] if offers else {}
     images=(p or {}).get('image') or []
     if isinstance(images,str): images=[images]
-    if not images:
-        images=uniq(re.findall(r'https://productimages\.hepsiburada\.net/[^"\'\s<>]+',html,re.I))[:12]
+    if not images: images=uniq(re.findall(r'https://productimages\.hepsiburada\.net/[^"\'\s<>]+',html,re.I))[:12]
     colors=[]
     for pat in [r'"(?:color|renk)"\s*:\s*"([^"]{2,40})"',r'Renk\s*</[^>]+>\s*<[^>]+>([^<]+)']:
         colors += re.findall(pat,html,re.I)
     attrs={}
     for m in re.finditer(r'"(?:name|key|attributeName)"\s*:\s*"([^"]{1,80})"\s*,\s*"(?:value|attributeValue)"\s*:\s*"([^"]{1,180})"',html,re.I):
-        k,v=clean(m.group(1)),clean(m.group(2));
+        k,v=clean(m.group(1)),clean(m.group(2))
         if k and v: attrs[k]=v
-    key_specs={}
-    compat=[]
+    key_specs={}; compat=[]
     for k,v in attrs.items():
         kl=k.lower()
         if any(x in kl for x in ['uyum','model','telefon modeli']): compat.append(v)
         if any(x in kl for x in ['malzeme','materyal']): key_specs.setdefault('material',v)
+    tl=title.lower(); ul=url.lower()
+    if not compat:
+        m=re.search(r'(Samsung\s+Galaxy\s+[A-Za-z0-9 +\-]{2,30}|iPhone\s+[A-Za-z0-9 +\-]{1,20}|Xiaomi\s+[A-Za-z0-9 +\-]{2,30}|Redmi\s+[A-Za-z0-9 +\-]{2,30})',title,re.I)
+        if m: compat.append(clean(m.group(1)))
     if compat: key_specs['compatibility']=' · '.join(uniq(compat)[:4])
-    name_lower=title.lower()
-    category='acc' if any(x in name_lower for x in ['kılıf','kilif','case','aksesuar']) else 'other'
+    if 'silikon' in tl and 'material' not in key_specs: key_specs['material']='Silikon'
+    elif 'deri' in tl and 'material' not in key_specs: key_specs['material']='Deri'
+    features=[]
+    if 'magsafe' in tl: features.append('MagSafe uyumlu')
+    if 'kablosuz şarj' in tl or 'kablosuz sarj' in tl: features.append('Kablosuz şarj destekli')
+    if 'manyetik' in tl: features.append('Manyetik')
+    if features: key_specs['features']=uniq(features)
+    category='acc' if any(x in tl+' '+ul for x in ['kılıf','kilif','case','aksesuar']) else 'other'
     return {'name':title,'price':clean(offers.get('price')),'currency':clean(offers.get('priceCurrency') or 'TRY'),'images':uniq(images)[:12],'colors':uniq(colors)[:6],'sizes':[],'dimensions':'','volume':'','brand':clean(((p or {}).get('brand') or {}).get('name') if isinstance((p or {}).get('brand'),dict) else (p or {}).get('brand')),'category':category,'keySpecs':key_specs,'source':'protected-hepsiburada-curl'}
 
 def inditex_ids(url,brand):
     q=parse_qs(urlparse(url).query)
     if brand=='stradivarius':
         pid=(q.get('pelement') or [None])[0]; return pid,'54009571','50331081','-43','https://www.stradivarius.com'
+    path=urlparse(url).path.lower()
+    if re.search(r'-n\d+\.html$',path): raise ValueError('category_url_not_product')
     pid=(q.get('celement') or [None])[0]; return pid,'44109521','40259537','-43','https://www.bershka.com'
 
 def parse_inditex_product(prod,brand):
@@ -96,8 +109,7 @@ def parse_inditex_product(prod,brand):
     for c in color_nodes:
         if c.get('modelSize'): model_size=clean(c.get('modelSize')); break
     if model_size: key_specs['modelSize']=model_size
-    raw_price=prices[0] if prices else ''
-    price=''
+    raw_price=prices[0] if prices else ''; price=''
     if raw_price:
         try: price=f'{int(raw_price)/100:.2f}'
         except: price=raw_price
@@ -122,4 +134,6 @@ def import_product(url):
     raise ValueError('unsupported_domain')
 
 if __name__=='__main__':
-    print(json.dumps(import_product(sys.argv[1]),ensure_ascii=False,indent=2))
+    try: print(json.dumps(import_product(sys.argv[1]),ensure_ascii=False,indent=2))
+    except Exception as e:
+        print(json.dumps({'error':str(e)},ensure_ascii=False)); sys.exit(2)
