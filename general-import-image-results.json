@@ -1,0 +1,14 @@
+{
+  "gratis": {
+    "image": "https://api.gratis.retter.io/1oakekr4e/CALL/Image/getImage/10194839-fH9wrDJCwO-01_1024x1024.jpg",
+    "http": 200,
+    "content_type": "image/webp",
+    "bytes": 105228
+  },
+  "altuda": {
+    "image": "https://cdn.shopify.com/s/files/1/0795/9081/8043/files/CBF96857-6956-4CCE-B712-BF6400291949.png?v=1783949062",
+    "http": 200,
+    "content_type": "image/webp",
+    "bytes": 43758
+  }
+}
