@@ -1380,13 +1380,7 @@ window.addEventListener('load',()=>{
   loadL();dedup();saveL();grt();buildCats();render();
   document.getElementById('splash').classList.add('hide');
   setTimeout(()=>document.getElementById('splash').remove(),600);
-  syncSheets();
-  // Auto-refresh every 30 seconds
-  setInterval(()=>syncSheets(),7200000); // 2 hours
-  // Refresh when app becomes visible again (phone switch)
-  document.addEventListener('visibilitychange',()=>{
-    if(!document.hidden) syncSheets();
-  });
+  // Sync is manual only. Use the sidebar sync button when needed.
 });
 </script>
 <script src="./enhancements.js?v=15"></script>
