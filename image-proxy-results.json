@@ -1,0 +1,12 @@
+{
+  "shulebags": {
+    "http": 200,
+    "content_type": "image/jpeg",
+    "bytes": 808199
+  },
+  "nisantasishoes": {
+    "http": 200,
+    "content_type": "image/webp",
+    "bytes": 21530
+  }
+}
