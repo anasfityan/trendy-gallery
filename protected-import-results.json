@@ -1,0 +1,61 @@
+{
+  "hepsiburada": {
+    "name": "Pirok Store Samsung Galaxy S26 Ultra Magsafe Uyumlu Kablosuz Şarj Destekli Yumuşak Soft Mükemmel",
+    "price": "279.89",
+    "currency": "TRY",
+    "category": "other",
+    "images": 3,
+    "colors": [
+      "Gri",
+      "Bordo",
+      "Siyah",
+      "Haki Yeşil",
+      "Navy Blue"
+    ],
+    "sizes": [],
+    "brand": "Pirok Store",
+    "keySpecs": {},
+    "description": null,
+    "source": "protected-hepsiburada-curl"
+  },
+  "stradivarius": {
+    "name": "Grafik baskılı V yaka t-shirt",
+    "price": "850.00",
+    "currency": "TRY",
+    "category": "clothes",
+    "images": 12,
+    "colors": [
+      "Kırmızı"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "brand": "Stradivarius",
+    "keySpecs": {
+      "composition": [
+        "97% pamuk",
+        "3% elastan"
+      ],
+      "modelSize": "S"
+    },
+    "description": "Kısa kollu, V yaka t-shirt. Önü baskılı, yaka ve kolları kontrast şerit detaylı.",
+    "source": "protected-stradivarius-itxrest"
+  },
+  "bershka": {
+    "name": "",
+    "price": "",
+    "currency": "TRY",
+    "category": "clothes",
+    "images": 0,
+    "colors": [],
+    "sizes": [],
+    "brand": "Bershka",
+    "keySpecs": {},
+    "description": "",
+    "source": "protected-bershka-itxrest"
+  }
+}
