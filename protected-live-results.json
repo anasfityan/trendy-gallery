@@ -1,0 +1,83 @@
+{
+  "endpoint": "https://trendy-gallery.vercel.app/api/protected",
+  "hepsiburada": {
+    "http": 200,
+    "name": "Pirok Store Samsung Galaxy S26 Ultra Magsafe Uyumlu Kablosuz Şarj Destekli Yumuşak Soft Mükemmel Manyetik Esnek Lansman Silikon Kılıf",
+    "price": "279.89",
+    "category": "acc",
+    "images": 3,
+    "colors": [
+      "Gri",
+      "Bordo",
+      "Siyah",
+      "Haki Yeşil",
+      "Navy Blue"
+    ],
+    "sizes": [],
+    "keySpecs": {
+      "compatibility": "Samsung Galaxy S26 Ultra",
+      "material": "Silikon",
+      "features": [
+        "MagSafe uyumlu",
+        "Kablosuz şarj destekli",
+        "Manyetik"
+      ]
+    },
+    "source": "protected-hepsiburada-curl",
+    "error": null
+  },
+  "stradivarius": {
+    "http": 200,
+    "name": "Grafik baskılı V yaka t-shirt",
+    "price": "850.00",
+    "category": "clothes",
+    "images": 12,
+    "colors": [
+      "Kırmızı"
+    ],
+    "sizes": [
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "keySpecs": {
+      "composition": [
+        "97% pamuk",
+        "3% elastan"
+      ],
+      "modelSize": "S"
+    },
+    "source": "protected-stradivarius-itxrest",
+    "error": null
+  },
+  "bershka": {
+    "http": 200,
+    "name": "Kargo paraşüt pantolon",
+    "price": "1990.00",
+    "category": "clothes",
+    "images": 16,
+    "colors": [
+      "Kırmızı",
+      "Siyah",
+      "Kum rengi"
+    ],
+    "sizes": [
+      "XXS",
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "keySpecs": {
+      "composition": [
+        "100% pamuk"
+      ],
+      "modelSize": "S"
+    },
+    "source": "protected-bershka-itxrest",
+    "error": null
+  }
+}
