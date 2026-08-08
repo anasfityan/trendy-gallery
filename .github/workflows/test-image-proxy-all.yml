@@ -1,0 +1,53 @@
+name: Validate unified image proxy
+on:
+  push:
+    paths:
+      - '.github/workflows/test-image-proxy-all.yml'
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test first image from every supported store
+        run: |
+          python - <<'PY'
+          import json, urllib.request, urllib.parse
+          api='https://uoydoungeplepusrsill.supabase.co/functions/v1/product-unified-api'
+          proxy='https://uoydoungeplepusrsill.supabase.co/functions/v1/product-image-proxy'
+          urls={
+            'shulebags':'https://www.shulebags.com/giglio-spor-omuz-cantasi-vizon',
+            'nisantasi':'https://www.nisantasishoes.com/lorea-kahve-saten-puantiye-desenli-fiyonk-detayli-kadin-topuklu-ayakkabi-14833?numara=39',
+            'gratis':'https://www.gratis.com/fondoten/note-matte-lock-foundation-fondoten-100-sari-alt-ton-p-10218914',
+            'altuda':'https://altuda.com.tr/products/kadin-seritli-shopper-omuz-cantasi-boris-pembe',
+            'hepsiburada':'https://www.hepsiburada.com/pirok-store-samsung-galaxy-s26-ultra-magsafe-uyumlu-kablosuz-sarj-destekli-yumusak-soft-mukemmel-manyetik-esnek-lansman-silikon-kilif-p-HBCV0000D2MAO4',
+            'stradivarius':'https://www.stradivarius.com/tr/en/graphic-vneck-tshirt-l06703295?categoryId=1718528&colorId=100&pelement=520351835',
+            'bershka':'https://www.bershka.com/tr/kargo-parasut-pantolon-l03046335-c0p227042041.html'
+          }
+          out={}
+          for k,u in urls.items():
+            req=urllib.request.Request(api,data=json.dumps({'url':u}).encode(),headers={'content-type':'application/json'},method='POST')
+            with urllib.request.urlopen(req,timeout=120) as r:
+              d=json.loads(r.read().decode())
+            image=(d.get('images') or [None])[0]
+            if not image:
+              out[k]={'ok':False,'error':'no_image'}; continue
+            purl=proxy+'?image='+urllib.parse.quote(image,safe='')
+            with urllib.request.urlopen(purl,timeout=120) as r:
+              body=r.read(2048)
+              typ=r.headers.get('content-type','')
+              out[k]={'ok':r.status==200 and typ.startswith('image/') and len(body)>100,'http':r.status,'contentType':typ,'sampleBytes':len(body),'imageHost':urllib.parse.urlparse(image).hostname}
+          out['_summary']={'total':len(urls),'ok':sum(1 for v in out.values() if isinstance(v,dict) and v.get('ok'))}
+          open('image-proxy-all-results.json','w').write(json.dumps(out,ensure_ascii=False,indent=2))
+          print(json.dumps(out,ensure_ascii=False,indent=2))
+          if out['_summary']['ok'] != len(urls): raise SystemExit('image_proxy_matrix_failed')
+          PY
+      - name: Commit result
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add image-proxy-all-results.json
+          git diff --cached --quiet || git commit -m 'Record unified image proxy validation'
+          git push
