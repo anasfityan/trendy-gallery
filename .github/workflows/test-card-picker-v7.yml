@@ -1,0 +1,70 @@
+name: Validate card image picker v7
+on:
+  push:
+    paths:
+      - 'lab.html'
+      - 'lab-card.js'
+      - '.github/workflows/test-card-picker-v7.yml'
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install -g playwright@1.54.2 && npx playwright install --with-deps chromium
+      - name: Test live picker and adaptive layouts
+        run: |
+          node <<'JS'
+          const { chromium } = require('playwright');
+          const fs = require('fs');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:1280,height:1400},acceptDownloads:true});
+            const out={page:'https://anasfityan.github.io/trendy-gallery/lab.html'};
+            await page.goto(out.page+'?v=7-'+Date.now(),{waitUntil:'networkidle',timeout:120000});
+            out.version=(await page.locator('.tag').textContent()).trim();
+            await page.getByRole('button',{name:'Shulebags'}).click();
+            await page.locator('#result.on').waitFor({timeout:120000});
+            out.slotCount=await page.locator('#cardSlots .slot').count();
+            out.choiceCount=await page.locator('#cardChoices .choice').count();
+            const before=await page.locator('#cardSlots .slot img').first().getAttribute('src');
+            await page.locator('#cardSlots .slot').first().click();
+            await page.locator('#cardChoices .choice').nth(4).click();
+            const after=await page.locator('#cardSlots .slot img').first().getAttribute('src');
+            out.mainChanged=!!before&&!!after&&before!==after;
+            await page.getByRole('button',{name:'معاينة البطاقة'}).click();
+            await page.locator('#cardPreview').waitFor({state:'visible',timeout:120000});
+            let size=await page.locator('#cardPreview').evaluate(img=>new Promise(res=>{if(img.complete)res([img.naturalWidth,img.naturalHeight]);else img.onload=()=>res([img.naturalWidth,img.naturalHeight])}));
+            out.fourImages={width:size[0],height:size[1]};
+            await page.locator('#cardSlots .slotRemove').last().click();
+            out.selectedAfterRemove1=await page.locator('#cardSlots .slot img').count();
+            await page.getByRole('button',{name:'معاينة البطاقة'}).click();
+            await page.locator('#cardPreview').waitFor({state:'visible',timeout:120000});
+            size=await page.locator('#cardPreview').evaluate(img=>[img.naturalWidth,img.naturalHeight]);
+            out.threeImages={width:size[0],height:size[1]};
+            await page.locator('#cardSlots .slotRemove').last().click();
+            out.selectedAfterRemove2=await page.locator('#cardSlots .slot img').count();
+            await page.getByRole('button',{name:'معاينة البطاقة'}).click();
+            await page.locator('#cardPreview').waitFor({state:'visible',timeout:120000});
+            size=await page.locator('#cardPreview').evaluate(img=>[img.naturalWidth,img.naturalHeight]);
+            out.twoImages={width:size[0],height:size[1]};
+            out.error=(await page.locator('#err').textContent()).trim();
+            out.ok=out.version.includes('v7')&&out.slotCount===4&&out.choiceCount>=4&&out.mainChanged&&out.selectedAfterRemove1===3&&out.selectedAfterRemove2===2&&out.fourImages.width===1440&&out.fourImages.height===1800&&!out.error;
+            fs.writeFileSync('card-picker-v7-results.json',JSON.stringify(out,null,2));
+            console.log(out);
+            await browser.close();
+            if(!out.ok)process.exit(1);
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+      - name: Commit result
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          test -f card-picker-v7-results.json && git add card-picker-v7-results.json || true
+          git diff --cached --quiet || git commit -m 'Record card picker v7 validation'
+          git push || true
