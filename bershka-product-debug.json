@@ -1,0 +1,55 @@
+{
+  "array_no_cat": {
+    "status": 200,
+    "content_type": "application/json",
+    "bytes": 121,
+    "preview": "{\"products\":[{\"description\":\"Item not found\",\"key\":\"_ERR_PRODUCT_NOT_FOUND\",\"commitMark\":false,\"causes\":[],\"params\":[]}]}",
+    "keys": [
+      "products"
+    ],
+    "products_len": 1
+  },
+  "array_cat_0": {
+    "status": 200,
+    "content_type": "application/json",
+    "bytes": 121,
+    "preview": "{\"products\":[{\"description\":\"Item not found\",\"key\":\"_ERR_PRODUCT_NOT_FOUND\",\"commitMark\":false,\"causes\":[],\"params\":[]}]}",
+    "keys": [
+      "products"
+    ],
+    "products_len": 1
+  },
+  "product_singular": {
+    "status": 404,
+    "content_type": "application/json; charset=utf-8",
+    "bytes": 72,
+    "preview": "{\"message\":\"Your request is blocked, no service match for your request\"}",
+    "keys": [
+      "message"
+    ],
+    "products_len": 0
+  },
+  "products_singular": {
+    "status": 404,
+    "content_type": "",
+    "bytes": 0,
+    "preview": ""
+  },
+  "product_query": {
+    "status": 410,
+    "content_type": "application/json; charset=UTF-8",
+    "bytes": 254,
+    "preview": "{\"description\":\"OBSOLETE_FEATURE\",\"action\":null,\"key\":\"OBSOLETE_FEATURE\",\"commitMark\":false,\"url\":null,\"causes\":[{\"description\":\"OBSOLETE_FEATURE\",\"code\":\"OBSOLETE_FEATURE\",\"key\":\"OBSOLETE_FEATURE\",\"params\":[\"operationId\",\"210\"]}],\"params\":[],\"code\":666}",
+    "keys": [
+      "description",
+      "action",
+      "key",
+      "commitMark",
+      "url",
+      "causes",
+      "params",
+      "code"
+    ],
+    "products_len": 0
+  }
+}
