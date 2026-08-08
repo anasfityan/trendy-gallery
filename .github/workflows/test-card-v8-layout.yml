@@ -1,0 +1,67 @@
+name: Validate card v8 layout
+on:
+  push:
+    paths:
+      - 'lab.html'
+      - 'lab-card.js'
+      - '.github/workflows/test-card-v8-layout.yml'
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.54.2
+      - run: npx playwright install --with-deps chromium
+      - name: Test live v8 card
+        run: |
+          node <<'JS'
+          const { chromium } = require('playwright');
+          const fs=require('fs');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:1440,height:1200}});
+            const url='https://anasfityan.github.io/trendy-gallery/lab.html?cardv8='+Date.now();
+            for(let i=0;i<12;i++){
+              await page.goto(url,{waitUntil:'networkidle',timeout:90000});
+              if((await page.locator('.tag').textContent()||'').includes('v8')) break;
+              await page.waitForTimeout(10000);
+            }
+            const version=(await page.locator('.tag').textContent()||'').trim();
+            if(!version.includes('v8')) throw new Error('GitHub Pages did not publish v8');
+            await page.getByRole('button',{name:'Shulebags'}).click();
+            await page.locator('#result.on').waitFor({timeout:90000});
+            await page.locator('#cardChoices .choice').first().waitFor({timeout:30000});
+            const choices=page.locator('#cardChoices .choice');
+            const count=await choices.count();
+            if(count<4) throw new Error('Not enough images for picker test');
+            await choices.nth(Math.min(4,count-1)).click();
+            const mainBadgeCount=await page.locator('#cardChoices .choiceMainBadge').count();
+            if(mainBadgeCount!==1) throw new Error('Main image selection failed');
+            const toggles=page.locator('#cardChoices .galleryToggle');
+            for(let i=0;i<Math.min(5,count);i++){
+              const txt=await toggles.nth(i).textContent();
+              if(txt && txt.includes('+')) await toggles.nth(i).click();
+            }
+            await page.getByRole('button',{name:'معاينة البطاقة'}).click();
+            await page.locator('#cardPreview').waitFor({state:'visible',timeout:90000});
+            const dims=await page.locator('#cardPreview').evaluate(img=>({w:img.naturalWidth,h:img.naturalHeight,src:img.src.slice(0,22)}));
+            if(dims.w!==1440||dims.h!==1800) throw new Error('Wrong card dimensions '+JSON.stringify(dims));
+            const galleryCount=(await page.locator('#galleryCount').textContent()||'').trim();
+            const out={page:url,version,choiceCount:count,mainBadgeCount,galleryCount,preview:dims,ok:true};
+            fs.writeFileSync('card-v8-results.json',JSON.stringify(out,null,2));
+            console.log(out);
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+      - name: Commit result
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '4189826+github-actions[bot]@users.noreply.github.com'
+          git add card-v8-results.json
+          git diff --cached --quiet || git commit -m 'Record card v8 validation'
+          git push
