@@ -1,33 +1,21 @@
-// Gacela Gallery - backend product importer bridge
+// Gacela Gallery - browser importer bridge
 (() => {
   'use strict';
 
+  const BROWSER_ENDPOINT = 'https://trendy-gallery.vercel.app/api/import-product';
   const SUPABASE_URL = 'https://uoydoungeplepusrsill.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_4N5mjsKVHFfKZglcUO-yBw_iCC9owhz';
-  const DEFAULT_ENDPOINT = `${SUPABASE_URL}/functions/v1/import-product`;
-  const NISANTASI_ENDPOINT = `${SUPABASE_URL}/functions/v1/import-nisantasishoes`;
+  const LEGACY_ENDPOINT = `${SUPABASE_URL}/functions/v1/import-product`;
   const originalDoFetch = window.doFetch;
   const originalSaveBag = window.saveBag;
 
   const clean = v => String(v ?? '').replace(/\s+/g, ' ').trim();
   const uniq = arr => [...new Set((arr || []).filter(Boolean))];
 
-  function endpointFor(url) {
-    try {
-      const host = new URL(url).hostname.replace(/^www\./, '');
-      if (host === 'nisantasishoes.com') return NISANTASI_ENDPOINT;
-    } catch {}
-    return DEFAULT_ENDPOINT;
-  }
-
-  async function backendImport(url) {
-    const r = await fetch(endpointFor(url), {
+  async function callJson(endpoint, url, headers = {}) {
+    const r = await fetch(endpoint, {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'apikey': SUPABASE_KEY,
-        'authorization': `Bearer ${SUPABASE_KEY}`
-      },
+      headers: { 'content-type': 'application/json', ...headers },
       body: JSON.stringify({ url })
     });
     const data = await r.json().catch(() => ({}));
@@ -35,9 +23,23 @@
     return data;
   }
 
+  async function backendImport(url) {
+    try {
+      const data = await callJson(BROWSER_ENDPOINT, url);
+      if (Array.isArray(data?.images) && data.images.length) return data;
+      throw new Error('browser_import_incomplete');
+    } catch (browserError) {
+      // Temporary fallback while browser importer coverage is expanded.
+      return callJson(LEGACY_ENDPOINT, url, {
+        apikey: SUPABASE_KEY,
+        authorization: `Bearer ${SUPABASE_KEY}`
+      });
+    }
+  }
+
   window.doFetch = async function(url) {
     const spinTxt = document.getElementById('amSpinTxt');
-    if (spinTxt) spinTxt.textContent = lang === 'ar' ? 'جاري استيراد بيانات المنتج...' : 'Importing product...';
+    if (spinTxt) spinTxt.textContent = lang === 'ar' ? 'جاري قراءة المنتج...' : 'Reading product...';
     lastUrl = url;
     curImg = '';
     showSpin(true);
@@ -58,7 +60,7 @@
       if (nameInput && data.name) nameInput.value = clean(data.name).slice(0, 100);
 
       const priceInput = document.getElementById('priceInp');
-      if (priceInput && data.price) priceInput.value = clean(data.price);
+      if (priceInput) priceInput.value = clean(data.price || '');
 
       const catInput = document.getElementById('catInp');
       if (catInput && data.category) catInput.value = data.category;
@@ -66,7 +68,7 @@
       document.getElementById('amManual').style.display = 'none';
       showSpin(false);
       toast(lang === 'ar'
-        ? `✅ تم جلب المنتج: ${imgs.length} صورة${data.price ? ' + السعر' : ''}${data.colors?.length ? ' + اللون' : ''}${data.sizes?.length ? ' + المقاسات' : ''}`
+        ? `✅ ${imgs.length} صورة${data.price ? ' + السعر' : ''}${data.colors?.length ? ' + اللون' : ''}${data.sizes?.length ? ' + المقاسات' : ''}`
         : '✅ Product imported');
     } catch (e) {
       window.__gacelaBackendImport = null;
@@ -101,7 +103,7 @@
         ? imported.sizes.join(', ')
         : bag.sizes || '';
       bag.cat = imported.category || bag.cat;
-      bag.importSource = imported.source || 'backend';
+      bag.importSource = imported.source || 'browser';
 
       saveL();
       pushSheets();
