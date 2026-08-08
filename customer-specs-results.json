@@ -11,7 +11,7 @@
       "closure": "Fermuar",
       "compartments": "6"
     },
-    "source": "customer-specs-v3"
+    "source": "customer-specs-v4"
   },
   "nisantasi": {
     "http": 200,
@@ -21,7 +21,7 @@
     "keySpecs": {
       "material": "Saten"
     },
-    "source": "customer-specs-v3"
+    "source": "customer-specs-v4"
   },
   "gratis_cream": {
     "http": 200,
@@ -32,7 +32,7 @@
       "amount": "75 ml",
       "variant": "Kiraz Çiçeği"
     },
-    "source": "customer-specs-v3"
+    "source": "customer-specs-v4"
   },
   "gratis_deodorant": {
     "http": 200,
@@ -43,7 +43,23 @@
       "amount": "150 ml",
       "variant": "Confidence"
     },
-    "source": "customer-specs-v3"
+    "source": "customer-specs-v4"
+  },
+  "gratis_foundation": {
+    "http": 200,
+    "category": "cosmetics",
+    "name": "Note Matte Lock Foundation Fondöten 100 Sarı Alt Ton",
+    "brand": "Note",
+    "keySpecs": {
+      "amount": "30 ml",
+      "shade": "100 Sarı Alt Ton",
+      "form": "Likit",
+      "finish": "Mat",
+      "skinType": "Tüm Cilt Tipleri",
+      "coverage": "Yüksek",
+      "spf": "50 SPF"
+    },
+    "source": "customer-specs-v4"
   },
   "altuda": {
     "http": 200,
@@ -54,6 +70,6 @@
       "material": "Suni Deri",
       "closure": "Fermuar"
     },
-    "source": "customer-specs-v3"
+    "source": "customer-specs-v4"
   }
 }
