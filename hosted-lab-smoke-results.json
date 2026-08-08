@@ -1,0 +1,14 @@
+{
+  "get_http": 200,
+  "post_http": 400,
+  "get_has_lab_title": true,
+  "get_bytes": 7869,
+  "post_result": {
+    "name": null,
+    "price": null,
+    "images": 0,
+    "colors": [],
+    "sizes": [],
+    "error": "reader_429"
+  }
+}
