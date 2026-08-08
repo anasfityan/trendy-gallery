@@ -30,6 +30,18 @@ def jsonld_products(html):
         except: pass
     return out
 
+def infer_phone_model(title):
+    patterns=[
+        r'Samsung\s+Galaxy\s+(?:S|A|M|Z)\d{1,3}(?:\s+(?:Ultra|Plus|FE))?',
+        r'iPhone\s+\d{1,2}(?:\s+(?:Pro Max|Pro|Plus|Mini))?',
+        r'Xiaomi\s+\d{1,3}(?:T|T Pro|Pro|Lite|Ultra)?',
+        r'Redmi\s+(?:Note\s+)?\d{1,3}(?:\s+Pro\+?|\s+Pro|\s+Plus)?'
+    ]
+    for pat in patterns:
+        m=re.search(pat,title,re.I)
+        if m:return clean(m.group(0))
+    return ''
+
 def hepsiburada(url):
     s=session(); r=s.get(url,timeout=45,allow_redirects=True); r.raise_for_status(); html=r.text
     p=(jsonld_products(html) or [None])[0]
@@ -57,9 +69,8 @@ def hepsiburada(url):
         if any(x in kl for x in ['uyum','model','telefon modeli']): compat.append(v)
         if any(x in kl for x in ['malzeme','materyal']): key_specs.setdefault('material',v)
     tl=title.lower(); ul=url.lower()
-    if not compat:
-        m=re.search(r'(Samsung\s+Galaxy\s+[A-Za-z0-9 +\-]{2,30}|iPhone\s+[A-Za-z0-9 +\-]{1,20}|Xiaomi\s+[A-Za-z0-9 +\-]{2,30}|Redmi\s+[A-Za-z0-9 +\-]{2,30})',title,re.I)
-        if m: compat.append(clean(m.group(1)))
+    model=infer_phone_model(title)
+    if model: compat=[model]
     if compat: key_specs['compatibility']=' · '.join(uniq(compat)[:4])
     if 'silikon' in tl and 'material' not in key_specs: key_specs['material']='Silikon'
     elif 'deri' in tl and 'material' not in key_specs: key_specs['material']='Deri'
