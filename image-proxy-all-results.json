@@ -1,0 +1,55 @@
+{
+  "shulebags": {
+    "ok": true,
+    "http": 200,
+    "contentType": "image/jpeg",
+    "sampleBytes": 2048,
+    "imageHost": "static.ticimax.cloud"
+  },
+  "nisantasi": {
+    "ok": true,
+    "http": 200,
+    "contentType": "image/webp",
+    "sampleBytes": 2048,
+    "imageHost": "cdn.myikas.com"
+  },
+  "gratis": {
+    "ok": true,
+    "http": 200,
+    "contentType": "image/webp",
+    "sampleBytes": 2048,
+    "imageHost": "api.gratis.retter.io"
+  },
+  "altuda": {
+    "ok": true,
+    "http": 200,
+    "contentType": "image/webp",
+    "sampleBytes": 2048,
+    "imageHost": "cdn.shopify.com"
+  },
+  "hepsiburada": {
+    "ok": true,
+    "http": 200,
+    "contentType": "image/webp",
+    "sampleBytes": 2048,
+    "imageHost": "productimages.hepsiburada.net"
+  },
+  "stradivarius": {
+    "ok": true,
+    "http": 200,
+    "contentType": "image/jpeg",
+    "sampleBytes": 2048,
+    "imageHost": "static.e-stradivarius.net"
+  },
+  "bershka": {
+    "ok": true,
+    "http": 200,
+    "contentType": "image/jpeg",
+    "sampleBytes": 318,
+    "imageHost": "static.bershka.net"
+  },
+  "_summary": {
+    "total": 7,
+    "ok": 7
+  }
+}
