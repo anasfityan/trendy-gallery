@@ -1,45 +1,88 @@
-// Gacela Gallery - validated product importer bridge
+// Gacela Gallery - unified smart product importer bridge
 (() => {
   'use strict';
 
   const SUPABASE_URL = 'https://uoydoungeplepusrsill.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_4N5mjsKVHFfKZglcUO-yBw_iCC9owhz';
-  const READER_ENDPOINT = `${SUPABASE_URL}/functions/v1/import-reader`;
-  const LEGACY_ENDPOINT = `${SUPABASE_URL}/functions/v1/import-product`;
+  const UNIFIED_ENDPOINT = `${SUPABASE_URL}/functions/v1/product-unified-api`;
+  const IMAGE_PROXY = `${SUPABASE_URL}/functions/v1/product-image-proxy`;
+
   const originalDoFetch = window.doFetch;
   const originalSaveBag = window.saveBag;
+  const originalOpenAdd = window.openAdd;
 
   const clean = v => String(v ?? '').replace(/\s+/g, ' ').trim();
-  const uniq = arr => [...new Set((arr || []).filter(Boolean))];
+  const uniq = arr => [...new Set((Array.isArray(arr) ? arr : []).map(clean).filter(Boolean))];
 
-  async function callJson(endpoint, url) {
-    const r = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        apikey: SUPABASE_KEY,
-        authorization: `Bearer ${SUPABASE_KEY}`
-      },
-      body: JSON.stringify({ url })
-    });
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(data?.error || `HTTP ${r.status}`);
-    return data;
+  function normalizeImported(data, url) {
+    const keySpecs = data?.keySpecs && typeof data.keySpecs === 'object' ? data.keySpecs : {};
+    return {
+      ...data,
+      url,
+      name: clean(data?.name || ''),
+      price: clean(data?.price || ''),
+      currency: clean(data?.currency || 'TRY') || 'TRY',
+      images: uniq(data?.images || []).slice(0, 20),
+      colors: uniq(data?.colors || []),
+      sizes: uniq(data?.sizes || []),
+      category: clean(data?.category || ''),
+      brand: clean(data?.brand || ''),
+      dimensions: clean(data?.dimensions || keySpecs.dimensions || ''),
+      volume: clean(data?.volume || keySpecs.amount || ''),
+      keySpecs: { ...keySpecs },
+      details: Array.isArray(data?.details) ? data.details.map(clean).filter(Boolean) : [],
+      source: clean(data?.unifiedSource || data?.source || 'unified-api') || 'unified-api',
+    };
   }
 
   async function backendImport(url) {
-    try {
-      const data = await callJson(READER_ENDPOINT, url);
-      if (Array.isArray(data?.images) && data.images.length && data.name) return data;
-      throw new Error('reader_import_incomplete');
-    } catch (readerError) {
-      return callJson(LEGACY_ENDPOINT, url);
+    const response = await fetch(UNIFIED_ENDPOINT, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data?.error || data?.message || `HTTP ${response.status}`);
+
+    const imported = normalizeImported(data, url);
+    if (!imported.images.length || !imported.name) throw new Error('unified_import_incomplete');
+    return imported;
+  }
+
+  function productTypeText(data, url) {
+    return [data.category, data.name, data.brand, data.keySpecs?.material, data.keySpecs?.form, data.keySpecs?.compatibility, url]
+      .filter(Boolean).join(' ');
+  }
+
+  function fillExistingFields(data, url) {
+    const nameInput = document.getElementById('nameInp');
+    if (nameInput && data.name) nameInput.value = data.name.slice(0, 120);
+
+    const priceInput = document.getElementById('priceInp');
+    if (priceInput) priceInput.value = data.price || '';
+
+    const catInput = document.getElementById('catInp');
+    if (catInput) {
+      const detected = typeof detectCat === 'function'
+        ? detectCat(productTypeText(data, url), data.name || '')
+        : data.category;
+      if (detected) catInput.value = detected;
     }
+  }
+
+  function importSummary(data) {
+    const parts = [];
+    if (data.images.length) parts.push(`${data.images.length} صورة`);
+    if (data.price) parts.push('السعر');
+    if (data.colors.length) parts.push('الألوان');
+    if (data.sizes.length) parts.push('المقاسات');
+    if (Object.keys(data.keySpecs || {}).length) parts.push('المواصفات');
+    return parts.join(' + ');
   }
 
   window.doFetch = async function(url) {
     const spinTxt = document.getElementById('amSpinTxt');
-    if (spinTxt) spinTxt.textContent = lang === 'ar' ? 'جاري قراءة المنتج...' : 'Reading product...';
+    if (spinTxt) spinTxt.textContent = lang === 'ar' ? 'جاري تحليل المنتج ومواصفاته...' : 'Analyzing product...';
+
     lastUrl = url;
     curImg = '';
     showSpin(true);
@@ -48,28 +91,18 @@
 
     try {
       const data = await backendImport(url);
-      const imgs = uniq(data.images || []);
-      if (!imgs.length) throw new Error('no_images');
+      window.__gacelaBackendImport = data;
 
-      window.__gacelaBackendImport = { ...data, url };
-      curImg = imgs[0];
+      curImg = data.images[0];
       setImgBox(curImg);
-      showThumbs(imgs);
+      showThumbs(data.images);
+      fillExistingFields(data, url);
 
-      const nameInput = document.getElementById('nameInp');
-      if (nameInput && data.name) nameInput.value = clean(data.name).slice(0, 120);
+      const manual = document.getElementById('amManual');
+      if (manual) manual.style.display = 'none';
 
-      const priceInput = document.getElementById('priceInp');
-      if (priceInput) priceInput.value = clean(data.price || '');
-
-      const catInput = document.getElementById('catInp');
-      if (catInput && data.category) catInput.value = data.category;
-
-      document.getElementById('amManual').style.display = 'none';
       showSpin(false);
-      toast(lang === 'ar'
-        ? `✅ ${imgs.length} صورة${data.price ? ' + السعر' : ''}${data.colors?.length ? ' + اللون' : ''}${data.sizes?.length ? ' + المقاسات' : ''}`
-        : '✅ Product imported');
+      toast(lang === 'ar' ? `✅ تم الاستيراد: ${importSummary(data)}` : '✅ Product imported');
     } catch (e) {
       window.__gacelaBackendImport = null;
       showSpin(false);
@@ -92,18 +125,19 @@
       const bag = bags.find(b => b.url === url);
       if (!bag) return;
 
-      bag.imgs = uniq(imported.images || []).slice(0, 12);
+      bag.imgs = uniq(imported.images || []).slice(0, 20);
       if (bag.img && !bag.imgs.includes(bag.img)) bag.imgs.unshift(bag.img);
-      bag.price = clean(imported.price || bag.price);
-      bag.currency = clean(imported.currency || bag.currency || 'TRY');
-      bag.colors = Array.isArray(imported.colors) && imported.colors.length
-        ? imported.colors.join(', ')
-        : bag.colors || '';
-      bag.sizes = Array.isArray(imported.sizes) && imported.sizes.length
-        ? imported.sizes.join(', ')
-        : bag.sizes || '';
-      bag.cat = imported.category || bag.cat;
-      bag.importSource = imported.source || 'reader';
+      bag.price = imported.price || bag.price || '';
+      bag.currency = imported.currency || bag.currency || 'TRY';
+      bag.colors = imported.colors.length ? imported.colors.join(', ') : (bag.colors || '');
+      bag.sizes = imported.sizes.length ? imported.sizes.join(', ') : (bag.sizes || '');
+      bag.brand = imported.brand || bag.brand || '';
+      bag.dimensions = imported.dimensions || bag.dimensions || '';
+      bag.volume = imported.volume || bag.volume || '';
+      bag.keySpecs = { ...(imported.keySpecs || {}) };
+      bag.details = [...(imported.details || [])];
+      bag.importSource = imported.source || 'unified-api';
+      bag.importedAt = new Date().toISOString();
 
       saveL();
       pushSheets();
@@ -113,11 +147,12 @@
     };
   }
 
-  const originalOpenAdd = window.openAdd;
   if (typeof originalOpenAdd === 'function') {
     window.openAdd = function(...args) {
       window.__gacelaBackendImport = null;
       return originalOpenAdd.apply(this, args);
     };
   }
+
+  window.gacelaProductImageProxy = src => src ? `${IMAGE_PROXY}?image=${encodeURIComponent(src)}` : '';
 })();
